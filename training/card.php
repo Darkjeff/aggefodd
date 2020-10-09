@@ -154,15 +154,15 @@ if ($action == 'update' && $user->rights->agefodd->agefodd_formation_catalogue->
 			}
 
 			if (! empty($conf->global->AGF_FCKEDITOR_ENABLE_TRAINING)) {
-				$agf->public = dol_htmlcleanlastbr(GETPOST('public'));
-				$agf->methode = dol_htmlcleanlastbr(GETPOST('methode'));
-				$agf->note1 = dol_htmlcleanlastbr(GETPOST('note1'));
-				$agf->note2 = dol_htmlcleanlastbr(GETPOST('note2'));
-				$agf->prerequis = dol_htmlcleanlastbr(GETPOST('prerequis'));
-				$agf->but = dol_htmlcleanlastbr(GETPOST('but'));
-				$agf->programme = dol_htmlcleanlastbr(GETPOST('programme'));
-				$agf->pedago_usage = dol_htmlcleanlastbr(GETPOST('pedago_usage'));
-				$agf->sanction = dol_htmlcleanlastbr(GETPOST('sanction'));
+				$agf->public = dol_htmlcleanlastbr(GETPOST('public','restricthtml'));
+				$agf->methode = dol_htmlcleanlastbr(GETPOST('methode','restricthtml'));
+				$agf->note1 = dol_htmlcleanlastbr(GETPOST('note1','restricthtml'));
+				$agf->note2 = dol_htmlcleanlastbr(GETPOST('note2','restricthtml'));
+				$agf->prerequis = dol_htmlcleanlastbr(GETPOST('prerequis','restricthtml'));
+				$agf->but = dol_htmlcleanlastbr(GETPOST('but','restricthtml'));
+				$agf->programme = dol_htmlcleanlastbr(GETPOST('programme','restricthtml'));
+				$agf->pedago_usage = dol_htmlcleanlastbr(GETPOST('pedago_usage','restricthtml'));
+				$agf->sanction = dol_htmlcleanlastbr(GETPOST('sanction','restricthtml'));
 			} else {
 				$agf->public = GETPOST('public', 'alpha');
 				$agf->methode = GETPOST('methode', 'alpha');
@@ -239,15 +239,15 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_formation_cat
 			}
 
 			if (! empty($conf->global->AGF_FCKEDITOR_ENABLE_TRAINING)) {
-				$agf->public = dol_htmlcleanlastbr(GETPOST('public'));
-				$agf->methode = dol_htmlcleanlastbr(GETPOST('methode'));
-				$agf->note1 = dol_htmlcleanlastbr(GETPOST('note1'));
-				$agf->note2 = dol_htmlcleanlastbr(GETPOST('note2'));
-				$agf->prerequis = dol_htmlcleanlastbr(GETPOST('prerequis'));
-				$agf->but = dol_htmlcleanlastbr(GETPOST('but'));
-				$agf->programme = dol_htmlcleanlastbr(GETPOST('programme'));
-				$agf->pedago_usage = dol_htmlcleanlastbr(GETPOST('pedago_usage'));
-				$agf->sanction = dol_htmlcleanlastbr(GETPOST('sanction'));
+				$agf->public = dol_htmlcleanlastbr(GETPOST('public','restricthtml'));
+				$agf->methode = dol_htmlcleanlastbr(GETPOST('methode','restricthtml'));
+				$agf->note1 = dol_htmlcleanlastbr(GETPOST('note1','restricthtml'));
+				$agf->note2 = dol_htmlcleanlastbr(GETPOST('note2','restricthtml'));
+				$agf->prerequis = dol_htmlcleanlastbr(GETPOST('prerequis','restricthtml'));
+				$agf->but = dol_htmlcleanlastbr(GETPOST('but','restricthtml'));
+				$agf->programme = dol_htmlcleanlastbr(GETPOST('programme','restricthtml'));
+				$agf->pedago_usage = dol_htmlcleanlastbr(GETPOST('pedago_usage','restricthtml'));
+				$agf->sanction = dol_htmlcleanlastbr(GETPOST('sanction','restricthtml'));
 			} else {
 				$agf->public = GETPOST('public', 'alpha');
 				$agf->methode = GETPOST('methode', 'alpha');
