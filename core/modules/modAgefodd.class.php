@@ -1199,6 +1199,7 @@ class modAgefodd extends DolibarrModules
 				'certif.certif_label' => 'AgfCertifLabel',
 				'certif.certif_dt_start' => 'AgfCertifDateSt',
 				'certif.certif_dt_end' => 'AgfCertifDateEnd',
+				'certif.mark' => 'AgfCertifMark',
 				's.datec' => 'AgfDateC'
 		);
 		$this->export_TypeFields_array[$r] = array(
@@ -1220,6 +1221,7 @@ class modAgefodd extends DolibarrModules
 				'certif.certif_label' => 'AgfCertificate',
 				'certif.certif_dt_start' => 'AgfCertificate',
 				'certif.certif_dt_end' => 'AgfCertificate',
+				'certif.mark' => 'AgfCertifMark',
 				's.datec' => 'AgfNbreParticipants'
 		);
 
