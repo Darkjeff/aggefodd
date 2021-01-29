@@ -1188,18 +1188,19 @@ class modAgefodd extends DolibarrModules
 			)
 		);
 		$this->export_fields_array[$r] = array(
-			's.nom' => 'AgfFamilyName',
-			's.prenom' => 'AgfFirstName',
-			's.civilite' => 'AgfTitle',
-			's.date_birth' => 'DateToBirth',
-			's.place_birth' => 'AgfPlaceBirth',
-			'certif.fk_stagiaire' => 'Id',
-			'certif.fk_session_agefodd' => 'Id',
-			'certif.certif_code' => 'AgfCertifCode',
-			'certif.certif_label' => 'AgfCertifLabel',
-			'certif.certif_dt_start' => 'AgfCertifDateSt',
-			'certif.certif_dt_end' => 'AgfCertifDateEnd',
-			's.datec' => 'AgfDateC'
+				's.nom' => 'AgfFamilyName',
+				's.prenom' => 'AgfFirstName',
+				's.civilite' => 'AgfTitle',
+				's.date_birth' => 'DateToBirth',
+				's.place_birth' => 'AgfPlaceBirth',
+				'certif.fk_stagiaire' => 'Id',
+				'certif.fk_session_agefodd' => 'Id',
+				'certif.certif_code' => 'AgfCertifCode',
+				'certif.certif_label' => 'AgfCertifLabel',
+				'certif.certif_dt_start' => 'AgfCertifDateSt',
+				'certif.certif_dt_end' => 'AgfCertifDateEnd',
+				'certif.mark' => 'AgfCertifMark',
+				's.datec' => 'AgfDateC'
 		);
 		$this->export_TypeFields_array[$r] = array(
 			'c.nom' => "Text",
@@ -1208,19 +1209,20 @@ class modAgefodd extends DolibarrModules
 			's.civilite' => "Text"
 		);
 		$this->export_entities_array[$r] = array(
-			'c.nom' => "company",
-			's.nom' => 'AgfNbreParticipants',
-			's.prenom' => 'AgfNbreParticipants',
-			's.civilite' => 'AgfNbreParticipants',
-			's.date_birth' => 'AgfNbreParticipants',
-			's.place_birth' => 'AgfNbreParticipants',
-			'certif.fk_stagiaire' => 'AgfNbreParticipants',
-			'certif.fk_session_agefodd' => 'AgefoddMenuAction',
-			'certif.certif_code' => 'AgfCertificate',
-			'certif.certif_label' => 'AgfCertificate',
-			'certif.certif_dt_start' => 'AgfCertificate',
-			'certif.certif_dt_end' => 'AgfCertificate',
-			's.datec' => 'AgfNbreParticipants'
+				'c.nom' => "company",
+				's.nom' => 'AgfNbreParticipants',
+				's.prenom' => 'AgfNbreParticipants',
+				's.civilite' => 'AgfNbreParticipants',
+				's.date_birth' => 'AgfNbreParticipants',
+				's.place_birth' => 'AgfNbreParticipants',
+				'certif.fk_stagiaire' => 'AgfNbreParticipants',
+				'certif.fk_session_agefodd' => 'AgefoddMenuAction',
+				'certif.certif_code' => 'AgfCertificate',
+				'certif.certif_label' => 'AgfCertificate',
+				'certif.certif_dt_start' => 'AgfCertificate',
+				'certif.certif_dt_end' => 'AgfCertificate',
+				'certif.mark' => 'AgfCertifMark',
+				's.datec' => 'AgfNbreParticipants'
 		);
 
 		$this->export_sql_start[$r] = 'SELECT DISTINCT ';

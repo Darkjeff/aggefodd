@@ -2722,7 +2722,7 @@ class Agsession extends CommonObject
             {
                 $sql .= ' '.$this->db->plimit($limit + 1, $offset);
             }
-        }
+       	}
 
 		dol_syslog(get_class($this) . "::fetch_all", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -2737,8 +2737,8 @@ class Agsession extends CommonObject
 			if ($num) {
 			    $Tsessid = array();
 
-				while ( empty($tolist) ? $i < $num : (($num >= $limit) ? count($Tsessid) <= $limit : $i < $num) ) {
-					$obj = $this->db->fetch_object($resql);
+				//while ( empty($tolist) ? $i < $num : (($num >= $limit) ? count($Tsessid) <= $limit : $i < $num) ) {
+				while ( $obj = $this->db->fetch_object($resql)) {
 
 					$line = new AgfSessionLine();
 

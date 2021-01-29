@@ -729,7 +729,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
 
 	}
 }
-$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $filter, $user, array_keys($extrafields->attribute_label), 1);
+$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $filter, $user, array_keys($extrafields->attribute_label));
 
 if ($resql != - 1) {
 
@@ -741,8 +741,11 @@ if ($resql != - 1) {
 			setEventMessages(null, $agf->errors, 'errors');
 		}
 	}
-
-	$num = $resql;
+	if (!empty($agf->lines) && count($agf->lines)>$resql) {
+		$num = count($agf->lines);
+	} else {
+		$num = $resql;
+	}
 
 	$arrayofselected = is_array($toselect) ? $toselect : array();
 
