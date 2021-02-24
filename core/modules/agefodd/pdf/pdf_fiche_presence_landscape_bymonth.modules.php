@@ -256,7 +256,7 @@ class pdf_fiche_presence_landscape_bymonth extends pdf_fiche_presence_landscape
 			foreach ($TTSessionDate as $dates_array) {
 				// New page
 				$this->pdf->AddPage();
-				$this->setupNewPage();
+//				$this->setupNewPage();
 
 				$this->maxSlot = count($dates_array);
 				$this->trainer_widthtimeslot = ($this->espaceH_dispo - $this->trainer_widthcol1 -2) / $this->maxSlot;
