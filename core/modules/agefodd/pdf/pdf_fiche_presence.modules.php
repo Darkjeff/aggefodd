@@ -499,7 +499,7 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 			$this->pdf->SetXY($posX + $this->trainee_widthcol1, $posY);
 			$this->pdf->SetFont(pdf_getPDFFont($this->outputlangs), '', 9);
 			$str = $this->outputlangs->transnoentities('AgfPDFFichePres17');
-			$this->pdf->Cell($this->trainee_widthcol2, $this->h_ligne + 8, $this->outputlangs->convToOutputCharset($str), 0, 2, "C", 0);
+			$this->pdf->Cell($this->trainee_widthcol2, $this->h_ligne + 8, $this->outputlangs->convToOutputCharset($str), 'R', 2, "C", 0);
 		} else {
 			$this->trainee_widthcol2 = 0;
 		}
