@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 
 - FIX : Multicell html in PDF [2020-12-18]
 - FIX : Dol V13 compatibility [2020-12-09]
+- FIX : Fix d'un bug d’affichage de bordure sur le bloc société dans la génération PDF de certaines feuilles d’émargement [2021-03-04]
 
 ___
 ## OLDER
