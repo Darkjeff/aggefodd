@@ -949,7 +949,7 @@ class modAgefodd extends DolibarrModules
 		$this->import_examplevalues_array[$r] = array(
 			's.fk_session_agefodd' => '999999',
 			's.fk_stagiaire' => '1',
-			's.fk_agefodd_stagiaire_type' => $conf->global->AGF_DEFAULT_STAGIAIRE_TYPE,
+			's.fk_agefodd_stagiaire_type' => (property_exists($conf->global, 'AGF_DEFAULT_STAGIAIRE_TYPE')?$conf->global->AGF_DEFAULT_STAGIAIRE_TYPE:0),
 			's.datec' => '2013-11-12',
 			'çertif.fk_stagiaire' => '1',
 			'certif.fk_session_agefodd' => '999999',
@@ -992,7 +992,7 @@ class modAgefodd extends DolibarrModules
 		$this->import_examplevalues_array[$r] = array(
 			's.fk_session_agefodd' => '999999',
 			's.fk_stagiaire' => '1',
-			's.fk_agefodd_stagiaire_type' => $conf->global->AGF_DEFAULT_STAGIAIRE_TYPE,
+			's.fk_agefodd_stagiaire_type' => (property_exists($conf->global, 'AGF_DEFAULT_STAGIAIRE_TYPE')?$conf->global->AGF_DEFAULT_STAGIAIRE_TYPE:0),
 			's.datec' => '2013-11-12'
 		);
 
