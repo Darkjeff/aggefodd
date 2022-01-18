@@ -1597,6 +1597,13 @@ class ReportBPF extends AgefoddExportExcel
 			}
 		}
 
+		//special C - 1
+		//compelete le montant avec les facture directement faite à l'emploeyr ou financeur alternatif du stagiaire
+		$result = $this->_getAmountFinCHack($filter);
+		if ($result < 0) {
+			return -1;
+		}
+
 		// C - 11
 		$result = $this->_getAmountFinC11($filter);
 		if ($result < 0) {
@@ -2213,6 +2220,118 @@ class ReportBPF extends AgefoddExportExcel
 			unset($this->financial_data[$financialDataKey]);
 		}
 		return $res;
+	}
+
+	public function _getAmountFinCHack($filter) {
+
+		$financialDataKey = 'C-1 Produits provenant des entreprises pour la formation de leurs salariés';
+		$sqlParts = ['select' => '', 'from' => '', 'where' => ''];
+
+		$confprod = $this->getConf('AGF_CAT_BPF_PRODPEDA', 'confprod');
+		if ($confprod === false) {
+			$this->setWarning('AgfErroVarNotSetBPF', $langs->transnoentities('AgfReportBPFCategProdPeda'));
+		}
+		$confcust = $this->getConf('AGF_CAT_BPF_OPCA', 'confcust');
+		if ($confcust === false) {
+			$this->setWarning('AgfErroVarNotSetBPF', $langs->transnoentities('AgfReportBPFCategOPCA'));
+		}
+
+		$sqlParts['select'] = /* @lang SQL */
+			" SELECT SUM(fd.total_ht) as amount";
+		$sqlParts['from'] = /* @lang SQL */
+			" FROM " . MAIN_DB_PREFIX . "facturedet AS fd "
+			. "INNER JOIN " . MAIN_DB_PREFIX . "facture AS f"
+			. "   ON f.rowid = fd.fk_facture ";
+
+		// si l'une des clés (employer ou datefac) est définie, filtre sur la date de facturation
+		if (!empty($data['employer']) || !empty($data['datefac'])) {
+			$sqlParts['from'] .= /* @lang SQL */
+				" AND " . $this->_getDateFilter($filter, 'f.datef');
+		}
+
+		// filtre sur le statut des factures (validées ou payées)
+		$sqlParts['where'] = /* @lang SQL */
+			" WHERE f.fk_statut IN (1 , 2)";
+
+		// si défini, filtre sur catégorie(s) du produit de la ligne de facture
+		if (!empty($confprod)) {
+			$sqlParts['where'] .= /* @lang SQL */
+				" AND fd.fk_product IN ("
+				. "    SELECT cp.fk_product"
+				. "    FROM " . MAIN_DB_PREFIX . "categorie_product AS cp"
+				. "    WHERE cp.fk_categorie IN (" . $confprod . ")"
+				. ")";
+		}
+
+		// si défini, filtre sur catégorie(s) du tiers de la facture
+		if (!empty($confcust)) {
+			$sqlParts['where'] .= /* @lang SQL */
+				" AND f.fk_soc NOT IN ("
+				. "    SELECT cs.fk_soc"
+				. "    FROM " . MAIN_DB_PREFIX . "categorie_societe AS cs"
+				. "    WHERE cs.fk_categorie IN (" . $confcust . ")"
+				. ")";
+		}
+
+		// filtre: les factures doivent:
+		//   • être liées à des sessions terminées ou en cours, dont les créneaux sont dans l'intervalle requis
+		$sqlParts['where'] .= /* @lang SQL */
+			" AND "
+			. "( " // BLOC 1
+			. "    ( " // BLOC 1.1
+			. "    f.rowid IN "
+			. "        (" // BLOC 1.1.1
+			. "          SELECT DISTINCT factin.rowid"
+			. "          FROM " . MAIN_DB_PREFIX . "agefodd_session_element AS se"
+			. "          INNER JOIN " . MAIN_DB_PREFIX . "agefodd_session AS sess"
+			. "             ON sess.rowid = se.fk_session_agefodd"
+			. "               AND se.element_type = 'invoice'"
+			. "               AND sess.status IN (5,6)"
+			. "               AND sess.entity IN (".getEntity('agsession').")"
+			. "          INNER JOIN " . MAIN_DB_PREFIX . "agefodd_session_calendrier as statime"
+			. "            ON statime.fk_agefodd_session=sess.rowid"
+			. "              AND statime.heured >= '" . $this->db->idate($filter['search_date_start']) . "'"
+			. "              AND statime.heuref <= '" . $this->db->idate($filter['search_date_end']) . "'";
+
+		//   • si le booléen employeur est true, la facture doit être liée à une session liée à un tiers employeur
+		if (! empty($data['employer'])) {
+			$sqlParts['where'] .= /* @lang SQL */
+				"            AND sess.fk_soc_employer IS NOT NULL ";
+		}
+
+		//   • la session doit avoir au moins un stagiaire ayant un des statuts spécifiés par $data['idtypesta']
+		//     (les statuts sont dans llx_agefodd_stagiaire_type)
+		$sqlParts['where'] .= /* @lang SQL */
+			"            INNER JOIN " . MAIN_DB_PREFIX . "agefodd_session_stagiaire AS ss"
+			. "            ON ss.fk_session_agefodd = sess.rowid"
+			. "              AND ss.fk_agefodd_stagiaire_type IN (20,4,1)";
+
+		//if (empty($data['checkOPCA']) && empty($data['employer'])) {
+			//   Ni checkOPCA, ni employer: facture liée à la session et tiers du stagiaire = tiers de la facture
+			$sqlParts['where'] .= /* @lang SQL */
+				"        INNER JOIN " . MAIN_DB_PREFIX . "agefodd_stagiaire AS sta ON sta.rowid = ss.fk_stagiaire"
+				. "      INNER JOIN " . MAIN_DB_PREFIX . "facture AS factin"
+				. "        ON factin.rowid = se.fk_element";
+			// si PAS checkPV, il faut que le stagiaire ait le même tiers que la facture
+		//	if (empty($data['checkPV'])) {
+				$sqlParts['where'] .= /* @lang SQL */
+					"        AND factin.fk_soc = sta.fk_soc ";
+		//	}
+			// si checkaltfin, il faut que le stagiaire ait, sur la session, le même tiers que la facture
+		//	elseif (!empty($data['checkaltfin'])) {
+				$sqlParts['where'] .= /* @lang SQL */
+					"        OR factin.fk_soc = ss.fk_soc_link ";
+		//	}
+
+		$sqlParts['where'] .= /* @lang SQL */
+			"          ) " // FIN BLOC 1.1.1
+			. "    )";   // FIN BLOC 1.1
+
+
+		$sqlParts['where'] .= /* @lang SQL */
+			"  )"; // FIN BLOC 1
+
+		return $this->_runFinancialQueryForSectionC($sqlParts, $financialDataKey);
 	}
 
 	/**
