@@ -23,17 +23,17 @@
  * \ingroup agefodd
  * \brief Internal rule pages for locations
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agefodd_place.class.php');
-require_once ('../class/agefodd_reginterieur.class.php');
-require_once ('../lib/agefodd.lib.php');
+require_once '../class/agefodd_place.class.php';
+require_once '../class/agefodd_reginterieur.class.php';
+require_once '../lib/agefodd.lib.php';
 
-require_once (DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php');
+require_once DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php';
 
 // Security check
 if (! $user->rights->agefodd->agefodd_place->lire)
@@ -43,6 +43,9 @@ $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
 $idreg = GETPOST('idreg', 'int');
+
+$urlToken = '';
+if (function_exists('newToken')) $urlToken = "&token=".newToken();
 
 /*
  * Actions delete
@@ -118,7 +121,6 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_place->creer)
 		$result = $agf->create($user);
 
 		if ($result > 0) {
-
 			$agf_place = new Agefodd_place($db);
 			$result_place = $agf_place->fetch($id);
 			$agf_place->fk_reg_interieur = $result;
@@ -204,7 +206,6 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 } else {
 	// Card location
 	if ($result_place > 0 && $result_regint > 0) {
-
 		// Card location interal rules Edit mode
 		if ($action == 'edit') {
 			print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '" method="post">' . "\n";
@@ -276,7 +277,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->agefodd_place->creer) {
-		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}

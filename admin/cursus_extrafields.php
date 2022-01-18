@@ -20,9 +20,9 @@
  * \ingroup agefodd
  * \brief Page to setup extra fields of session
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 
 require_once '../lib/agefodd.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
@@ -44,7 +44,7 @@ $tmptype2label = ExtraFields::$type2label;
 $type2label = array(
 	''
 );
-foreach ( $tmptype2label as $key => $val )
+foreach ($tmptype2label as $key => $val)
 	$type2label [$key] = $langs->trans($val);
 
 $action = GETPOST('action', 'alpha');
@@ -60,6 +60,9 @@ require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
 /*
  * View
  */
+
+$urlToken = '';
+if (function_exists('newToken')) $urlToken = "&token=".newToken();
 
 llxHeader('', $langs->trans("AgefoddSetupDesc"));
 
@@ -89,8 +92,8 @@ print '<td align="center">' . $langs->trans("Required") . '</td>';
 print '<td width="80">&nbsp;</td>';
 print "</tr>\n";
 
-$var = True;
-foreach ( $extrafields->attribute_type as $key => $value ) {
+$var = true;
+foreach ($extrafields->attribute_type as $key => $value) {
 	$var = ! $var;
 	print "<tr " . $bc [$var] . ">";
 	print "<td>" . $extrafields->attribute_label [$key] . "</td>\n";
@@ -100,7 +103,7 @@ foreach ( $extrafields->attribute_type as $key => $value ) {
 	print '<td align="center">' . yn($extrafields->attribute_unique [$key]) . "</td>\n";
 	print '<td align="center">' . yn($extrafields->attribute_required [$key]) . "</td>\n";
 	print '<td align="right"><a href="' . $_SERVER ["PHP_SELF"] . '?action=edit&attrname=' . $key . '">' . img_edit() . '</a>';
-	print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete&attrname=$key\">" . img_delete() . "</a></td>\n";
+	print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete".$urlToken."&attrname=$key\">" . img_delete() . "</a></td>\n";
 	print "</tr>";
 }
 

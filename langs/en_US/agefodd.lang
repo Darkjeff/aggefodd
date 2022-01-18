@@ -1241,6 +1241,8 @@ AgfEATrainerAndTraineeAccessSessionLink=Portail formateur et apprenant - Voir le
 AgfCloneTrainingModules=Clone modules training programm ?
 AttachmentsTitleAgefodd=Training session
 EndHour = End Hour
+AgfOptionnalTrainingDuration=Duration is optionnal on trainings
+AgfDurationIsFonctionOfNbTrainee=Duration in function of the number of trainees and there level
 
 #PLANNING TRAINEES
 AgfHoursP=Scheduled hours
@@ -1274,10 +1276,10 @@ AgfMenuSessTrainee=Mes formations
 AgfCreneauDeleted=Créneau supprimé
 AgfSendEmailTrainee=Formation
 AgfSendEmailTrainer=Formation
-PredefinedMailContentAgf_trainee=Bonjour<br/>__SIGNATURE__
-PredefinedMailContentAgf_trainer=Bonjour<br/>__SIGNATURE__
-PredefinedMailContentConvention=Bonjour<br/><br/>__SIGNATURE__
-PredefinedMailContentFiche_presence_trainee_trainee=Bonjour,<br/>Veuillez trouver ci-joint vos feuilles d'émargement pour la formation « __FORMINTITULE__ ».<br/><br/> __SIGNATURE__
+PredefinedMailContentAgf_trainee=Bonjour<br/>__USER_SIGNATURE__
+PredefinedMailContentAgf_trainer=Bonjour<br/>__USER_SIGNATURE__
+PredefinedMailContentConvention=Bonjour<br/><br/>__USER_SIGNATURE__
+PredefinedMailContentFiche_presence_trainee_trainee=Bonjour,<br/>Veuillez trouver ci-joint vos feuilles d'émargement pour la formation « __FORMINTITULE__ ».<br/><br/> __USER_SIGNATURE__
 agfQuestionnaireTabTitle=Evaluation de la session
 AgfZDaysBeforeAlert=Dans plus de 8 jours avant la limite
 AgfUp=Monter
@@ -1542,7 +1544,7 @@ ErrorOnlyPDFSupported=Seul de PDF son accepter pour les fonds de page
 AgfTraineeCost=Coût par participants
 AgfEffectiveDuration=Durée effective
 AgfCertifLegend=vert = délai d'alerte non-dépassé <br> orange = délai d'alerte dépassé <br> rouge = certificat invalide
-AgfReportBPFCategFAF=Categorie des fond d'assurance formation de non-salariés
+AgfReportBPFCategFAF=Categorie des fonds d'assurance formation de non-salariés
 AgfStaMail=Participant e-mail
 AgfOrders=Commandes
 AgfOrdersUnselect=Délier la commande
@@ -1756,6 +1758,11 @@ AGF_FICHEPRES_SHOW_OPCO_NUMBERS=Afficher les numeros de dossier OPCO dans les fe
 AgfStaNotInStatusToOutput=Le stagiaire %s n'est pas dans un status pour être sur la fiche de présence
 AgfDocFin=Documents Financiés (devis/commande/facture)
 AgfTimeManagement=Gestion du temps
+
+ThisContactIsNotInSessionAsTeacher = This contact is not a trainer on any sessions
+ThisContactIsNotInSessionAsTrainee = This contact is not a trainee on any sessions
+
 #
 # NEW TRANSLATIONS HERE
 #
+AgfSessionTraineeComment = Note

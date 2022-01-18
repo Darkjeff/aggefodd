@@ -24,14 +24,14 @@
  * \ingroup agefodd
  * \brief card of contact
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agefodd_contact.class.php');
-require_once ('../lib/agefodd.lib.php');
+require_once '../class/agefodd_contact.class.php';
+require_once '../lib/agefodd.lib.php';
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -137,7 +137,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	$nbcontact = $agf_static->fetch_all('ASC', 'rowid', '', 0);
 	$exclude_array = array ();
 	if ($nbcontact > 0) {
-		foreach ( $agf_static->lines as $line ) {
+		foreach ($agf_static->lines as $line) {
 			$exclude_array [] = $line->fk_socpeople;
 		}
 	}
@@ -209,6 +209,9 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 *
 */
 
+$urlToken = '';
+if (function_exists('newToken')) $urlToken = "&token=".newToken();
+
 print '<div class="tabsAction">';
 
 if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
@@ -218,7 +221,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifierFicheContact') . '</a>';
 	}
 	if ($user->rights->agefodd->creer) {
-		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}
@@ -237,4 +240,3 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 print '</div>';
 
 llxFooter('$Date: 2010-03-30 20:58:28 +0200 (mar. 30 mars 2010) $ - $Revision: 54 $');
-?>

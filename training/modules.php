@@ -18,23 +18,26 @@
 
 // Load environment
 // Load environment
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agefodd_formation_catalogue.class.php');
-require_once ('../core/modules/agefodd/modules_agefodd.php');
-require_once ('../class/html.formagefodd.class.php');
-require_once ('../lib/agefodd.lib.php');
-require_once ('../class/agefodd_formation_catalogue_modules.class.php');
+require_once '../class/agefodd_formation_catalogue.class.php';
+require_once '../core/modules/agefodd/modules_agefodd.php';
+require_once '../class/html.formagefodd.class.php';
+require_once '../lib/agefodd.lib.php';
+require_once '../class/agefodd_formation_catalogue_modules.class.php';
 
 $action = GETPOST('action', 'alpha');
 $id = GETPOST('id', 'int');
 $confirm = GETPOST('confirm', 'alpha');
 
 $moduletitle = GETPOST('moduletitle', 'alpha');
+
+$urlToken = '';
+if (function_exists('newToken')) $urlToken = "&token=".newToken();
 
 // Security check
 if (! $user->rights->agefodd->agefodd_formation_catalogue->lire)
@@ -128,13 +131,13 @@ print '<div class="underbanner clearboth"></div><br>';
 
 print_fiche_titre($langs->trans("AgfTrainingModule"));
 if (is_array($object_modules->lines) && count($object_modules->lines) > 0) {
-	foreach ( $object_modules->lines as $line_chapter ) {
+	foreach ($object_modules->lines as $line_chapter) {
 		print '<table class="border" width="100%">';
 
 		if ($user->rights->agefodd->agefodd_formation_catalogue->creer) {
 			print '<tr><td rowspan="5" width="20px">';
 			print '<a href="' . dol_buildpath('/agefodd/training/modules_chapters.php', 1) . '?id=' . $line_chapter->id . '&fk_formation_catalogue='.$object->id.'&action=edit">' . img_picto($langs->trans('Edit'), 'edit') . '</a>';
-			print '<a href="' . dol_buildpath('/agefodd/training/modules_chapters.php', 1) . '?id=' . $line_chapter->id . '&fk_formation_catalogue='.$object->id.'&action=delete">' . img_picto($langs->trans('Delete'), 'delete') . '</a>';
+			print '<a href="' . dol_buildpath('/agefodd/training/modules_chapters.php', 1) . '?id=' . $line_chapter->id . '&fk_formation_catalogue='.$object->id.'&action=delete'.$urlToken.'">' . img_picto($langs->trans('Delete'), 'delete') . '</a>';
 			print '</td></tr>';
 		}
 

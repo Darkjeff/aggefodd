@@ -27,7 +27,8 @@ include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
 /**
  * Class to manage the box
  */
-class box_agefodd_board extends ModeleBoxes {
+class box_agefodd_board extends ModeleBoxes
+{
 	var $boxcode = "agefodd_board";
 	var $boximg = "agefodd@agefodd";
 	var $boxlabel;
@@ -42,7 +43,8 @@ class box_agefodd_board extends ModeleBoxes {
 	/**
 	 * Constructor
 	 */
-	function __construct() {
+	function __construct()
+	{
 		global $langs,$user;
 		$langs->load("boxes");
 
@@ -57,7 +59,8 @@ class box_agefodd_board extends ModeleBoxes {
 	 * @param int $max of records to load
 	 * @return void
 	 */
-	function loadBox() {
+	function loadBox()
+	{
 		global $conf, $user, $langs, $db;
 
 		$this->max = $max;
@@ -75,7 +78,6 @@ class box_agefodd_board extends ModeleBoxes {
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
-
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
 					//'logo' => img_object($langs->trans("AgfRunningSession"), "generic",'',false,1),
@@ -106,7 +108,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$key ++;
 		}
 
-		$result = $agf->fetch_tache_in_between(0,3);
+		$result = $agf->fetch_tache_in_between(0, 3);
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
@@ -123,7 +125,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$key ++;
 		}
 
-		$result = $agf->fetch_tache_in_between(3,8);
+		$result = $agf->fetch_tache_in_between(3, 8);
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
@@ -140,7 +142,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$key ++;
 		}
 
-		$result = $agf->fetch_tache_in_between(8,0);
+		$result = $agf->fetch_tache_in_between(8, 0);
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
@@ -181,9 +183,10 @@ class box_agefodd_board extends ModeleBoxes {
 	 * @param array $head with properties of box title
 	 * @param array $contents with properties of box lines
 	 * @param integer $nooutput nooutput
-	 * @return void
+	 * @return string
 	 */
-	function showBox($head = null, $contents = null, $nooutput = 0) {
-		parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
+	function showBox($head = null, $contents = null, $nooutput = 0)
+	{
+		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

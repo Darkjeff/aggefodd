@@ -30,9 +30,9 @@ if (! defined('NOREQUIREAJAX'))
 if (! defined('NOLOGIN'))
 	define('NOLOGIN', '1');
 
-$res = @include ('../../main.inc.php'); // For root directory
+$res = @include '../../main.inc.php'; // For root directory
 if (! $res)
-	$res = @include ('../../../main.inc.php'); // For 'custom' directory
+	$res = @include '../../../main.inc.php'; // For 'custom' directory
 if (! $res)
 	die('Include of main fails');
 
@@ -43,8 +43,8 @@ $resql = $db->query('UPDATE '.MAIN_DB_PREFIX.'agefodd_training_admlevel as ata '
 	. 'SET ata.trigger_name = asa.trigger_name '
 	. 'WHERE asa.trigger_name IS NOT NULL');
 
-if($resql) print 'Propagation sur les formations effectuée ';
-else  print 'Erreur lors de la propagation sur les formations : '.$db->error();
+if ($resql) print 'Propagation sur les formations effectuée ';
+else print 'Erreur lors de la propagation sur les formations : '.$db->error();
 
 print ' <br/>';
 
@@ -54,5 +54,5 @@ $resql = $db->query('UPDATE '.MAIN_DB_PREFIX.'agefodd_session_adminsitu as ata '
 	. 'SET ata.trigger_name = asa.trigger_name  '
 	. 'WHERE asa.trigger_name IS NOT NULL');
 
-if($resql) print 'Propagation sur les sessions effectuée';
-else  print 'Erreur lors de la propagation sur les sessions : '.$db->error();
+if ($resql) print 'Propagation sur les sessions effectuée';
+else print 'Erreur lors de la propagation sur les sessions : '.$db->error();

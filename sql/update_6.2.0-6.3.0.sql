@@ -1,0 +1,1 @@
+ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN nature_action int

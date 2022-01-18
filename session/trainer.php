@@ -23,9 +23,9 @@
  * \ingroup agefodd
  * \brief card of trainer session
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
@@ -63,8 +63,7 @@ $calendrier = new Agefodd_sesscalendar($db);
 if (! empty($id)) {
 	$result = $calendrier->fetch_all($id);
 	if ($result<0) {
-		setEventMessages(null,$calendrier->errors,'errors');
-
+		setEventMessages(null, $calendrier->errors, 'errors');
 	}
 }
 
@@ -93,7 +92,6 @@ if ($action == 'confirm_delete_form' && $confirm == "yes" && $user->rights->agef
 }
 
 if ($action == 'edit' && $user->rights->agefodd->modifier) {
-
 	if (empty($formid) && ($form_update_x > 0 || $form_add_x > 0)) {
 		setEventMessage($langs->trans('ErrorFieldRequired', $langs->trans('AgfFormateur')), 'errors');
 		$form_update_x = 0;
@@ -101,7 +99,6 @@ if ($action == 'edit' && $user->rights->agefodd->modifier) {
 	}
 
 	if ($form_update_x > 0) {
-
 		$agf = new Agefodd_session_formateur($db);
 
 		$agf->opsid = GETPOST('opsid', 'int');
@@ -130,7 +127,7 @@ if ($action == 'edit' && $user->rights->agefodd->modifier) {
 		if ($result > 0) {
 			$TSessCalendarId = GETPOST('TSessCalendarId', 'array');
 			if (! empty($TSessCalendarId)) {
-				foreach ( $TSessCalendarId as $fk_agefodd_session_calendrier ) {
+				foreach ($TSessCalendarId as $fk_agefodd_session_calendrier) {
 					$agefodd_sesscalendar = new Agefodd_sesscalendar($db);
 					$agefodd_sesscalendar->fetch($fk_agefodd_session_calendrier);
 
@@ -168,7 +165,6 @@ if ($action == 'edit' && $user->rights->agefodd->modifier) {
 }
 
 if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
-
 	if (! empty($period_add)) {
 		$error = 0;
 		$error_message = array();
@@ -223,7 +219,6 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 	}
 
 	if (! empty($period_update)) {
-
 		$modperiod = GETPOST('modperiod', 'int');
 		$date_session = dol_mktime(0, 0, 0, GETPOST('datemonth', 'int'), GETPOST('dateday', 'int'), GETPOST('dateyear', 'int'));
 
@@ -249,10 +244,10 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 
 		$agf_cal->sessid = GETPOST('sessid', 'int');
 
-        // Je récupère le/les calendrier participants avant modificatino du calendrier formateur
-        $TCalendrier = _getCalendrierFromCalendrierFormateur($agf_cal, true, true);
+		// Je récupère le/les calendrier participants avant modificatino du calendrier formateur
+		$TCalendrier = _getCalendrierFromCalendrierFormateur($agf_cal, true, true);
 
-        if (! empty($modperiod))
+		if (! empty($modperiod))
 			$agf_cal->id = $modperiod;
 		if (! empty($date_session))
 			$agf_cal->date_session = $date_session;
@@ -273,7 +268,7 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 			$error ++;
 			$error_message[] = $agf_cal->error;
 		} else {
-			foreach ( $agf_cal->lines as $line ) {
+			foreach ($agf_cal->lines as $line) {
 				if (! empty($line->trainer_status_in_session) && $line->trainer_status_in_session != 6) {
 					if ((($agf_cal->heured <= $line->heured && $agf_cal->heuref >= $line->heuref) || ($agf_cal->heured >= $line->heured && $agf_cal->heuref <= $line->heuref) || ($agf_cal->heured <= $line->heured && $agf_cal->heuref <= $line->heuref && $agf_cal->heuref > $line->heured) || ($agf_cal->heured >= $line->heured && $agf_cal->heuref >= $line->heuref && $agf_cal->heured < $line->heuref)) && $line->fk_session != $id) {
 						if (! empty($conf->global->AGF_ONLY_WARNING_ON_TRAINER_AVAILABILITY)) {
@@ -292,24 +287,19 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 			if ($result < 0) {
 				$error ++;
 				$error_message[] = $agf_cal->error;
+			} else {
+				if (!empty($TCalendrier) && is_array($TCalendrier)) {
+					$agf_calendrier = $TCalendrier[0];
+					$agf_calendrier->date_session = $agf_cal->date_session;
+					$agf_calendrier->heured = $agf_cal->heured;
+					$agf_calendrier->heuref = $agf_cal->heuref;
+					$agf_calendrier->status = $agf_cal->status;
+					//                    $agf_calendrier->calendrier_type = $code_c_session_calendrier_type;
+					$r=$agf_calendrier->update($user);
+				} elseif (is_string($TCalendrier)) {
+					setEventMessage($TCalendrier, 'errors');
+				}
 			}
-			else
-            {
-                if (!empty($TCalendrier) && is_array($TCalendrier))
-                {
-                    $agf_calendrier = $TCalendrier[0];
-                    $agf_calendrier->date_session = $agf_cal->date_session;
-                    $agf_calendrier->heured = $agf_cal->heured;
-                    $agf_calendrier->heuref = $agf_cal->heuref;
-                    $agf_calendrier->status = $agf_cal->status;
-//                    $agf_calendrier->calendrier_type = $code_c_session_calendrier_type;
-                    $r=$agf_calendrier->update($user);
-                }
-                elseif (is_string($TCalendrier))
-                {
-                    setEventMessage($TCalendrier, 'errors');
-                }
-            }
 		}
 
 		if (count($warning_message) > 0) {
@@ -326,14 +316,13 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 
 	$copysessioncalendar = GETPOST('copysessioncalendar', 'none');
 	if (! empty($copysessioncalendar)) {
-
 		$fk_agefodd_session_formateur = GETPOST('fk_agefodd_session_formateur', 'int');
 
 		// Delete all time already inputed
 		$agf_cal = new Agefoddsessionformateurcalendrier($db);
 		$agf_cal->fetch_all($fk_agefodd_session_formateur);
 		if (is_array($agf_cal->lines) && count($agf_cal->lines) > 0) {
-			foreach ( $agf_cal->lines as $line ) {
+			foreach ($agf_cal->lines as $line) {
 				$delteobject = new Agefoddsessionformateurcalendrier($db);
 				$delteobject->remove($line->id);
 			}
@@ -343,8 +332,7 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 		$agf_session_cal = new Agefodd_sesscalendar($db);
 		$agf_session_cal->fetch_all($id);
 		if (is_array($agf_session_cal->lines) && count($agf_session_cal->lines) > 0) {
-			foreach ( $agf_session_cal->lines as $line ) {
-
+			foreach ($agf_session_cal->lines as $line) {
 				$agf_cal = new Agefoddsessionformateurcalendrier($db);
 
 				$agf_cal->sessid = $id;
@@ -364,9 +352,8 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 					$error_message[] = $agf_cal->error;
 				}
 
-				foreach ( $agf_cal->lines as $line ) {
+				foreach ($agf_cal->lines as $line) {
 					if (! empty($line->trainer_status_in_session) && $line->trainer_status_in_session != 6) {
-
 						if (($agf_cal->heured <= $line->heured && $agf_cal->heuref >= $line->heuref) || ($agf_cal->heured >= $line->heured && $agf_cal->heuref <= $line->heuref) || ($agf_cal->heured <= $line->heured && $agf_cal->heuref <= $line->heuref && $agf_cal->heuref > $line->heured) || ($agf_cal->heured >= $line->heured && $agf_cal->heuref >= $line->heuref && $agf_cal->heured < $line->heuref)) {
 							if (! empty($conf->global->AGF_ONLY_WARNING_ON_TRAINER_AVAILABILITY)) {
 								$warning_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/trainer.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
@@ -379,7 +366,6 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 				}
 
 				if (! $error) {
-
 					$result = $agf_cal->create($user);
 					if ($result < 0) {
 						$error ++;
@@ -405,7 +391,7 @@ if ($action == 'edit_calendrier' && $user->rights->agefodd->modifier) {
 if ($action == 'delete_calsel') {
 	$deleteselcal = GETPOST('deleteselcal', 'array');
 	if (count($deleteselcal) > 0) {
-		foreach ( $deleteselcal as $lineid ) {
+		foreach ($deleteselcal as $lineid) {
 			$agf = new Agefoddsessionformateurcalendrier($db);
 			$result = $agf->remove($lineid);
 			if ($result < 0) {
@@ -472,7 +458,6 @@ if (! empty($id)) {
 	$rowf_var = GETPOST('rowf', 'none');
 	$trainerid_var = GETPOST('trainerid', 'none');
 	if ($action == 'edit_calendrier' && (! empty($rowf_var) || ! empty($trainerid_var))) {
-
 		$anchroid = empty($rowf_var) ? $trainerid_var : $rowf_var;
 
 		print '<script type="text/javascript">
@@ -485,7 +470,6 @@ if (! empty($id)) {
 	}
 
 	if ($action == 'edit') {
-
 		print '<script type="text/javascript">
 					jQuery(document).ready(function () {
 						jQuery(function() {' . "\n";
@@ -537,11 +521,10 @@ if (! empty($id)) {
 		$formateurs = new Agefodd_session_formateur($db);
 		$nbform = $formateurs->fetch_formateur_per_session($agf->id);
 		if ($nbform > 0) {
-			for($i = 0; $i < $nbform; $i ++) {
+			for ($i = 0; $i < $nbform; $i ++) {
 				if ($formateurs->lines[$i]->opsid == GETPOST('opsid', 'none') && ! empty($form_remove_var))
 					print '<tr class="oddeven" style="background:#d5baa8">';
-				else
-					print '<tr class="oddeven">' . "\n";
+				else print '<tr class="oddeven">' . "\n";
 
 				print '<td width="20px" align="center">' . ($i + 1);
 				print '<a id="anchoropsid' . $formateurs->lines[$i]->opsid . '" name="anchoropsid' . $formateurs->lines[$i]->opsid . '" href="#anchoropsid' . $formateurs->lines[$i]->opsid . '"></a>';
@@ -599,7 +582,7 @@ if (! empty($id)) {
 						print strtoupper($formateurs->lines[$i]->lastname) . ' ' . ucfirst($formateurs->lines[$i]->firstname) . '</a>' . "\n";
 
 						if (! empty($conf->global->AGF_USE_FORMATEUR_TYPE)) {
-							print '<BR>';
+							print '<br />';
 							print $formateurs->lines[$i]->trainer_type_label;
 						}
 
@@ -620,17 +603,16 @@ if (! empty($id)) {
 							}
 
 							if (! empty($trainer_calendar->lines)) {
-
 								$hourhtml .= '<table class="nobordernopadding">' . "\n";
 								$blocNumber = count($trainer_calendar->lines);
 								$old_date = 0;
 								$totaltime = 0;
 
-								for($j = 0; $j < $blocNumber; $j ++) {
+								for ($j = 0; $j < $blocNumber; $j ++) {
 									// Find if time is solo plateform for trainee
 									$platform_time = false;
 									if (is_array($agf_session_cal->lines) && count($agf_session_cal->lines) > 0) {
-										foreach ( $agf_session_cal->lines as $line_cal ) {
+										foreach ($agf_session_cal->lines as $line_cal) {
 											if (
 												$line_cal->calendrier_type == 'AGF_TYPE_PLATF' &&
 												(
@@ -678,7 +660,7 @@ if (! empty($id)) {
 									$hourhtml .= dol_print_date($trainer_calendar->lines[$j]->date_session, 'daytextshort') . '</td>' . "\n";
 									$hourhtml .= '<td width="100px">' . "\n";
 									if (! $user->rights->agefodd->session->trainer) {
-                                        $hourDisplay = dol_print_date($trainer_calendar->lines[$j]->heured, 'hour') . ' - ' . dol_print_date($trainer_calendar->lines[$j]->heuref, 'hour');
+										$hourDisplay = dol_print_date($trainer_calendar->lines[$j]->heured, 'hour') . ' - ' . dol_print_date($trainer_calendar->lines[$j]->heuref, 'hour');
 										$hourhtml .= _isTrainerFreeBadge($hourDisplay, $trainer_calendar->lines[$j], $formateurs->lines[$i]->formid);
 									}
 									$hourhtml.= '<td>'.Agefodd_sesscalendar::getStaticLibStatut($trainer_calendar->lines[$j]->status, 0).'</td>'."\n";
@@ -785,7 +767,7 @@ if (! empty($id)) {
 				print '<td colspan="' . $colspan . '">' . "\n";
 
 				print '<ul class="nocellnopadd">' . "\n"; // tmenu / nocellnopadd
-				foreach ( $calendrier->lines as &$agefodd_sesscalendar ) {
+				foreach ($calendrier->lines as &$agefodd_sesscalendar) {
 					print
 							'<li><input type="checkbox" name="TSessCalendarId[]" value="' . $agefodd_sesscalendar->id . '"> ' . dol_print_date($agefodd_sesscalendar->date_session, 'daytext') . ' [' . dol_print_date($agefodd_sesscalendar->heured, 'hour') . ' - ' . dol_print_date(
 									$agefodd_sesscalendar->heuref, 'hour') . ']</li>';
@@ -796,7 +778,7 @@ if (! empty($id)) {
 
 				print '</tr>' . "\n";
 			} else {
-				setEventMessages(null, $calendrier->errors,'errors');
+				setEventMessages(null, $calendrier->errors, 'errors');
 			}
 		}
 
@@ -824,7 +806,7 @@ if (! empty($id)) {
 		$nbform = $formateurs->fetch_formateur_per_session($agf->id);
 
 		if ($nbform < 1) {
-			print '<td style="text-decoration: blink;"><BR><BR>' . $langs->trans("AgfNobody") . '</td></tr>' . "\n";
+			print '<td style="text-decoration: blink;"><br /><br />' . $langs->trans("AgfNobody") . '</td></tr>' . "\n";
 			print '<table style="border:0;" width="100%">';
 			print '<tr><td align="right">';
 			print '<form name="newform" action="' . $_SERVER['PHP_SELF'] . '?action=edit&amp;id=' . $id . '"  method="POST">' . "\n";
@@ -835,8 +817,7 @@ if (! empty($id)) {
 			print '</form></td></tr>' . "\n";
 			print '</table>' . "\n";
 		} else {
-
-			for($i = 0; $i < $nbform; $i ++) {
+			for ($i = 0; $i < $nbform; $i ++) {
 				print '<tr class="oddeven">';
 
 				// Trainer name
@@ -861,11 +842,11 @@ if (! empty($id)) {
 					}
 
 					$totaltime = 0;
-					foreach ( $trainer_calendar->lines as $line_trainer_calendar ) {
+					foreach ($trainer_calendar->lines as $line_trainer_calendar) {
 						// Find if time is solo plateform for trainee
 						$platform_time = false;
 						if ($result > 0 && is_array($agf_session_cal->lines) && count($agf_session_cal->lines) > 0) {
-							foreach ( $agf_session_cal->lines as $line_cal ) {
+							foreach ($agf_session_cal->lines as $line_cal) {
 								if (
 									$line_cal->calendrier_type == 'AGF_TYPE_PLATF' &&
 									(
@@ -944,11 +925,10 @@ if (! empty($id)) {
 
 						$old_date = 0;
 						$duree = 0;
-						for($j = 0; $j < $blocNumber; $j ++) {
+						for ($j = 0; $j < $blocNumber; $j ++) {
 							if ($calendrier->lines[$j]->id == GETPOST('modperiod', 'none') && ! empty($period_remove))
 								print '<tr bgcolor="#d5baa8">' . "\n";
-							else
-								print '<tr>' . "\n";
+							else print '<tr>' . "\n";
 
 							if ($calendrier->lines[$j]->id == GETPOST('modperiod', 'none') && empty($period_remove)) {
 								// Delete select case not display here
@@ -986,8 +966,8 @@ if (! empty($id)) {
 								}
 								print '</td>' . "\n";
 								print '<td width="20%">' . dol_print_date($calendrier->lines[$j]->date_session, 'daytext') . '</td>' . "\n";
-                                $hourDisplay = dol_print_date($calendrier->lines[$j]->heured, 'hour') . ' - ' . dol_print_date($calendrier->lines[$j]->heuref, 'hour');
-                                $hourDisplay = _isTrainerFreeBadge($hourDisplay, $calendrier->lines[$j], $formateurs->lines[$i]->opsid);
+								$hourDisplay = dol_print_date($calendrier->lines[$j]->heured, 'hour') . ' - ' . dol_print_date($calendrier->lines[$j]->heuref, 'hour');
+								$hourDisplay = _isTrainerFreeBadge($hourDisplay, $calendrier->lines[$j], $formateurs->lines[$i]->opsid);
 								print '<td  width="40%">' . $hourDisplay  . '</td>';
 								print '<td>' . Agefodd_sesscalendar::getStaticLibStatut($calendrier->lines[$j]->status, 0) . '</td>';
 
@@ -1131,22 +1111,21 @@ $db->close();
 
 function _isTrainerFreeBadge($hourDisplay, $line, $fk_trainer)
 {
-    global $langs;
+	global $langs;
 
-    $errorsStatus = $warningsStatus = 'default';
-    if($line->status != Agefoddsessionformateurcalendrier::STATUS_DRAFT){
-        $warningsStatus = array();
-    }
+	$errorsStatus = $warningsStatus = 'default';
+	if ($line->status != Agefoddsessionformateurcalendrier::STATUS_DRAFT) {
+		$warningsStatus = array();
+	}
 
-    $isTrainerFree = Agefoddsessionformateurcalendrier::isTrainerFree($fk_trainer, $line->heured, $line->heuref, $line->id, $errorsStatus, $warningsStatus);
-    if(!$isTrainerFree->isFree)
-    {
-        if($isTrainerFree->errors > 0){
-            $hourDisplay = '<span class="classfortooltip badge badge-danger" title="'.$langs->trans('TrainerNotFree').'" ><i class="fa fa-exclamation-circle"></i> '.$hourDisplay .'</span>';
-        } elseif ($isTrainerFree->warnings > 0){
-            $hourDisplay = '<span class="classfortooltip badge badge-warning" title="'.$langs->trans('TrainerCouldBeNotFree').'" ><i class="fa fa-exclamation-triangle"></i> '.$hourDisplay .'</span>';
-        }
-    }
+	$isTrainerFree = Agefoddsessionformateurcalendrier::isTrainerFree($fk_trainer, $line->heured, $line->heuref, $line->id, $errorsStatus, $warningsStatus);
+	if (!$isTrainerFree->isFree) {
+		if ($isTrainerFree->errors > 0) {
+			$hourDisplay = '<span class="classfortooltip badge badge-danger" title="'.$langs->trans('TrainerNotFree').'" ><i class="fa fa-exclamation-circle"></i> '.$hourDisplay .'</span>';
+		} elseif ($isTrainerFree->warnings > 0) {
+			$hourDisplay = '<span class="classfortooltip badge badge-warning" title="'.$langs->trans('TrainerCouldBeNotFree').'" ><i class="fa fa-exclamation-triangle"></i> '.$hourDisplay .'</span>';
+		}
+	}
 
-    return $hourDisplay;
+	return $hourDisplay;
 }

@@ -16,15 +16,23 @@ INSTALL AGEFODD
 	http://wiki.dolibarr.org/index.php/FAQ_ModuleCustomDirectory
 
 
-INSTAL FROM GIT (into "custom" directory)
+INSTALL FROM GIT (into "custom" directory)
 ---------------
 
 	$git clone git@git.framasoft.org:atm-consulting/dolibarr_agefodd.git agefodd
 
+
+FORCE re-install Database elements
+---------------
+
+If you have an install error and need to replay sql table creation script, 
+you can remove all AGF_LAST_VERION_INSTALL const in llx_const and then activate the module.
+
+
 DOCUMENTATION
 ---------------
 
-	http://www.open-concept.pro/images/doc/
+	https://wiki.atm-consulting.fr/index.php/Nos_modules_Dolibarr#Agefodd
 	
 
 DOLISTORE

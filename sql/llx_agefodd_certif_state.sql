@@ -23,11 +23,11 @@
 CREATE TABLE IF NOT EXISTS llx_agefodd_certif_state (
   rowid integer NOT NULL auto_increment PRIMARY KEY,
   fk_user_author integer default NULL,
-  fk_user_mod integer NOT NULL,
+  fk_user_mod integer NOT NULL default 0,
   datec datetime NOT NULL,
   tms timestamp NOT NULL,
-  fk_certif integer NOT NULL,
-  fk_certif_type integer NOT NULL,
+  fk_certif integer NOT NULL default 0,
+  fk_certif_type integer NOT NULL default 0,
   certif_state integer default NULL,
   import_key		varchar(14)
 ) ENGINE=InnoDB;

@@ -107,3 +107,52 @@ text-size-adjust: 100% ;
    -o-transition: width .6s ease;
    transition: width .6s ease;
 }
+
+.new-trainee-form-container{
+	padding: 20px;
+	background-color: #f6f6f6;
+	border: 1px solid #eaeaea;
+}
+
+.new-trainee-form-tile {
+	border-bottom: 1px solid #eaeaea;
+	padding-bottom: 10px;
+}
+
+.new-trainee-form-container tbody tr:last-child td, .new-trainee-form-container tbody tr:last-child th  {
+	padding-bottom: 20px;
+}
+
+.new-trainee-form-container tfoot tr:first-child td, .new-trainee-form-container tfoot tr:first-child th  {
+	padding-top: 20px;
+	border-top: 1px solid #eaeaea;
+}
+
+/* Css fix for button  class not equiv for <a>  an <button> */
+.new-trainee-form-container .button {
+	font-size: 1em;
+	line-height: 1em;
+}
+
+.agf-trainee-table-list .delete-link {
+	margin-left: 20px;
+}
+
+.agf-trainee-table-list .col-actions{
+	white-space: nowrap;
+}
+.agf-trainee-line.--editmode .col-actions{
+	vertical-align: bottom;
+}
+
+.agf-trainee-table-list .col-line-number{
+	min-width: 20px;
+}
+
+.agf-trainee-table-list .col-line-number{
+	text-align: center;
+}
+
+.agf-trainee-line.--editmode td, .agf-trainee-line.--editmode th{
+	background-color: #f6f6f6;
+}

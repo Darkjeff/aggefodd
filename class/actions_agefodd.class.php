@@ -34,7 +34,7 @@ dol_include_once('/agefodd/class/agefodd_session_element.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_convention.class.php');
 dol_include_once('/comm/propal/class/propal.class.php');
-dol_include_once( '/agefodd/core/modules/agefodd/modules_agefodd.php');
+dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 
 class ActionsAgefodd
 {
@@ -79,6 +79,24 @@ class ActionsAgefodd
 	 $this->resprints = $out;
 	 }*/
 
+	public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
+	{
+
+		$TContext = explode(':', $parameters['context']);
+		/**
+		 * si nous sommes dan sle context de la liste agenda d'une session
+		 */
+		if (in_array('actioncard', $TContext)) {
+			$origin_page = GETPOST('origin_page');
+			// inputs hidden pour intégrer elementtype et fk_element sur la création d'un événement agenda depuis la liste des événements d'une session pour qu'il soit associé à la session d'origine
+			if ($origin_page === 'agefodd_history') {
+				$hookmanager->resPrint = '<input type="hidden" name="fk_element" value="'.GETPOST('id', 'int').'" />';
+				$hookmanager->resPrint.= '<input type="hidden" name="elementtype" value="'.GETPOST('elementtype', 'alpha').'" />';
+				///print '<input type="hidden" name="_element" value="'.GETPOST('id','int').'" />';
+				return 1;
+			}
+		}
+	}
 	/**
 	 * printSearchForm Method Hook Call
 	 *
@@ -182,37 +200,37 @@ class ActionsAgefodd
 		$arrayresult = array();
 		if (empty($conf->global->AGEFODD_HIDE_QUICK_SEARCH) && $user->rights->agefodd->lire && empty($user->societe_id)) {
 			$str_search_id = '';
-			if (DOL_VERSION < 8) {
-				$str_search_id = '&search_id=' . urlencode($parameters['search_boxvalue']);
-			}
 			$str_search_ref = '';
-			if (DOL_VERSION < 8) {
-				$str_search_ref = '&search_session_ref=' . urlencode($parameters['search_boxvalue']);
-			}
 			$str_search_trainee = '';
 			if (DOL_VERSION < 8) {
+				$str_search_id = '&search_id=' . urlencode($parameters['search_boxvalue']);
+				$str_search_ref = '&search_session_ref=' . urlencode($parameters['search_boxvalue']);
 				$str_search_trainee = '&search_namefirstname=' . urlencode($parameters['search_boxvalue']);
 			}
+
 			$arrayresult['searchintoagefoddsession'] = array(
 				'position' => $modAgefodd->numero,
 				'text' => img_object('', 'agefodd@agefodd') . ' ' . $langs->trans("AgfSessionId"),
 				'url' => dol_buildpath('/agefodd/session/list.php', 1) . '?search_by=search_id' . $str_search_id
 			);
-			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION)) $arrayresult['searchintoagefoddsession']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION;
+			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION))
+				$arrayresult['searchintoagefoddsession']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION;
 
 			$arrayresult['searchintoagefoddsessionref'] = array(
 				'position' => $modAgefodd->numero,
 				'text' => img_object('', 'agefodd@agefodd') . ' ' . $langs->trans("AgfSessionRef"),
 				'url' => dol_buildpath('/agefodd/session/list.php', 1) . '?search_by=search_session_ref' . $str_search_ref
 			);
-			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION_REF)) $arrayresult['searchintoagefoddsessionref']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION_REF;
+			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION_REF))
+				$arrayresult['searchintoagefoddsessionref']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION_REF;
 
 			$arrayresult['searchintoagefoddtrainee'] = array(
 				'position' => $modAgefodd->numero,
 				'text' => img_object('', 'contact') . ' ' . $langs->trans("AgfMenuActStagiaire"),
 				'url' => dol_buildpath('/agefodd/trainee/list.php', 1) . '?search_by=search_namefirstname' . $str_search_trainee
 			);
-			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_TRAINEE)) $arrayresult['searchintoagefoddtrainee']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_TRAINEE;
+			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_TRAINEE))
+				$arrayresult['searchintoagefoddtrainee']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_TRAINEE;
 		}
 		$this->results = $arrayresult;
 
@@ -230,7 +248,7 @@ class ActionsAgefodd
 	 */
 	public function doActions($parameters, &$object, &$action, $hookmanager)
 	{
-		global $langs, $conf, $user, $mc;
+		global $langs, $conf, $user, $mc, $db;
 
 		if (is_object($mc)) {
 			/** @var ActionsMulticompany $mc */
@@ -252,12 +270,10 @@ class ActionsAgefodd
 			$exportkey = GETPOST('exportkey', 'none');
 
 			// replace dolibarr security check for ageffod agenda
-			if(!empty($agftraineeid) || !empty($agftrainerid))
-			{
-				if(!empty($agftrainerid) && md5($conf->global->MAIN_AGENDA_XCAL_EXPORTKEY.'agftrainerid'.$agftrainerid) === $exportkey){
+			if (!empty($agftraineeid) || !empty($agftrainerid)) {
+				if (!empty($agftrainerid) && md5($conf->global->MAIN_AGENDA_XCAL_EXPORTKEY.'agftrainerid'.$agftrainerid) === $exportkey) {
 					return 1;
-				}
-				elseif(!empty($agftraineeid) && md5($conf->global->MAIN_AGENDA_XCAL_EXPORTKEY.'agftraineeid'.$agftraineeid) === $exportkey){
+				} elseif (!empty($agftraineeid) && md5($conf->global->MAIN_AGENDA_XCAL_EXPORTKEY.'agftraineeid'.$agftraineeid) === $exportkey) {
 					return 1;
 				}
 			}
@@ -283,8 +299,7 @@ class ActionsAgefodd
 			if ($context->controller == 'agefodd_session_card') {
 				if ($action == 'deleteCalendrierFormateur' && GETPOST('sessid', 'none') > 0 && GETPOST('fk_agefodd_session_formateur_calendrier', 'none') > 0) {
 					$agsession = new Agsession($this->db);
-					if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) // Vérification que la session existe
-					{
+					if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) { // Vérification que la session existe
 						$trainer = $agsession->getTrainerFromUser($user);
 						if ($trainer) {
 							$context->setControllerFound();
@@ -301,14 +316,12 @@ class ActionsAgefodd
 									$billed = 0;
 									$agf_calendrier = $TCalendrier[0];
 									if (!empty($agf_calendrier)) {
-
 										$billed = $agf_calendrier->billed; // pour un test un peu plus loin
 
 										if (empty($agf_calendrier->billed)) {
 											$r = $agf_calendrier->delete($user);
 											if ($r < 0) $error++;
 										}
-
 									}
 
 									if (empty($billed)) {
@@ -372,21 +385,18 @@ class ActionsAgefodd
 							}
 
 							$createShareLink=GETPOST("createsharelink_hid", 'int');
-							if(! $error && $createShareLink) {
+							if (! $error && $createShareLink) {
 								require_once DOL_DOCUMENT_ROOT . '/ecm/class/ecmfiles.class.php';
 								$ecmfile = new ECMFiles($this->db);
 								$result=$ecmfile->fetch(0, '', dol_osencode("agefodd/" .GETPOST('sessid', 'none') . "/" .$_FILES['userfile']['name'][0]));
 
-								if ($result > 0)
-								{
-									if (empty($ecmfile->share))
-									{
+								if ($result > 0) {
+									if (empty($ecmfile->share)) {
 										require_once DOL_DOCUMENT_ROOT.'/core/lib/security2.lib.php';
 										$ecmfile->share = getRandomPassword(true);
 									}
 									$result = $ecmfile->update($user);
-									if ($result < 0)
-									{
+									if ($result < 0) {
 										$context->setError($ecmfile->error);
 									}
 								} else {
@@ -397,11 +407,115 @@ class ActionsAgefodd
 							// FIXME Gestion d'erreur si tout ça se passe mal. Comme je connais pas trop portail, je laisse à quelqu'un d'autre - MdLL 10/04/2020
 						}
 					}
+				} elseif ($action == "createSupplierInvoice" && GETPOST('sessid', 'int') > 0) {
+					$addUrl = '';
+					$userCanCreate = !empty($user->rights->fournisseur->facture->creer);
+
+					$agsession = new Agsession($this->db);
+					if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) {
+						if ($userCanCreate) {
+							$ref_supplier = GETPOST('ref_supplier', 'alphanohtml');
+
+							if (!empty($user->socid)) {
+								$this->thirdparty = new Societe($db);
+								$resfetch = $this->thirdparty->fetch($user->socid);
+							}
+							if ($resfetch <= 0)
+								$context->setEventMessages($langs->trans("ErrorNoFetchInformation"), 'errors');
+
+							if (!empty($conf->global->AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES) && $conf->global->AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES != -1) {
+								$lineHours = new stdClass();
+								$lineHours->qty = GETPOST('hoursQty', 'int');
+								$lineHours->puht = GETPOST('hoursUnitPrice', 'int');
+								$lineHours->tva_tx = GETPOST('hoursVAT', 'int');
+								$lineHours->notes = GETPOST('hoursNote', 'alphanohtml');
+								if (empty($lineHours->tva_tx)) $lineHours->tva_tx = 0;
+								$lineHours->fk_product = $conf->global->AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES;
+								$lineHours->toInsert = (!empty($lineHours->qty) && !empty($lineHours->puht) && !empty($lineHours->fk_product));
+							}
+
+							if (!empty($conf->global->AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES) && $conf->global->AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES != -1) {
+								$lineMisc = new stdClass();
+								$lineMisc->qty = GETPOST('miscQty', 'int');
+								$lineMisc->puht = GETPOST('miscUnitPrice', 'int');
+								$lineMisc->tva_tx = GETPOST('miscVAT', 'int');
+								$lineMisc->notes = GETPOST('miscNote', 'alphanohtml');
+								if (empty($lineMisc->tva_tx)) $lineMisc->tva_tx = 0;
+								$lineMisc->fk_product = $conf->global->AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES;
+								$lineMisc->toInsert = (!empty($lineMisc->qty) && !empty($lineMisc->puht) && !empty($lineMisc->fk_product));
+							}
+
+							// test poids du fichier
+							if (!empty($_FILES) && !empty($conf->global->MAIN_UPLOAD_DOC)) {
+								if (is_array($_FILES['userfile']['tmp_name'])) $userfiles = $_FILES['userfile']['tmp_name'];
+								else $userfiles = array($_FILES['userfile']['tmp_name']);
+
+								$error = 0;
+
+								foreach ($userfiles as $key => $userfile) {
+									if (empty($_FILES['userfile']['tmp_name'][$key])) {
+										if ($_FILES['userfile']['error'][$key] == 1 || $_FILES['userfile']['error'][$key] == 2) {
+											$error++;
+											$context->setError($langs->trans('ErrorFileSizeTooLarge'));
+										}
+									}
+								}
+							}
+
+							if (!$error && (!empty($lineHours->toInsert) || !empty($lineMisc->toInsert))) {
+								require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
+								$facFourn = new FactureFournisseur($this->db);
+								$facFourn->socid = $this->thirdparty->id;
+								$facFourn->type = FactureFournisseur::TYPE_STANDARD;
+								$facFourn->date = dol_now();
+								$facFourn->ref_supplier = $ref_supplier;
+								$res = $facFourn->create($user);
+								if ($res > 0) {
+									$context->setEventMessages($langs->transnoentities('agfSupplierInvoiceCreatedAndAddedToSuppliarInvoicesTab', $facFourn->ref_supplier));
+									// ajout des lignes saisies
+									if (!empty($lineHours->toInsert)) {
+										$res = $facFourn->addline($lineHours->notes, $lineHours->puht, $lineHours->tva_tx, 0, 0, $lineHours->qty, $lineHours->fk_product);
+										if ($res > 0) $context->setEventMessages($langs->transnoentities('agfSupplierInvoiceHoursLineAdded'));
+									}
+									if (!empty($lineMisc->toInsert)) {
+										$res = $facFourn->addline($lineHours->notes, $lineMisc->puht, $lineMisc->tva_tx, 0, 0, $lineMisc->qty, $lineMisc->fk_product);
+										if ($res > 0) $context->setEventMessages($langs->transnoentities('agfSupplierInvoiceMiscLineAdded'));
+									}
+
+									// liaison avec la session identifiée
+									$this->linkFournInvoiceToSession($facFourn, $agsession);
+
+									// liaison du fichier joint à la facture s'il y en a un
+									if (!empty($_FILES) && !empty($conf->global->MAIN_UPLOAD_DOC)) {
+										$upload_dir = $conf->fournisseur->facture->dir_output . "/" . get_exdir($facFourn->id, 2, 0, 0, $facFourn, 'invoice_supplier').$facFourn->ref;
+
+
+										if (!$error) {
+											$result = dol_add_file_process($upload_dir, 0, 1, 'userfile', GETPOST('savingdocmask', 'alpha'));
+
+											if ($result < 0) {
+												$error++;
+											} else $context->setEventMessages($langs->transnoentities('AgfUploadSuccess'));
+										}
+									}
+								}
+							} elseif (!$error) {
+								$context->setError($langs->trans("AgfNoLineToCreate"));
+								$addUrl = '&tab=session-supplierinvoice-tab';
+							} else $addUrl = '&tab=session-supplierinvoice-tab';
+						} else {
+							$context->setError($langs->trans("AgfCreateInvoiceRightPb"));
+							$addUrl = '&tab=session-supplierinvoice-tab';
+						}
+
+						$url = $context->getRootUrl($context->controller, '&sessid=' . $agsession->id.$addUrl);
+						header('Location: ' . $url);
+						exit;
+					}
 				}
-			} else if ($context->controller == 'agefodd_session_card_time_slot' && in_array($action, array('add', 'update')) && GETPOST('sessid', 'int') > 0) {
+			} elseif ($context->controller == 'agefodd_session_card_time_slot' && in_array($action, array('add', 'update')) && GETPOST('sessid', 'int') > 0) {
 				$agsession = new Agsession($this->db);
-				if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) // Vérification que la session existe
-				{
+				if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) { // Vérification que la session existe
 					$trainer = $agsession->getTrainerFromUser($user); // Est ce que mon user (formateur) est bien associé à la session ?
 					if ($trainer) {
 						$slotid = GETPOST('slotid', 'int');
@@ -416,7 +530,7 @@ class ActionsAgefodd
 							$heuref = GETPOST('heuref', 'none');
 							$status = GETPOST('status', 'none');
 							$code_c_session_calendrier_type = GETPOST('code_c_session_calendrier_type', 'none');
-                            $note_private = GETPOST('note_private', 'none');
+							$note_private = GETPOST('note_private', 'none');
 
 							if (!empty($date_session) && !empty($heured) && !empty($heuref)) {
 								$context->setControllerFound();
@@ -437,7 +551,7 @@ class ActionsAgefodd
 								$agf_calendrier_formateur->heured = strtotime($date_session . ' ' . $heured);
 								$agf_calendrier_formateur->heuref = strtotime($date_session . ' ' . $heuref);
 								$agf_calendrier_formateur->fk_agefodd_session_formateur = $trainer->agefodd_session_formateur->id;
-                                $agf_calendrier_formateur->note_private = $note_private;
+								$agf_calendrier_formateur->note_private = $note_private;
 
 								if (in_array($status, array(
 									Agefoddsessionformateurcalendrier::STATUS_DRAFT,
@@ -469,8 +583,8 @@ class ActionsAgefodd
 									$TCalendrier[] = $agf_calendrier;
 								} else {
 									// TODO normalement je suis sensé avoir 1 seule valeur, mais le mode de fonctionnement fait qu'il est possible d'en avoir plusieurs
-//									foreach ($TCalendrier as &$agf_calendrier)
-//									{
+									//                                  foreach ($TCalendrier as &$agf_calendrier)
+									//                                  {
 									$agf_calendrier = $TCalendrier[0];
 									$agf_calendrier->date_session = $agf_calendrier_formateur->date_session;
 									$agf_calendrier->heured = $agf_calendrier_formateur->heured;
@@ -479,7 +593,7 @@ class ActionsAgefodd
 									$agf_calendrier->calendrier_type = $code_c_session_calendrier_type;
 									$r = $agf_calendrier->update($user);
 									if ($r <= 0) $error++;
-//									}
+									//                                  }
 								}
 
 								$now = dol_now();
@@ -519,7 +633,7 @@ class ActionsAgefodd
 											} // Si le statut passe à annulé, les heures participants doivent passer à 0 car la session n'a pas eu lieu
 											elseif ($agf_calendrier_formateur->status == Agefoddsessionformateurcalendrier::STATUS_CANCELED) {
 												$duree = 0;
-											} else if ($agf_calendrier->date_session < $now && !empty($THour[$stagiaire->id])) {
+											} elseif ($agf_calendrier->date_session < $now && !empty($THour[$stagiaire->id])) {
 												$forceHoursSum = 0;
 											}
 										}
@@ -531,7 +645,7 @@ class ActionsAgefodd
 											$duree = $hours + $minutes / 60;
 										}
 
-										$agfssh->heures = (float)$duree;
+										$agfssh->heures = (float) $duree;
 										if ($result) $r = $agfssh->update($user);
 										else {
 											$agfssh->fk_stagiaire = $stagiaire->id;
@@ -543,7 +657,7 @@ class ActionsAgefodd
 										if ($r < 0) $error++;
 										else {
 											if ($duree > 0) {
-												$r = $agfssh->setStatusAccordingTime($user,$agsession->id,$stagiaire->id);
+												$r = $agfssh->setStatusAccordingTime($user, $agsession->id, $stagiaire->id);
 												if ($r < 0) $error++;
 											}
 										}
@@ -581,7 +695,7 @@ class ActionsAgefodd
 								$redirect = $context->getRootUrl('agefodd_session_card', '&sessid=' . $agsession->id.'&fromaction='.$action);
 								if ($context->iframe || empty($conf->global->AGF_EA_FORCE_REDIRECT_TO_LIST_AFTER_SAVE_CRENEAU)) {
 									$redirect = $context->getRootUrl('agefodd_session_card_time_slot', '&sessid=' . $agsession->id . '&slotid=' . $agf_calendrier_formateur->id.'&fromaction='.$action);
-									if(empty($error)){
+									if (empty($error)) {
 										$redirect.= '&action=view';
 									}
 								}
@@ -593,15 +707,18 @@ class ActionsAgefodd
 							} else {
 								$context->setError($langs->trans('AgefoddMissingFieldRequired'));
 							}
-
 						}
 					}
 				}
 
+
+				return 1;
 			} elseif ($context->controller == 'agefodd_trainee_session_list' || $context->controller == 'agefodd_trainee_session_card') {
 				$context->title = $langs->trans('AgfExternalAccess_PageTitle_TraineeSessions');
 				$context->desc = $langs->trans('AgfExternalAccess_PageDesc_TraineeSessions');
 				$context->menu_active[] = 'invoices';
+
+				return 1;
 			} elseif ($context->controller == 'agefodd_trainer_agenda') {
 				$context->title = $langs->trans('AgfExternalAccess_PageTitle_Agenda');
 				$context->desc = $langs->trans('AgfExternalAccess_PageDesc_Agenda');
@@ -639,7 +756,6 @@ class ActionsAgefodd
 						}
 					}
 				} elseif ($context->action == 'save') {
-
 					$errors = 0;
 
 					include_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
@@ -696,7 +812,7 @@ class ActionsAgefodd
 					$heured = GETPOST('heured', 'none');
 					$heuredDate = GETPOST('heured-date', 'none'); // it's a fix for firefox and datetime-local
 					$heuredTime = GETPOST('heured-time', 'none'); // it's a fix for firefox and datetime-local
-					if(empty($heured) && !empty($heuredDate) && !empty($heuredTime)){
+					if (empty($heured) && !empty($heuredDate) && !empty($heuredTime)) {
 						$heured = $heuredDate.'T'.$heuredTime;
 					}
 
@@ -713,7 +829,7 @@ class ActionsAgefodd
 					$heuref = GETPOST('heuref', 'none');
 					$heurefDate = GETPOST('heuref-date', 'none');
 					$heurefTime = GETPOST('heuref-time', 'none');
-					if(empty($heuref) && !empty($heurefDate) && !empty($heurefTime)){
+					if (empty($heuref) && !empty($heurefDate) && !empty($heurefTime)) {
 						$heuref = $heurefDate.'T'.$heurefTime;
 					}
 
@@ -741,7 +857,6 @@ class ActionsAgefodd
 						if ($event->id > 0) {
 							$saveRes = $event->update($user);
 						} else {
-
 							$event->userownerid = $user->id;
 
 							$saveRes = $event->create($user);
@@ -751,8 +866,6 @@ class ActionsAgefodd
 							$context->setEventMessages($langs->transnoentities('Saved'));
 							$context->action = 'saved';
 						} else {
-
-
 							$errors = is_array($event->errors) ? '<br/>' . implode('<br/>', $event->errors) : '';
 							if (!empty($event->error)) {
 								$errors .= '<br/>' . $event->error;
@@ -769,10 +882,11 @@ class ActionsAgefodd
 						//exit;
 					}
 				}
+
+				return 1;
 			}
 
 			if ($context->controller == 'agefodd_trainee_session_card' && in_array($action, array('setplannedAbsence')) && GETPOST('sessid', 'int') > 0) {
-
 				include_once __DIR__ . '/agefodd_session_stagiaire.class.php';
 				include_once __DIR__ . '/agefodd_stagiaire.class.php';
 				include_once __DIR__ . '/agefodd_calendrier.class.php';
@@ -780,11 +894,11 @@ class ActionsAgefodd
 				$agsession = new Agsession($this->db);
 				$sessid = GETPOST('sessid', 'int');
 				$slotid = GETPOST('slotid', 'int');
-				if ($agsession->fetch($sessid) > 0) // Vérification que la session existe
-				{
+				if ($agsession->fetch($sessid) > 0) { // Vérification que la session existe
 					// Trainee exist ?
 					$trainee = new Agefodd_stagiaire($this->db);
-					if ($trainee->fetch_by_contact($user->contactid) > 0) {
+					$user_contactid = (intval(DOL_VERSION) < 13) ? $user->contactid : $user->contact_id;
+					if ($trainee->fetch_by_contact($user_contactid) > 0) {
 						// Trainee is in session ?
 						$sessionStagiaire = new Agefodd_session_stagiaire($this->db);
 						if ($sessionStagiaire->fetch_by_trainee($agsession->id, $trainee->id) > 0) {
@@ -798,7 +912,6 @@ class ActionsAgefodd
 							$calendrier = new Agefodd_sesscalendar($this->db);
 							if ($calendrier->fetch($slotid) > 0) {
 								if (traineeCanChangeAbsenceStatus($calendrier->heured)) {
-
 									if (GETPOST('plannedAbsence', 'none') == 'missing') {
 										$sessionstagiaireheures->planned_absence = 1;
 										$successMsg = $langs->trans('AgfSetPlannedAbsenceMissing');
@@ -811,7 +924,6 @@ class ActionsAgefodd
 									$sessionstagiaireheures->heures = 0;
 
 									if ($needCreate) {
-
 										$sessionstagiaireheures->entity = $conf->entity;
 										$sessionstagiaireheures->fk_stagiaire = $trainee->id;
 										$sessionstagiaireheures->fk_session = $agsession->id;
@@ -847,7 +959,6 @@ class ActionsAgefodd
 										$redirect = $context->getRootUrl('agefodd_trainee_session_card') . '&sessid=' . $agsession->id . '&slotid=' . $slotid . '&save_lastsearch_values=1';
 										header('Location: ' . $redirect);
 										exit;
-
 									} else {
 										$context->setEventMessages($langs->trans('AgfSetPlannedAbsenceError'), 'errors');
 									}
@@ -857,7 +968,6 @@ class ActionsAgefodd
 							} else {
 								$context->setEventMessages($langs->trans('AgfSessionCreneauNotFound'), 'errors');
 							}
-
 						} else {
 							$context->setEventMessages($langs->trans('AgfContactNotInSession'), 'errors');
 						}
@@ -867,10 +977,28 @@ class ActionsAgefodd
 				} else {
 					$context->setEventMessages($langs->trans('AgfSessionNotExist'), 'errors');
 				}
-			}
 
-			return 1;
+				return 1;
+			}
 		}
+
+		$TContext = explode(':', $parameters['context']);
+		/**
+		 * si nous sommes dan sle context de la liste agenda d'une session
+		 */
+		if (in_array('agendalist', $TContext)) {
+			$origin_page = GETPOST('origin_page');
+			if ($origin_page === 'agefodd_history') {
+				/**
+				 *  on a besoin de l'initialiser à 0 pour eviter de selectionner l'user actif
+				 *
+				 */
+				global $filtert ;
+				$filtertUser = GETPOST("search_filtert", "int", 3) ?GETPOST("search_filtert", "int", 3) : GETPOST("filtert", "int", 3);
+				$filtert = !empty($filtertUser)  ? $filtertUser : -1;
+			}
+		}
+
 
 		return 0;
 	}
@@ -902,10 +1030,10 @@ class ActionsAgefodd
 			if ($action == "downloadSessionAttachement") {
 				require_once DOL_DOCUMENT_ROOT . '/ecm/class/ecmfiles.class.php';
 				$ecmfile = new ECMFiles($this->db);
-				$result=$ecmfile->fetch(0, '', '', '', GETPOST('hashp','alpha'));
+				$result=$ecmfile->fetch(0, '', '', '', GETPOST('hashp', 'alpha'));
 				if ($result > 0) {
 					if (!empty($ecmfile->share)) {
-						$filename = $conf->agefodd->dir_output . '/' . str_replace('agefodd/','', $ecmfile->filepath).'/'.$ecmfile->filename;
+						$filename = $conf->agefodd->dir_output . '/' . str_replace('agefodd/', '', $ecmfile->filepath).'/'.$ecmfile->filename;
 						$this->_downloadSessionFile($filename);
 					}
 				}
@@ -937,7 +1065,6 @@ class ActionsAgefodd
 			} elseif ($action === 'downloadAgefoddTrainneeDoc') {
 				downloadAgefoddTrainneeDoc();
 			}
-
 		}
 
 		return 0;
@@ -960,7 +1087,6 @@ class ActionsAgefodd
 		$TContext = explode(':', $parameters['context']);
 
 		if (in_array('externalaccesspage', $TContext) && !empty($conf->global->AGF_EACCESS_ACTIVATE)) {
-
 			$sessid = GETPOST('sessid', 'int');
 
 			dol_include_once('/agefodd/lib/agf_externalaccess.lib.php');
@@ -979,7 +1105,6 @@ class ActionsAgefodd
 				$context->setControllerFound();
 				print getPageViewSessionListExternalAccess();
 			} elseif ($context->controller == 'agefodd_session_card' && GETPOST('sessid', 'int') > 0) {
-
 				// CLOSE IFRAME
 				if ($context->iframe) {
 					$fromAction = GETPOST('fromAction', 'none');
@@ -990,15 +1115,13 @@ class ActionsAgefodd
 
 
 				$agsession = new Agsession($this->db);
-				if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) // Vérification que la session existe
-				{
+				if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) { // Vérification que la session existe
 					$trainer = $agsession->getTrainerFromUser($user);
 					if ($trainer) {
 						$context->setControllerFound();
 						print getPageViewSessionCardExternalAccess($agsession, $trainer);
 					}
 				}
-
 			} elseif ($context->controller == 'agefodd_trainee_session_list') {
 				// Trainee sessions list
 				$context->setControllerFound();
@@ -1007,8 +1130,7 @@ class ActionsAgefodd
 				print getPageViewTraineeSessionCardExternalAccess();
 			} elseif ($context->controller == 'agefodd_session_card_time_slot' && $sessid > 0) {
 				$agsession = new Agsession($this->db);
-				if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) // Vérification que la session existe
-				{
+				if ($agsession->fetch(GETPOST('sessid', 'none')) > 0) { // Vérification que la session existe
 					$trainer = $agsession->getTrainerFromUser($user); // Est ce que mon user (formateur) est bien associé à la session ?
 					if ($trainer) {
 						$ok = true;
@@ -1063,6 +1185,9 @@ class ActionsAgefodd
 	{
 		global $langs, $conf, $user;
 
+
+		$langs->loadLangs(array('agefodd@agefodd','agfexternalaccess@agefodd','orders'));
+
 		if (empty($conf->global->AGF_EACCESS_ACTIVATE)) return 0;
 
 		$context = Context::getInstance();
@@ -1107,19 +1232,33 @@ class ActionsAgefodd
 				'name' => $langs->trans('AgfMenuSessTrainee')
 			);
 		}
+		//vérifie si l'utilisateur à une societé pour ce cas précis
+		if (empty($user->thirdparty)) {
+			$res = $user->fetch_thirdparty();
+		}
 
-		if (is_object($hookmanager))
-		{
+		if (empty($conf->global->AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES_FOR_A_SESSION)
+			&& !empty($user->thirdparty)
+			&& !empty($user->rights->fournisseur->facture->creer)) {
+			$this->results['agefodd']['children']['agfbill'] = array(
+				'id' => 'agefodd',
+				'rank' => 50,
+				'url' => $context->getRootUrl('agfbill'),
+				'name' => $langs->trans('AgfMakeASupplierBillHour')
+			);
+		}
+
+
+		if (is_object($hookmanager)) {
 			$params = array (
 				'menuList' => $this->results
 			);
 			$reshook = $hookmanager->executeHooks('addExternalTopMenu', $params);
 
-			if (!empty($reshook)){
+			if (!empty($reshook)) {
 				// override full output
 				$this->results = $hookmanager->resArray;
-			}
-			else{
+			} else {
 				$this->results+= $hookmanager->resArray;
 			}
 		}
@@ -1198,7 +1337,6 @@ class ActionsAgefodd
 		global $conf, $langs, $bc, $var;
 
 		if (in_array('propalcard', explode(':', $parameters['context']))) {
-
 			dol_include_once('/agefodd/class/agefodd_session_element.class.php');
 			dol_include_once('/agefodd/class/agsession.class.php');
 			$agfsess = new Agefodd_session_element($object->db);
@@ -1210,7 +1348,6 @@ class ActionsAgefodd
 				if (is_array($agfsess->lines) && count($agfsess->lines) > 0) {
 					$langs->load('agefodd@agefodd');
 					foreach ($agfsess->lines as $key => $session) {
-
 						$sessiondetail = new Agsession($object->db);
 						$sessiondetail->fetch($session->fk_session_agefodd);
 
@@ -1234,7 +1371,6 @@ class ActionsAgefodd
 						}
 
 						if (is_file($conf->agefodd->dir_output . '/' . 'fiche_pedago_modules_' . $sessiondetail->formid . '.pdf')) {
-
 							$out .= '<tr ' . $bc[$var] . '>
 			     			<td colspan="4" style="text-align: right">
 			     				<label for="hideInnerLines">' . $langs->trans('AgfAddTrainingProgramMod', $session->fk_session_agefodd) . '</label>
@@ -1287,7 +1423,6 @@ class ActionsAgefodd
 		$object = $parameters['object'];
 
 		if ($object->table_element == 'propal') {
-
 			$pdf = pdf_getInstance();
 			if (class_exists('TCPDF')) {
 				$pdf->setPrintHeader(false);
@@ -1345,11 +1480,12 @@ class ActionsAgefodd
 	 */
 	function concat(&$pdf, $files)
 	{
-		$pagecount = 0;
+		$totalpagecount = 0;
 
 		foreach ($files as $file) {
-			$pagecount += $pdf->setSourceFile($file);
-			for ($i = 1; $i <= $pagecount; $i++) {
+			$filepagecount = $pdf->setSourceFile($file);
+			$totalpagecount += $filepagecount;
+			for ($i = 1; $i <= $filepagecount; $i++) {
 				$tplidx = $pdf->ImportPage($i);
 				$s = $pdf->getTemplatesize($tplidx);
 				$pdf->AddPage($s['h'] > $s['w'] ? 'P' : 'L');
@@ -1357,7 +1493,7 @@ class ActionsAgefodd
 			}
 		}
 
-		return $pagecount;
+		return $totalpagecount;
 	}
 
 	/**
@@ -1411,7 +1547,6 @@ class ActionsAgefodd
 			$agfsess = new Agefodd_session_element($object->db);
 			$result = $agfsess->fetch_element_by_id($object->id, $element_type);
 			if ($result >= 0) {
-
 				// Keep old objects linked
 				$this->results = $parameters['linkedobjects'];
 
@@ -1442,10 +1577,18 @@ class ActionsAgefodd
 							$formation = new Formation($object->db);
 							if ($formation->fetch($sessiondetail->fk_formation_catalogue) > 0) {
 								$this->results[get_class($formation) . $formation->id] = array(
-									'ref_title' => $outputlangs->transnoentities("AgefoddTitleAndCodeInt"),
-									'ref_value' => $formation->intitule . ' / ' . (!empty($formation->ref_interne) ? $formation->ref_interne : '-'),
+									'ref_title' => $outputlangs->transnoentities("AgefoddTitle"),
+									'ref_value' => $formation->intitule ,
 									'date_value' => ''
 								);
+
+								if (!empty($formation->ref_interne)) {
+									$this->results[get_class($formation) . $formation->id.$formation->ref ] = array(
+										'ref_title' => $outputlangs->transnoentities("AgefoddCOdeInt"),
+										'ref_value' => (!empty($formation->ref_interne) ? $formation->ref_interne : "-" ),
+										'date_value' => ''
+									);
+								}
 							}
 
 							$date_d = dol_print_date($sessiondetail->dated, '%d/%m/%Y');
@@ -1456,7 +1599,6 @@ class ActionsAgefodd
 								'date_value' => ''
 							);
 						}
-
 					} else {
 						dol_print_error('', $agfsess->error);
 					}
@@ -1529,8 +1671,7 @@ class ActionsAgefodd
 		global $db, $conf;
 
 		$agftrainerid = GETPOST('agftrainerid', "int");
-		if (!empty($agftrainerid) && empty($conf->global->AGF_DONT_ADD_TRAINER_INDISPO_IN_ICS))
-		{
+		if (!empty($agftrainerid) && empty($conf->global->AGF_DONT_ADD_TRAINER_INDISPO_IN_ICS)) {
 			$eventarray = &$parameters['eventarray'];
 			$sql = "SELECT a.id,";
 			$sql.= " a.datep,";		// Start
@@ -1557,13 +1698,10 @@ class ActionsAgefodd
 			$sql.= " ORDER BY a.datep";
 
 			$resql = $db->query($sql);
-			if ($resql)
-			{
-				if ($db->num_rows($resql))
-				{
+			if ($resql) {
+				if ($db->num_rows($resql)) {
 					$diff = 0;
-					while ($obj=$this->db->fetch_object($resql))
-					{
+					while ($obj=$this->db->fetch_object($resql)) {
 						global $dolibarr_main_url_root;
 
 						$qualified=true;
@@ -1588,7 +1726,7 @@ class ActionsAgefodd
 						$event['punctual']=$obj->punctual;
 						$event['category']=$obj->libelle;	// libelle type action
 						// Define $urlwithroot
-						$urlwithouturlroot=preg_replace('/'.preg_quote(DOL_URL_ROOT,'/').'$/i','',trim($dolibarr_main_url_root));
+						$urlwithouturlroot=preg_replace('/'.preg_quote(DOL_URL_ROOT, '/').'$/i', '', trim($dolibarr_main_url_root));
 						$urlwithroot=$urlwithouturlroot.DOL_URL_ROOT;			// This is to use external domain name found into config file
 						//$urlwithroot=DOL_MAIN_URL_ROOT;						// This is to use same domain name than current
 						$url=$urlwithroot.'/comm/action/card.php?id='.$obj->id;
@@ -1596,8 +1734,7 @@ class ActionsAgefodd
 						$event['created']=$this->db->jdate($obj->datec)-(empty($conf->global->AGENDA_EXPORT_FIX_TZ)?0:($conf->global->AGENDA_EXPORT_FIX_TZ*3600));
 						$event['modified']=$this->db->jdate($obj->datem)-(empty($conf->global->AGENDA_EXPORT_FIX_TZ)?0:($conf->global->AGENDA_EXPORT_FIX_TZ*3600));
 
-						if ($qualified && $datestart)
-						{
+						if ($qualified && $datestart) {
 							$eventarray[]=$event;
 						}
 						$diff++;
@@ -1642,6 +1779,16 @@ class ActionsAgefodd
 			if ($actioncode == 'AC_NON_AUTO') {
 				$sql .= " AND c.code NOT IN ('AC_AGF_CONVO', 'AC_AGF_SESST', 'AC_AGF_SESS') ";
 			}
+			$origin_page = GETPOST('origin_page');
+
+			if ($origin_page === 'agefodd_history') {
+				$id_session = GETPOST('id', 'int');
+				$sql .= ' AND (
+									(a.fk_element = '.$id_session.' AND a.elementtype = "agefodd_agsession")
+									OR (a.elementtype = "invoice" AND a.fk_element IN (SELECT fk_element FROM llx_agefodd_session_element ase WHERE ase.fk_session_agefodd = '.$id_session.' AND ase.element_type = "invoice"))
+									OR (a.elementtype = "propal" AND a.fk_element IN (SELECT fk_element FROM llx_agefodd_session_element ase2 WHERE ase2.fk_session_agefodd = '.$id_session.' AND ase2.element_type = "propal"))
+									) ';
+			}
 
 			$this->resprints = $sql;
 			return 1;
@@ -1664,7 +1811,6 @@ class ActionsAgefodd
 		$TContext = explode(':', $parameters['context']);
 		if (in_array('fileupload', $TContext)) {
 			if ($parameters['element'] == 'agefodd_agsession') {
-
 				$parameters['options']['upload_dir'] = $conf->agefodd->dir_output . "/" . $object->id . "/";
 				return 0;
 			}
@@ -1739,7 +1885,6 @@ class ActionsAgefodd
 							$event['note'] .= strtoupper($stagiaires->lines[$i]->nom) . ' ' . ucfirst($stagiaires->lines[$i]->prenom) . '</a>';
 						}
 					}
-
 				}
 			}
 		}
@@ -1771,7 +1916,7 @@ class ActionsAgefodd
 		$fk_mailModel_create = $conf->global->AGF_SEND_CREATE_CRENEAU_TO_TRAINEE_MAILMODEL;
 		$fk_mailModel_save = $conf->global->AGF_SEND_SAVE_CRENEAU_TO_TRAINEE_MAILMODEL;
 
-		require_once(DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php');
+		require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
 
 		$formateur = new Agefodd_teacher($this->db);
 		$formateur->fetchByUser($user);
@@ -1796,7 +1941,6 @@ class ActionsAgefodd
 				$errorsMsg[] = $langs->trans('AgfErrorFetchingAgefoddsessionstagiaireheures');
 				$error++;
 			} else {
-
 				// select mail template
 				$fk_mailModel = $fk_mailModel_create;
 				if (!empty($agfssh->mail_sended)) {
@@ -1874,8 +2018,8 @@ class ActionsAgefodd
 				$from = getExternalAccessSendEmailFrom($user->email);
 				$replyto = $user->email;
 				if (!empty($formateur->id) && !empty($formateur->email) && filter_var($formateur->email, FILTER_VALIDATE_EMAIL)) {
-                                	$replyto = $formateur->email;
-                        	}
+									$replyto = $formateur->email;
+				}
 
 				$errors_to = $conf->global->MAIN_MAIL_ERRORS_TO;
 
@@ -2054,7 +2198,7 @@ class ActionsAgefodd
 		$resql = $this->db->query($sql);
 		if ($resql) {
 			while ($obj = $this->db->fetch_object($resql)) {
-				$agf_opca = new Agefodd_opca ($this->db);
+				$agf_opca = new Agefodd_opca($this->db);
 				$agf_opca->fetch($obj->rowid);
 				$agf_opca->fk_soc_trainee = intval($parameters['soc_dest']);
 				$agf_opca->update($user);
@@ -2066,7 +2210,7 @@ class ActionsAgefodd
 		$resql = $this->db->query($sql);
 		if ($resql) {
 			while ($obj = $this->db->fetch_object($resql)) {
-				$agf_opca = new Agefodd_opca ($this->db);
+				$agf_opca = new Agefodd_opca($this->db);
 				$agf_opca->fetch($obj->rowid);
 				$agf_opca->fk_soc_OPCA = intval($parameters['soc_dest']);
 				$agf_opca->update($user);
@@ -2078,7 +2222,7 @@ class ActionsAgefodd
 		$resql = $this->db->query($sql);
 		if ($resql) {
 			while ($obj = $this->db->fetch_object($resql)) {
-				$agf_place = new Agefodd_place ($this->db);
+				$agf_place = new Agefodd_place($this->db);
 				$agf_place->fetch($obj->rowid);
 				$agf_place->fk_societe = intval($parameters['soc_dest']);
 				$agf_place->update($user);
@@ -2172,7 +2316,6 @@ class ActionsAgefodd
 							$file = 'convention_' . $agf->id . '_' . $parameters['soc_dest'] . '_' . $obj2->rowid . '.pdf';
 							$result = agf_pdf_create($this->db, $id_tmp, '', $model, $outputlangs, $file, $socid, '', '', '', $convention);
 						}
-
 					}
 				}
 			}
@@ -2189,11 +2332,12 @@ class ActionsAgefodd
 	 * @return int
 	 * @throws \Luracast\Restler\RestException
 	 */
-	public function attachMoreFiles($parameters, &$object, &$action, $hookmanager) {
+	public function attachMoreFiles($parameters, &$object, &$action, $hookmanager)
+	{
 		global $conf,$langs;
 		$documentToDealWith=array('Commande','Facture','Propal','FactureFournisseur','CommandeFournisseur');
-		if ($conf->attachments->enabled && !empty($conf->global->ATTACHMENTS_INCLUDE_OBJECT_LINKED) && in_array(get_class($object),$documentToDealWith)) {
-            $langs->load('agefodd@agefodd');
+		if ($conf->attachments->enabled && !empty($conf->global->ATTACHMENTS_INCLUDE_OBJECT_LINKED) && in_array(get_class($object), $documentToDealWith)) {
+			$langs->load('agefodd@agefodd');
 			dol_include_once('/agefodd/class/agsession.class.php');
 			$agf = new Agsession($this->db);
 			$result = $agf->fetch_all_by_order_invoice_propal('', '', 0, 0,
@@ -2207,10 +2351,10 @@ class ActionsAgefodd
 			if ($result < 0) {
 				setEventMessage('From hook attachMoreFiles agefodd :' . $agf->error, 'errors');
 			} elseif (is_array($agf->lines) && count($agf->lines)>0) {
-				foreach($agf->lines as $session) {
-					$TLinkDocuments=$agf->documentsSessionList($session->rowid, $object->socid );
+				foreach ($agf->lines as $session) {
+					$TLinkDocuments=$agf->documentsSessionList($session->rowid, $object->socid);
 					if (is_array($TLinkDocuments) && count($TLinkDocuments)>0) {
-						foreach($TLinkDocuments as $document) {
+						foreach ($TLinkDocuments as $document) {
 							$fullname=$conf->agefodd->dir_output.'/'.$document;
 							$fullname_md5 = md5($fullname);
 							$name = pathinfo($fullname, PATHINFO_BASENAME);
@@ -2226,5 +2370,61 @@ class ActionsAgefodd
 			$this->results['AttachmentsTitleAgefodd'] = $doclist;
 		}
 		return 0;
+	}
+
+	/**
+	 * function to link create supplier invoice to session
+	 * @param FactureFournisseur $facFourn
+	 * @param Agsession $agsession
+	 */
+	private function linkFournInvoiceToSession(&$facFourn, &$agsession)
+	{
+		global $user, $langs, $context;
+
+		$langs->load('agfexternalaccess@agefodd');
+
+		require_once 'agefodd_session_element.class.php';
+
+		$opsid = GETPOST('opsid', 'int');
+
+		$session_invoice = new Agefodd_session_element($this->db);
+		$session_invoice->fk_soc = $facFourn->socid;
+		$session_invoice->fk_session_agefodd = $agsession->id;
+		$session_invoice->fk_element = $facFourn->id;
+		$session_invoice->element_type = 'invoice_supplier_trainer';
+		$session_invoice->fk_sub_element = $opsid;
+		$result = $session_invoice->create($user);
+		if ($result < 0) {
+			$context->setEventMessage($session_invoice->error, 'errors');
+		} else $context->setEventMessages($langs->transnoentities('AgfSupplierInvoiceLinkedToSessionSuccess', $facFourn->ref, $agsession->ref));
+
+		$result = $session_invoice->fetch_by_session_by_thirdparty($agsession->id, 0, array(
+			'\'invoice_supplier_trainer\'',
+			'\'invoice_supplierline_trainer\''
+		));
+		if ($result < 0) {
+			$context->setEventMessage($session_invoice->error, 'errors');
+		}
+		if (count($session_invoice->lines) > 0) {
+			$suplier_invoice = new FactureFournisseur($this->db);
+			$suplier_invoiceline = new SupplierInvoiceLine($this->db);
+			$total_ht = 0;
+			foreach ($session_invoice->lines as $line) {
+				if ($line->element_type == 'invoice_supplier_trainer') {
+					$suplier_invoice->fetch($line->fk_element);
+
+					$total_ht += $suplier_invoice->total_ht;
+				} else {
+					$suplier_invoiceline->fetch($line->fk_element);
+
+					$total_ht += $suplier_invoiceline->total_ht;
+				}
+			}
+		}
+		$agsession->cost_trainer = $total_ht;
+		$result = $agsession->update($user, 1);
+		if ($result < 0) {
+			$context->setEventMessage($agsession->error, 'errors');
+		}
 	}
 }

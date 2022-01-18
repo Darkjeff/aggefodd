@@ -27,12 +27,13 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
+dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire_certif.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
+require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 class pdf_certificatecard extends ModelePDFAgefodd
 {
 	var $emetteur; // Objet societe qui emet
@@ -49,7 +50,8 @@ class pdf_certificatecard extends ModelePDFAgefodd
 	 * \brief Constructor
 	 * \param db Database handler
 	 */
-	function __construct($db) {
+	function __construct($db)
+	{
 		global $conf, $langs, $mysoc;
 
 		$this->db = $db;
@@ -94,7 +96,8 @@ class pdf_certificatecard extends ModelePDFAgefodd
 	 * file Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $socid) {
+	function write_file($agf, $outputlangs, $file, $socid)
+	{
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -139,13 +142,18 @@ class pdf_certificatecard extends ModelePDFAgefodd
 			$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
 			$pdf->SetAutoPageBreak(1, 0);
 
+
+
 			// Récuperation des objectifs pedagogique de la formation
 			$agf_op = new Formation($this->db);
 			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
 
+
 			// Récupération de la duree de la formation
 			$agf_duree = new Formation($this->db);
 			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
+
+
 
 			// Recuperation des stagiaires participant à la formation
 			$agf2 = new Agefodd_session_stagiaire($this->db);
@@ -156,14 +164,11 @@ class pdf_certificatecard extends ModelePDFAgefodd
 			$result = $agf_trainer->fetch_formateur_per_session($id);
 
 			if ($result) {
-				for($i = 0; $i < count($agf2->lines); $i ++) {
-
+				for ($i = 0; $i < count($agf2->lines); $i ++) {
 					if ($agf2->lines[$i]->status_in_session == 3) {
-
 						$agf_certif = new Agefodd_stagiaire_certif($this->db);
 						$agf_certif->fetch(0, $agf2->lines[$i]->traineeid, $id, $agf2->lines[$i]->stagerowid);
 						if (! empty($agf_certif->id)) {
-
 							// New page
 							$pdf->AddPage();
 							$pagenb ++;
@@ -211,14 +216,13 @@ class pdf_certificatecard extends ModelePDFAgefodd
 								$dir = $conf->societe->multidir_output[$staticsoc->entity] . '/' . $staticsoc->id . '/logos/';
 								if (! empty($staticsoc->logo)) {
 									$logo_client = $dir . $staticsoc->logo;
-									if (file_exists($logo_client) && is_readable($logo_client)){
+									if (file_exists($logo_client) && is_readable($logo_client)) {
 										$hlogo = pdf_getHeightForLogo($logo_client);
 										$wlogo = pdf_getWidthForLogo($logo_client);
 										$X =  ($this->page_largeur / 2) - ($wlogo / 2) ;
 										$Y = $this->marge_haute;
-										$pdf->Image($logo_client,$X ,$Y, $wlogo, $hlogo,'','','',true);
+										$pdf->Image($logo_client, $X, $Y, $wlogo, $hlogo, '', '', '', true);
 									}
-
 								}
 							}
 
@@ -267,7 +271,7 @@ class pdf_certificatecard extends ModelePDFAgefodd
 							$newY = $pdf->GetY() + 1;
 							$text = $outputlangs->transnoentities('AgfPDFCertificate17');
 							if (is_array($agf_trainer->lines) && count($agf_trainer->lines) > 0) {
-								foreach ( $agf_trainer->lines as $trainer ) {
+								foreach ($agf_trainer->lines as $trainer) {
 									$text .= ' ' . $trainer->lastname . ' ' . $trainer->firstname . '   ';
 									$pdf->SetXY($this->marge_gauche + 2, $newY);
 									$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 8);
@@ -336,7 +340,8 @@ class pdf_certificatecard extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
+	{
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -351,7 +356,8 @@ class pdf_certificatecard extends ModelePDFAgefodd
 	 * \param outputlang Object lang for output
 	 * \remarks Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs) {
+	function _pagefoot(&$pdf, $object, $outputlangs)
+	{
 		global $conf, $langs, $mysoc;
 
 		$text = $outputlangs->transnoentities('AgfPDFCertificate18') . ':' . $mysoc->phone . ' ' . $outputlangs->transnoentities('AgfPDFCertificate19') . ':' . $mysoc->fax;

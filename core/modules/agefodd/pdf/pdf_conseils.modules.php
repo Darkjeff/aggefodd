@@ -29,10 +29,14 @@ dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_contact.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
 dol_include_once('/agefodd/class/agefodd_reginterieur.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
+require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-class pdf_conseils extends ModelePDFAgefodd {
+/**
+ * Put here description of your class
+ */
+class pdf_conseils extends ModelePDFAgefodd
+{
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -47,7 +51,8 @@ class pdf_conseils extends ModelePDFAgefodd {
 	 * \brief		Constructor
 	 * \param		db		Database handler
 	 */
-	function pdf_conseils($db) {
+	function pdf_conseils($db)
+	{
 		global $conf, $langs, $mysoc;
 
 		$langs->load("agefodd@agefodd");
@@ -81,16 +86,16 @@ class pdf_conseils extends ModelePDFAgefodd {
 
 
 		// gestion des marge en fonction de l'orientation : fonction du fond PDF
-		if($conf->global->{'AGF_MARGE_GAUCHE_'.$this->orientation}){
+		if ($conf->global->{'AGF_MARGE_GAUCHE_'.$this->orientation}) {
 			$this->marge_gauche = $conf->global->{'AGF_MARGE_GAUCHE_'.$this->orientation};
 		}
-		if($conf->global->{'AGF_MARGE_DROITE_'.$this->orientation}){
+		if ($conf->global->{'AGF_MARGE_DROITE_'.$this->orientation}) {
 			$this->marge_droite = $conf->global->{'AGF_MARGE_DROITE_'.$this->orientation};
 		}
-		if($conf->global->{'AGF_MARGE_HAUTE_'.$this->orientation}){
+		if ($conf->global->{'AGF_MARGE_HAUTE_'.$this->orientation}) {
 			$this->marge_haute = $conf->global->{'AGF_MARGE_HAUTE_'.$this->orientation};
 		}
-		if($conf->global->{'AGF_MARGE_BASSE_'.$this->orientation}){
+		if ($conf->global->{'AGF_MARGE_BASSE_'.$this->orientation}) {
 			$this->marge_basse = $conf->global->{'AGF_MARGE_BASSE_'.$this->orientation};
 		}
 
@@ -114,7 +119,8 @@ class pdf_conseils extends ModelePDFAgefodd {
 	 * file		Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $socid, $courrier) {
+	function write_file($agf, $outputlangs, $file, $socid, $courrier)
+	{
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -145,7 +151,6 @@ class pdf_conseils extends ModelePDFAgefodd {
 		}
 
 		if (file_exists($dir)) {
-
 			$pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
 
 			if (class_exists('TCPDF')) {
@@ -168,8 +173,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 			$pdf->SetAutoPageBreak(1, $this->marge_basse);
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
-			{
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $pdf->importPage(1);
 			}
@@ -197,10 +201,8 @@ class pdf_conseils extends ModelePDFAgefodd {
 
 				// Logo
 				$logo=$conf->mycompany->dir_output.'/logos/'.$this->emetteur->logo;
-				if ($this->emetteur->logo)
-				{
-					if (is_readable($logo))
-					{
+				if ($this->emetteur->logo) {
+					if (is_readable($logo)) {
 						$height=pdf_getHeightForLogo($logo);
 						$width_logo=pdf_getWidthForLogo($logo);
 						if ($width_logo>0) {
@@ -209,17 +211,13 @@ class pdf_conseils extends ModelePDFAgefodd {
 							$posX=$this->page_largeur-$this->marge_droite-55;
 						}
 						$pdf->Image($logo, $posX, $posY, 0, $height);
-					}
-					else
-					{
-						$pdf->SetTextColor(200,0,0);
-						$pdf->SetFont('','B',$this->default_font_size - 2);
-						$pdf->MultiCell(100, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound",$logo), 0, 'L');
+					} else {
+						$pdf->SetTextColor(200, 0, 0);
+						$pdf->SetFont('', 'B', $this->default_font_size - 2);
+						$pdf->MultiCell(100, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound", $logo), 0, 'L');
 						$pdf->MultiCell(100, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
 					}
-				}
-				else
-				{
+				} else {
 					$text=$this->emetteur->name;
 					$pdf->MultiCell(100, 4, $outputlangs->convToOutputCharset($text), 0, 'L');
 				}
@@ -253,30 +251,30 @@ class pdf_conseils extends ModelePDFAgefodd {
 				$posx=$this->marge_gauche;
 
 				$hautcadre=30;
-				$pdf->SetXY($posx,$posy);
+				$pdf->SetXY($posx, $posy);
 				$pdf->MultiCell(70, $hautcadre, "", 0, 'R', 1);
 
 				// Show sender name
-				$pdf->SetXY($posx,$posy);
-				$pdf->SetFont('','B', $this->default_font_size -2);
+				$pdf->SetXY($posx, $posy);
+				$pdf->SetFont('', 'B', $this->default_font_size -2);
 				$pdf->MultiCell(80, 4, $outputlangs->convToOutputCharset($this->emetteur->name), 0, 'L');
 				$posy=$pdf->GetY();
 
 				// Show sender information
-				$pdf->SetXY($posx,$posy);
-				$pdf->SetFont('','', $this->default_font_size - 3);
+				$pdf->SetXY($posx, $posy);
+				$pdf->SetFont('', '', $this->default_font_size - 3);
 				$pdf->MultiCell(70, 4, $outputlangs->convToOutputCharset($this->emetteur->address), 0, 'L');
 				$posy=$pdf->GetY();
-				$pdf->SetXY($posx,$posy);
-				$pdf->SetFont('','', $this->default_font_size - 3);
+				$pdf->SetXY($posx, $posy);
+				$pdf->SetFont('', '', $this->default_font_size - 3);
 				$pdf->MultiCell(70, 4, $outputlangs->convToOutputCharset($this->emetteur->zip.' '.$this->emetteur->town), 0, 'L');
 				$posy=$pdf->GetY();
-				$pdf->SetXY($posx,$posy);
-				$pdf->SetFont('','', $this->default_font_size - 3);
+				$pdf->SetXY($posx, $posy);
+				$pdf->SetFont('', '', $this->default_font_size - 3);
 				$pdf->MultiCell(70, 4, $outputlangs->convToOutputCharset($this->emetteur->phone), 0, 'L');
 				$posy=$pdf->GetY();
-				$pdf->SetXY($posx,$posy);
-				$pdf->SetFont('','', $this->default_font_size - 3);
+				$pdf->SetXY($posx, $posy);
+				$pdf->SetFont('', '', $this->default_font_size - 3);
 				$pdf->MultiCell(70, 4, $outputlangs->convToOutputCharset($this->emetteur->email), 0, 'L');
 				$posy=$pdf->GetY();
 
@@ -411,7 +409,11 @@ class pdf_conseils extends ModelePDFAgefodd {
 				$posYBeforeSiteAccess = $posY;
 
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
-				$this->str = '<strong>'.$langs->transnoentities("AgfAccesSite").'</strong><br/>'.$this->str;
+				$this->str = '<strong>'.$langs->transnoentities("AgfAccesSite").'</strong><br/>'.$this->str.'<br/>';
+				if (! $conf->fckeditor->enabled) {
+					$agf_place->acces_site = strtr($agf_place->acces_site, array(' ' => '&nbsp;'));
+					$agf_place->acces_site = nl2br($agf_place->acces_site);
+				}
 				$this->str.= strtr($agf_place->acces_site, array('src="'.dol_buildpath('viewimage.php', 1) => 'src="'.dol_buildpath('viewimage.php', 2), '&amp;'=>'&'));
 
 				$pdf->SetXY($posX, $posY);
@@ -420,7 +422,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 				$posY = $pdf->GetY() + 8;
 
 				$pageposAfterSiteAccess=$pdf->getPage();
-				if($pageposBeforeSiteAccess < $pageposAfterSiteAccess){
+				if ($pageposBeforeSiteAccess < $pageposAfterSiteAccess) {
 					$pdf->rollbackTransaction(true);
 					$posY = $posYBeforeSiteAccess;
 					$pagenb = $pdf->getPage();
@@ -443,8 +445,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 					$pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '', $ishtml);
 
 					$posY = $pdf->GetY() + 8;
-				}
-				else{
+				} else {
 					$pdf->commitTransaction();
 				}
 				/**
@@ -468,7 +469,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 
 
 				$pageposAfterDivers=$pdf->getPage();
-				if($pageposBeforeDivers < $pageposAfterDivers) {
+				if ($pageposBeforeDivers < $pageposAfterDivers) {
 					$pdf->rollbackTransaction(true);
 					$pagenb = $pdf->getPage();
 					$posY = $posYBeforeDivers;
@@ -482,7 +483,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 						$pdf->SetAutoPageBreak(1, $this->marge_basse);
 						$this->_pagehead($pdf, $agf, 1, $outputlangs);
 					}
-					$pdf->SetFillColor(255,255,0);
+					$pdf->SetFillColor(255, 255, 0);
 					// back to start
 					$pdf->setPage($pageposBeforeDivers);
 					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size);
@@ -493,9 +494,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 					$pdf->SetXY($posX, $posY);
 					$pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', 0, '2', '', '', '', '', $ishtml);
 					$posY = $pdf->GetY() + 8;
-
-				}
-				else{
+				} else {
 					$pdf->commitTransaction();
 				}
 
@@ -517,15 +516,14 @@ class pdf_conseils extends ModelePDFAgefodd {
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager))
-			{
+			if (! is_object($hookmanager)) {
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
 
 
@@ -546,7 +544,8 @@ class pdf_conseils extends ModelePDFAgefodd {
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs		Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
+	{
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -565,15 +564,15 @@ class pdf_conseils extends ModelePDFAgefodd {
 	 * \param		outputlang		Object lang for output
 	 * \remarks	Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs) {
+	function _pagefoot(&$pdf, $object, $outputlangs)
+	{
 		global $conf, $langs, $mysoc;
 
 		$pdf->SetAutoPageBreak(0, 0);
 		$pdf->SetDrawColor($this->colorfooter [0], $this->colorfooter [1], $this->colorfooter [2]);
 		$pdf->SetTextColor($this->colorfooter [0], $this->colorfooter [1], $this->colorfooter [2]);
-		$pdf_agfpagefoot = pdf_agfpagefoot($pdf,$outputlangs,'',$this->emetteur,$this->marge_basse,$this->marge_gauche,$this->page_hauteur,$object,1);
+		$pdf_agfpagefoot = pdf_agfpagefoot($pdf, $outputlangs, '', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, 1);
 		$pdf->SetAutoPageBreak(1, 0);
 		return $pdf_agfpagefoot;
 	}
-
 }

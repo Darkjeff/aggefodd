@@ -21,9 +21,9 @@
  * \brief about agefood module page
  */
 // Dolibarr environment
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
@@ -62,22 +62,21 @@ dol_fiche_head($head, 'about', $langs->trans("Module103000Name"), 0, "agefodd@ag
 
 // About page goes here
 print 'Version : ' . $conf->global->AGF_LAST_VERION_INSTALL;
-print '<BR><a href="' . dol_buildpath('/agefodd/ChangeLog', 1) . '">Change Log</a>';
+print '<br /><a href="' . dol_buildpath('/agefodd/ChangeLog', 1) . '">Change Log</a>';
 
-print '<BR><a href="' . dol_buildpath('/agefodd/dev/check_data_integrity.php', 1) . '">Check agefodd data integrity</a>';
+print '<br /><a href="' . dol_buildpath('/agefodd/dev/check_data_integrity.php', 1) . '">Check agefodd data integrity</a>';
 
-print '<BR><BR><BR><BR>--------------------------------';
-print '<BR><a href="http://wiki.atm-consulting.fr/index.php/Agefodd/Documentation_utilisateur" target="_blanck">Lien Documentation Utilisateur Français</a>';
-print '<BR>--------------------------------';
+print '<br /><br /><br /><br />--------------------------------';
+print '<br /><a href="http://wiki.atm-consulting.fr/index.php/Agefodd/Documentation_utilisateur" target="_blanck">Lien Documentation Utilisateur Français</a>';
+print '<br />--------------------------------';
 
 
 $buffer .= file_get_contents(dol_buildpath('/agefodd/README.md', 0));
 print Markdown($buffer);
 
-print '<BR>';
+print '<br />';
 
 print '<a href="' . dol_buildpath('/agefodd/COPYING', 1) . '">License GPL</a>';
 
 llxFooter();
 $db->close();
-?>

@@ -22,17 +22,17 @@
  * \brief		report part
  * (Agefodd).
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agsession.class.php');
-require_once ('../lib/agefodd.lib.php');
-require_once ('../class/html.formagefodd.class.php');
-require_once ('../class/agefodd_formateur.class.php');
-require_once ('../class/report_ca_ventilated.class.php');
+require_once '../class/agsession.class.php';
+require_once '../lib/agefodd.lib.php';
+require_once '../class/html.formagefodd.class.php';
+require_once '../class/agefodd_formateur.class.php';
+require_once '../class/report_ca_ventilated.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
@@ -75,7 +75,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportCAVentilated'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/ca_ventilated/';
+$upload_dir = $conf->agefodd->dir_output . '/report/ca_ventilated';
 if (!is_dir($upload_dir)) dol_mkdir($upload_dir);
 
 $agf = new Agsession($db);
@@ -114,7 +114,7 @@ if (! empty($search_parent)) {
 	$filter['so.parent|sorequester.parent'] = $search_parent;
 }
 
-if (! empty($search_sale)) {
+if (! empty($search_sale) && $search_sale > 0) {
 	$filter['sale.fk_user'] = $search_sale;
 }
 
@@ -123,9 +123,7 @@ if (! empty($search_sale)) {
  * Actions
  */
 if ($action == 'builddoc') {
-
 	if (count($filter)>0) {
-
 		$outputlangs = $langs;
 		$newlang = $lang_id;
 		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
@@ -157,7 +155,6 @@ if ($action == 'builddoc') {
 		setEventMessage($langs->trans("AgfRptSelectAtLeastOneCriteria"), 'errors');
 	}
 } elseif ($action == 'remove_file') {
-
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 	$langs->load("other");
@@ -165,8 +162,7 @@ if ($action == 'builddoc') {
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
-	else
-		setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
+	else setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
 	$action = '';
 }
 
@@ -183,9 +179,9 @@ print '<tr>';
 print '<td>' . $langs->trans('DateInvoice').'</td>';
 print '<td>';
 print $langs->trans('From').' ';
-print $form->selectDate($date_start, "date_start", 0,0,1);
+print $form->selectDate($date_start, "date_start", 0, 0, 1);
 print $langs->trans('to').' ';
-print $form->selectDate($date_end, "date_end", 0,0,1);
+print $form->selectDate($date_end, "date_end", 0, 0, 1);
 print '</td>';
 print '</tr>';
 
@@ -208,8 +204,7 @@ print '<tr>';
 print '<td>' . $langs->trans('ParentCompany') . '</td>';
 $extrafields = new ExtraFields($db);
 $extrafields->fetch_name_optionals_label('thirdparty');
-if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison',$extrafields->attributes['societe']['type'])) {
-
+if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison', $extrafields->attributes['societe']['type'])) {
 	$filter='extra.ts_maison=1';
 } else {
 	$filter='';
@@ -218,10 +213,8 @@ print '<td>';
 $TCompaniesTmp = $form->select_thirdparty_list("", "socid", $filter, "", 0, 0, array(), "", 1);
 
 $TCompaniesMere = array();
-if (!empty($TCompaniesTmp))
-{
-	foreach ($TCompaniesTmp as $mere)
-	{
+if (!empty($TCompaniesTmp)) {
+	foreach ($TCompaniesTmp as $mere) {
 		$TCompaniesMere[$mere['key']] = $mere['label'];
 	}
 }
@@ -277,8 +270,7 @@ function getMultiSalesRepresentative()
 	if (empty($user->rights->user->user->lire)) $sql_usr.=" AND u.rowid = ".$user->id;
 	if (! empty($user->societe_id)) $sql_usr.=" AND u.fk_soc = ".$user->societe_id;
 	// Add existing sales representatives of thirdparty of external user
-	if (empty($user->rights->user->user->lire) && $user->societe_id)
-	{
+	if (empty($user->rights->user->user->lire) && $user->societe_id) {
 		$sql_usr.=" UNION ";
 		$sql_usr.= "SELECT u2.rowid, u2.lastname, u2.firstname, u2.statut, u2.login";
 		$sql_usr.= " FROM ".MAIN_DB_PREFIX."user as u2, ".MAIN_DB_PREFIX."societe_commerciaux as sc";
@@ -289,10 +281,8 @@ function getMultiSalesRepresentative()
 	//print $sql_usr;exit;
 
 	$resql_usr = $db->query($sql_usr);
-	if ($resql_usr)
-	{
-		while ($obj = $db->fetch_object($resql_usr))
-		{
+	if ($resql_usr) {
+		while ($obj = $db->fetch_object($resql_usr)) {
 			$Tab[$obj->rowid] = dolGetFirstLastname($obj->firstname, $obj->lastname);
 		}
 	}

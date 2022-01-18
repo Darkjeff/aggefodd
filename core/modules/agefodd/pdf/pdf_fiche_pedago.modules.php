@@ -26,10 +26,14 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue_modules.class.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
+dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_contact.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
+require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 dol_include_once('/agefodd/lib/agefodd.lib.php');
+/**
+ * Put here description of your class
+ */
 class pdf_fiche_pedago extends ModelePDFAgefodd
 {
 	var $emetteur; // Objet societe qui emet
@@ -50,7 +54,8 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 	 * \brief Constructor
 	 * \param db Database handler
 	 */
-	function __construct($db) {
+	function __construct($db)
+	{
 		global $conf, $langs, $mysoc;
 
 		$langs->load("agefodd@agefodd");
@@ -102,7 +107,8 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 	 * file Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $socid, $courrier) {
+	function write_file($agf, $outputlangs, $file, $socid, $courrier)
+	{
 		global $user, $langs, $conf, $mysoc;
 
 		$default_font_size = pdf_getPDFFontSize($outputlangs);
@@ -112,18 +118,45 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 
 		if (! is_object($agf)) {
 			$id = $agf;
-			$agf = new Formation($this->db);
-			$agf->fetch($id);
 
-			// Vilain hack si !empty($courrier) alors c'est un id de session
-			$agf_session = new Agsession($this->db);
-			if (! empty($courrier)) {
-				$agf_session->fetch($courrier);
+			/** SWITCH OBJECT FORMATION - SESSION_CATALOGUE ---------------------------------  */
+			$agf_sessioncal = new SessionCatalogue($this->db); // formation clone
+
+			//si !empty($courrier) alors c'est un id de session
+			if (!empty($courrier)) {
+				$ret = $agf_sessioncal->fetchSessionCatalogue($courrier); // par default ça fetch le clone
+			} else {
+				$ret = $agf_sessioncal->fetchSessionCatalogue($id); // par default ça fetch le clone
 			}
+
+
+			if (empty($ret)) { // pas de clone
+				$agf_session = new Agsession($this->db);
+				if (!empty($courrier)) {
+					$retSession = $agf_session->fetch($courrier);
+				} else {
+					$retSession = $agf_session->fetch($id);
+				}
+
+				$agf = new Formation($this->db);
+				if ($retSession > 0 ) {
+					$agf->fetch($agf_session->fk_formation_catalogue);
+					$agf->fetch_objpeda_per_formation($agf_session->fk_formation_catalogue);
+				} else {
+					setEventMessage('errorloadSession', 'errors');
+				}
+			} else { // si clone
+				$agf = new SessionCatalogue($this->db);
+				$agf->fetch($ret);
+				$agf->fetch_objpeda_per_session_catalogue($ret);
+			}
+			/** ---------------------------------  */
+		} else {
+			$agf->fetch_objpeda_per_formation($agf->id);
 
 			$object_modules = new Agefoddformationcataloguemodules($this->db);
 			$result = $object_modules->fetchAll('ASC', 'sort_order', 0, 0, array(
-					't.fk_formation_catalogue' => $id
+				't.fk_formation_catalogue' => $id
 			));
 		}
 
@@ -139,7 +172,6 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 		}
 
 		if (file_exists($dir)) {
-
 			$this->pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
 
 			if (class_exists('TCPDF')) {
@@ -162,8 +194,7 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 			$this->pdf->SetAutoPageBreak(true, 0);
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
-			{
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
 				$pagecount = $this->pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $this->pdf->importPage(1);
 			}
@@ -242,8 +273,7 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 				 * *** Objectifs pedagogique de la formation ****
 				 */
 
-				// Récuperation
-				$result2 = $agf->fetch_objpeda_per_formation($agf->id);
+
 				if (count($agf->lines) > 0) {
 					$this->pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size + 1); // $this->pdf->SetFont('Arial','B',9);
 					$this->pdf->SetXY($posX, $posY);
@@ -258,8 +288,7 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 					$this->pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size); // $this->pdf->SetFont('Arial','',9);
 					$hauteur = 0;
 					$width = $this->page_largeur - $this->marge_gauche - $this->marge_droite;
-					for($y = 0; $y < count($agf->lines); $y ++) {
-
+					for ($y = 0; $y < count($agf->lines); $y ++) {
 						$this->pdf->SetXY($posX, $posY);
 						$hauteur = dol_nboflines_bis($agf->lines[$y]->intitule, 100) * 4;
 
@@ -290,8 +319,63 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 				$this->pdf->SetXY($posX, $posY);
 				$ishtml = $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING ? 1 : 0;
 
-				$this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '', $ishtml);
-				$posY = $this->pdf->GetY() + $this->espace_apres_corps_text;
+				$this->pdf->MultiCell(0, 3, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '', $ishtml);
+				$posY = $this->pdf->GetY() + $this->espace_apres_corps_text + 2;
+
+				/**
+				 * Mentor Réferents
+				 */
+				$this->pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size + 1);
+				$this->pdf->SetXY($posX, $posY);
+				$this->str = $outputlangs->transnoentities('AgfMentorList');
+				$this->pdf->MultiCell(0, 3, $outputlangs->convToOutputCharset($this->str), 0, 'L');
+				$posY = $this->pdf->GetY();
+				$this->pdf->SetDrawColor($this->colorLine[0], $this->colorLine[1], $this->colorLine[2]);
+				$this->pdf->Line($this->marge_gauche + 0.5, $posY, $this->page_largeur - $this->marge_droite, $posY);
+				$posY = $this->pdf->GetY() + $this->espace_apres_corps_text + 2;
+
+				if (!empty($conf->global->AGF_DEFAULT_MENTOR_ADMIN)) {
+					$u = new User($this->db);
+					$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_ADMIN));
+					if ($res) {
+						$this->pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
+						$this->str = ucfirst($langs->trans('MentorAdmin') ." : " . $u->civility_code .' '.  $u->firstname . " " . $u->lastname);
+						$this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '', $ishtml);
+						$posY = $this->pdf->GetY() + 0.5;
+					}
+				}
+
+				if (!empty($conf->global->AGF_DEFAULT_MENTOR_PEDAGO)) {
+					$this->pdf->SetXY($posX, $posY);
+					$u = new User($this->db);
+					$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_PEDAGO));
+					if ($res) {
+						$this->pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
+						$this->str = ucfirst($langs->trans('MentorPedago') . " : " . $u->civility_code . ' ' . $u->firstname . " " . $u->lastname);
+						$this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '', $ishtml);
+						$posY = $this->pdf->GetY() + 0.5;
+					}
+				}
+
+				if (!empty($conf->global->AGF_DEFAULT_MENTOR_HANDICAP)) {
+					$this->pdf->SetXY($posX, $posY);
+					$u = new User($this->db);
+					$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_HANDICAP));
+					if ($res) {
+						$this->pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
+						$this->str = ucfirst($langs->trans('MentorHandicap') . " : " . $u->civility_code . ' ' . $u->firstname . " " . $u->lastname);
+						$this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '', $ishtml);
+						$posY = $this->pdf->GetY() + $this->espace_apres_titre + 2;
+					}
+				}
+				/**
+				 * Fin Mentor Réferents
+				 */
+
+
+
+
+
 
 				/**
 				 * *** Public ****
@@ -403,17 +487,16 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 				$this->pdf->startTransaction();
 				$posY = $this->_printduree($posX, $posY, $outputlangs, $agf_session, $agf);
 
-				if($posY > $this->page_limit)
-				{
-				    $this->pdf = $this->pdf->rollbackTransaction();
-				    $this->_pagefoot($agf, $outputlangs);
-				    $this->pdf->AddPage();
-				    if (! empty($tplidx)) $this->pdf->useTemplate($tplidx);
-				    $this->_pagehead($agf, $outputlangs);
-				    $posY = $this->pdf->GetY() + 5;
-				    $this->_printduree($posX, $posY, $outputlangs, $agf_session, $agf);
+				if ($posY > $this->page_limit) {
+					$this->pdf = $this->pdf->rollbackTransaction();
+					$this->_pagefoot($agf, $outputlangs);
+					$this->pdf->AddPage();
+					if (! empty($tplidx)) $this->pdf->useTemplate($tplidx);
+					$this->_pagehead($agf, $outputlangs);
+					$posY = $this->pdf->GetY() + 5;
+					$this->_printduree($posX, $posY, $outputlangs, $agf_session, $agf);
 				} else {
-				    $this->pdf->commitTransaction();
+					$this->pdf->commitTransaction();
 				}
 				/**
 				 * *** Programme ****
@@ -422,19 +505,17 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 				if (is_array($object_modules->lines) && count($object_modules->lines) > 0) {
 					$ishtml = $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING ? 1 : 0;
 					$programme_array = array();
-					foreach ( $object_modules->lines as $line_chapter ) {
+					foreach ($object_modules->lines as $line_chapter) {
 						$programme_array[] = " &bull; ".trim($line_chapter->title)."<br />";
 					}
 					if (count($programme_array) > 0) {
 						$programme .=implode('', $programme_array);
 					}
-
 				} else {
 					$programme = $agf->programme;
 				}
 
 				if (strpos($programme, '{breakpage}') !== false) {
-
 					$posY = $this->pdf->GetY() + 5;
 
 					$this->pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size + 1);
@@ -453,7 +534,7 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 
 					if (count($programme_array) > 0) {
 						$i = 0;
-						foreach ( $programme_array as $programme_detail ) {
+						foreach ($programme_array as $programme_detail) {
 							$this->pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
 							$this->str = $programme_detail;
 							$ishtml = $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING ? 1 : 0;
@@ -474,11 +555,11 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 					// Determine if jump pages is needed
 					$height = $this->getRealHeightLine($programme) + 10 + $this->espace_apres_titre + 2;
 					// print 'Real $height='.$height;
-					// print '<BR>';
+					// print '<br />';
 
 					$height_left = $this->page_hauteur - $this->marge_basse - $posY;
 					// print 'Real $$height_left='.$height_left;
-					// print '<BR>';
+					// print '<br />';
 					$fontsize = $this->default_font_size;
 
 					// We must add page because no more space for the program
@@ -490,14 +571,14 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 						// Check if needed to reduce text font size to fitt all in one page
 						$height = $this->getTotalHeightLine($programme, $agf, $outputlangs, $fontsize) + 10 + $this->espace_apres_titre + 2;
 						// print 'TOTAL $height='.$height;
-						// print '<BR>';
+						// print '<br />';
 						// print ' $fontsize='.$fontsize;
-						// print '<BR>';
+						// print '<br />';
 
 						$total_height_left = $this->page_hauteur - $header_height - 80;
 
 						// print ' $$total_height_left='.$total_height_left;
-						// print '<BR>';
+						// print '<br />';
 						if ($height > $total_height_left) {
 							$allin_a_page = false;
 
@@ -507,7 +588,7 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 								$height = $this->getTotalHeightLine($programme, $agf, $outputlangs, $fontsize);
 								// print '$fontsize='.$fontsize;
 								// print '$height='.$height;
-								// print '<BR>';
+								// print '<br />';
 								if ($height <= $total_height_left) {
 									$allin_a_page = true;
 								}
@@ -523,7 +604,7 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 					} else {
 						$posY = $this->pdf->GetY() + $this->espace_apres_corps_text;
 					}
-					// print '<BR>';
+					// print '<br />';
 					// print '$fontsize='.$fontsize;
 					// exit;
 					/**
@@ -550,6 +631,19 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 
 					$res = $this->pdf->MultiCell(0, 5, $this->str, 0, 'L', false, 1, $posX, $posY, true, 0, $ishtml);
 					$posY = $this->pdf->GetY() + $this->espace_apres_corps_text;
+
+
+					/**
+					 * ** accessibility handicap **
+					 */
+					$this->pdf->SetTextColor($this->colortext[0], $this->colortext[1], $this->colortext[2]);
+					$this->pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size + 1);
+					$this->pdf->SetXY($posX, $posY);
+					$str ='';
+					$str = $agf->accessibility_handicap == 1 ? 'oui':'non';
+
+					$this->str = $outputlangs->transnoentities('AccessHandicap') .' : '.$str;
+					$this->pdf->MultiCell(0, 3, $outputlangs->convToOutputCharset($this->str), 0, 'L');
 				}
 				// $this->pdf->SetXY($posX, $this->pdf->GetY());
 				// Pied de page
@@ -568,15 +662,14 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager))
-			{
+			if (! is_object($hookmanager)) {
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
 
 
@@ -596,7 +689,8 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs Object lang for output
 	 */
-	function _pagehead($object, $outputlangs) {
+	function _pagehead($object, $outputlangs)
+	{
 		global $conf, $mysoc;
 
 		pdf_pagehead($this->pdf, $outputlangs, $this->pdf->page_hauteur);
@@ -702,7 +796,8 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 	 * \param outputlang Object lang for output
 	 * \remarks Need this->emetteur object
 	 */
-	function _pagefoot($object, $outputlangs) {
+	function _pagefoot($object, $outputlangs)
+	{
 		global $conf, $langs, $mysoc;
 
 		$this->pdf->SetDrawColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
@@ -714,7 +809,8 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 	 *
 	 * @param string $txt
 	 */
-	public function getRealHeightLine($txt = '') {
+	public function getRealHeightLine($txt = '')
+	{
 		global $conf;
 		// Determine if jump pages is needed
 		$this->pdf->startTransaction();
@@ -743,7 +839,7 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 			$height = $end_y - $start_y;
 			// print 'aa$height='.$height.'<br>';
 		} else {
-			for($page = $start_page; $page <= $end_page; $page ++) {
+			for ($page = $start_page; $page <= $end_page; $page ++) {
 				$this->pdf->setPage($page);
 				// print '$page='.$page.'<br>';
 				if ($page == $start_page) {
@@ -776,7 +872,8 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 	 * @param object $outputlangs
 	 * @param number $fontsize
 	 */
-	public function getTotalHeightLine($txt, $object, $outputlangs, $fontsize = 8) {
+	public function getTotalHeightLine($txt, $object, $outputlangs, $fontsize = 8)
+	{
 		global $conf;
 		// Determine if jump pages is needed
 		$this->pdf->startTransaction();
@@ -799,16 +896,16 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 		$end_page = $this->pdf->getPage();
 		// calculate height
 
-		/*print '$start_y='.$start_y.'<BR>';
-		 print '$$start_page='.$start_page.'<BR>';
-		 print '$$end_y='.$end_y.'<BR>';
-		 print '$$end_page='.$end_page.'<BR>';*/
+		/*print '$start_y='.$start_y.'<br />';
+		 print '$$start_page='.$start_page.'<br />';
+		 print '$$end_y='.$end_y.'<br />';
+		 print '$$end_page='.$end_page.'<br />';*/
 
 		$height = 0;
 		if ($end_page == $start_page) {
 			$height = $end_y - $start_y;
 		} else {
-			for($page = $start_page; $page <= $end_page; $page ++) {
+			for ($page = $start_page; $page <= $end_page; $page ++) {
 				$this->pdf->setPage($page);
 				if ($page == $start_page) {
 					// first page
@@ -828,45 +925,50 @@ class pdf_fiche_pedago extends ModelePDFAgefodd
 
 	function _printduree($posX, $posY, &$outputlangs, &$agf_session, &$agf)
 	{
-	    global $conf;
+		global $conf;
 
-	    $this->pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size + 1);
-	    $this->pdf->SetXY($posX, $posY);
-	    $this->str = $outputlangs->transnoentities('AgfPDFFichePeda1');
-	    $this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-	    $posY = $this->pdf->GetY();
-	    $this->pdf->SetDrawColor($this->colorLine[0], $this->colorLine[1], $this->colorLine[2]);
-	    $this->pdf->Line($this->marge_gauche + 0.5, $posY, $this->page_largeur - $this->marge_droite, $posY);
-	    $posY = $this->pdf->GetY() + $this->espace_apres_titre + 2;
+		$this->pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size + 1);
+		$this->pdf->SetXY($posX, $posY);
+		$this->str = $outputlangs->transnoentities('AgfPDFFichePeda1');
+		$this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L');
+		$posY = $this->pdf->GetY();
+		$this->pdf->SetDrawColor($this->colorLine[0], $this->colorLine[1], $this->colorLine[2]);
+		$this->pdf->Line($this->marge_gauche + 0.5, $posY, $this->page_largeur - $this->marge_droite, $posY);
+		$posY = $this->pdf->GetY() + $this->espace_apres_titre + 2;
 
-	    $this->pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
-	    // calcul de la duree en nbre de jours
+		$this->pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
+		// calcul de la duree en nbre de jours
 
-	    if (empty($agf_session->duree_session)) {
-	        $duree = $agf->duree;
-	    } else {
-	        $duree = $agf_session->duree_session;
-	    }
-	    if (empty($conf->global->AGF_NB_HOUR_IN_DAYS)) {
-	        $jour = $duree / 7;
-	    } else {
-	        $jour = $duree / $conf->global->AGF_NB_HOUR_IN_DAYS;
-	    }
+		if (empty($agf_session->duree_session)) {
+			$duree = $agf->duree;
+		} else {
+			$duree = $agf_session->duree_session;
+		}
+		if (empty($conf->global->AGF_NB_HOUR_IN_DAYS)) {
+			$jour = $duree / 7;
+		} else {
+			$jour = $duree / $conf->global->AGF_NB_HOUR_IN_DAYS;
+		}
 
 
-	    // $this->str = $agf->duree.' '.$outputlangs->transnoentities('AgfPDFFichePeda2').'.';
-	    if ($jour < 1)
-	        $this->str = $duree . ' ' . $outputlangs->transnoentities('AgfPDFFichePeda2') . '.';
-        else {
-            $this->str = $duree . ' ' . $outputlangs->transnoentities('AgfPDFFichePeda2') . ' (' . ceil($jour) . ' ' . $outputlangs->transnoentities('AgfPDFFichePeda3');
-            if (ceil($jour) > 1)
-                $this->str .= 's';
-                $this->str .= ').';
-        }
-        $this->pdf->SetXY($posX, $posY);
-        $this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-        $posY = $this->pdf->GetY() + $this->espace_apres_titre + 2;
+		// $this->str = $agf->duree.' '.$outputlangs->transnoentities('AgfPDFFichePeda2').'.';
+		if ($jour < 1)
+			$this->str = $duree . ' ' . $outputlangs->transnoentities('AgfPDFFichePeda2') . '.';
+		else {
+			$this->str = $duree . ' ' . $outputlangs->transnoentities('AgfPDFFichePeda2') . ' (' . ceil($jour) . ' ' . $outputlangs->transnoentities('AgfPDFFichePeda3');
+			if (ceil($jour) > 1)
+				$this->str .= 's';
+				$this->str .= ').';
+		}
 
-        return $posY;
+		if (!empty($conf->global->AGF_OPTIONNAL_TRAINING_DURATION) && empty($duree)) {
+			$this->str = $outputlangs->transnoentities('AgfDurationIsFonctionOfNbTrainee');
+		}
+
+		$this->pdf->SetXY($posX, $posY);
+		$this->pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L');
+		$posY = $this->pdf->GetY() + $this->espace_apres_titre + 2;
+
+		return $posY;
 	}
 }

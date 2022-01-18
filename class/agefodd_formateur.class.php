@@ -20,12 +20,13 @@
  * \ingroup agefodd
  * \brief Manage trainer
  */
-require_once (DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php");
+require_once DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php";
 
 /**
  * Trainner Class
  */
-class Agefodd_teacher extends CommonObject {
+class Agefodd_teacher extends CommonObject
+{
 	public $error;
 	public $errors = array ();
 	public $element = 'agefodd_formateur';
@@ -54,7 +55,8 @@ class Agefodd_teacher extends CommonObject {
 	 *
 	 * @param DoliDb $db handler
 	 */
-	public function __construct($db) {
+	public function __construct($db)
+	{
 		$this->db = $db;
 		$this->type_trainer_def = array (
 				0 => 'user',
@@ -70,7 +72,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, Id of created object if OK
 	 */
-	public function create($user, $notrigger = 0) {
+	public function create($user, $notrigger = 0)
+	{
 		global $conf, $langs;
 		$error = 0;
 
@@ -133,7 +136,7 @@ class Agefodd_teacher extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::create " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -151,14 +154,17 @@ class Agefodd_teacher extends CommonObject {
 	 * @param object $user user object
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function fetchByUser($user) {
+	public function fetchByUser($user)
+	{
 		global $conf;
-		
+
 		$error = 0;
-		
+
+		$user_contactid = (intval(DOL_VERSION) < 13) ? $user->contactid : $user->contact_id;
+
 		$sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'agefodd_formateur';
 		$sql.= ' WHERE (fk_user = '.$user->id.' AND type_trainer = \'user\')';
-		if (!empty($user->contactid)) $sql.= ' OR (fk_socpeople = '.$user->contactid.' AND type_trainer = \'socpeople\')';
+		if (!empty($user_contactid)) $sql.= ' OR (fk_socpeople = '.$user_contactid.' AND type_trainer = \'socpeople\')';
 		$sql.= ' AND entity = '.$conf->entity;
 		$resql = $this->db->query($sql);
 		if ($resql) {
@@ -172,18 +178,18 @@ class Agefodd_teacher extends CommonObject {
 			$this->errors[] = "Error " . $this->db->lasterror();
 			$error++;
 		}
-		
+
 		if (empty($error)) {
 			return 1;
 		} else {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::" . __METHOD__ . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
 			return - 1 * $error;
 		}
 	}
-	
+
 	/**
 	 * Load object in memory from database
 	 *
@@ -191,9 +197,10 @@ class Agefodd_teacher extends CommonObject {
 	 * @param int $arch unused
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function fetch($id, $arch = 0) {
+	public function fetch($id, $arch = 0)
+	{
 		global $mysoc;
-		
+
 		$error = 0;
 
 		$sql = "SELECT";
@@ -205,8 +212,8 @@ class Agefodd_teacher extends CommonObject {
 		$sql .= " ,s.address as s_address, s.zip as s_zip, s.town as s_town";
 		$sql .= " ,s.fk_soc as soctrainerid";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formateur as f";
-		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople as s ON f.fk_socpeople = s.rowid";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON f.fk_user = u.rowid";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople as s ON (u.fk_socpeople = s.rowid OR f.fk_socpeople = s.rowid)";
 		$sql .= " WHERE f.rowid = " . $id;
 		$sql .= " AND f.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 
@@ -234,6 +241,11 @@ class Agefodd_teacher extends CommonObject {
 					$this->zip = $mysoc->zip;
 					$this->town = $mysoc->town;
 					$this->thirdparty=$mysoc;
+					if (!empty($obj->soctrainerid)) {
+						$soctrainer= new Societe($this->db);
+						$soctrainer->fetch($obj->soctrainerid);
+						$this->thirdparty=$soctrainer;
+					}
 				}
 				// trainer is Dolibarr contact
 				elseif ($this->type_trainer == $this->type_trainer_def[1]) {
@@ -300,7 +312,6 @@ class Agefodd_teacher extends CommonObject {
 					$this->errors[] = "Error " . $this->db->lasterror();
 					$error++;
 				}
-
 			} else return 0;
 			$this->db->free($resql);
 		} else {
@@ -312,7 +323,7 @@ class Agefodd_teacher extends CommonObject {
 		if (empty($error)) {
 			return 1;
 		} else {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::" . __METHOD__ . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -331,7 +342,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param array $filter array of filter
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function fetch_all($sortorder, $sortfield, $limit, $offset, $arch = 0, $filter = array()) {
+	public function fetch_all($sortorder, $sortfield, $limit, $offset, $arch = 0, $filter = array())
+	{
 		global $mysoc;
 
 		$error=0;
@@ -366,7 +378,7 @@ class Agefodd_teacher extends CommonObject {
 
 			// Manage filter
 		if (count($filter) > 0) {
-			foreach ( $filter as $key => $value ) {
+			foreach ($filter as $key => $value) {
 				if ($key == 'f.rowid' || $key == 'f.fk_socpeople') {
 					$sql .= ' AND ' . $key . '=' . $value;
 				} elseif ($key == 'lastname') {
@@ -437,7 +449,6 @@ class Agefodd_teacher extends CommonObject {
 							$soctrainer->fetch($obj->soctrainerid);
 							$line->thirdparty=$soctrainer;
 						}
-
 					}
 
 					$sql_inner='SELECT cat.rowid as catid, dict.rowid as dictid,dict.code,dict.label,dict.description ';
@@ -498,7 +509,7 @@ class Agefodd_teacher extends CommonObject {
 		if (empty($error)) {
 			return $num;
 		} else {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::" . __METHOD__ . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -512,7 +523,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param int $id object
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function info($id) {
+	public function info($id)
+	{
 		$sql = "SELECT";
 		$sql .= " f.rowid, f.entity, f.datec, f.tms, f.fk_user_mod, f.fk_user_author";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formateur as f";
@@ -547,7 +559,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function update($user, $notrigger = 0) {
+	public function update($user, $notrigger = 0)
+	{
 		global $conf, $langs;
 		$error = 0;
 
@@ -591,7 +604,7 @@ class Agefodd_teacher extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::update " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -609,7 +622,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param int $id id of agefodd_formateur to delete
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function remove($id) {
+	public function remove($id)
+	{
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "agefodd_formateur";
 		$sql .= " WHERE rowid = " . $id;
 
@@ -629,7 +643,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param string $label
 	 * @return string
 	 */
-	public function getNomUrl($label = 'name') {
+	public function getNomUrl($label = 'name')
+	{
 		$link = dol_buildpath('/agefodd/trainer/card.php', 1);
 		if ($label == 'name') {
 			return '<a href="' . $link . '?id=' . $this->id . '">' . $this->name . ' ' . $this->firstname . '</a>';
@@ -642,7 +657,8 @@ class Agefodd_teacher extends CommonObject {
 	 *
 	 * @return number
 	 */
-	public function fetchAllCategories() {
+	public function fetchAllCategories()
+	{
 		$sql = 'SELECT dict.rowid as dictid,dict.code,dict.label,dict.description ';
 		$sql.=' FROM '.MAIN_DB_PREFIX.'agefodd_formateur_category_dict as dict WHERE dict.active=1';
 
@@ -663,7 +679,7 @@ class Agefodd_teacher extends CommonObject {
 					$this->dict_categories[]=$trainer_cat;
 				}
 			}
-		}else {
+		} else {
 			$this->error = "Error " . $this->db->lasterror();
 			dol_syslog(get_class($this) . "::".__METHOD__." ERROR :" . $this->error, LOG_ERR);
 			return - 1;
@@ -679,7 +695,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param User $user
 	 * @return number
 	 */
-	public function setTrainerCat($categories, $user) {
+	public function setTrainerCat($categories, $user)
+	{
 		$error=0;
 
 		$this->db->begin();
@@ -696,7 +713,7 @@ class Agefodd_teacher extends CommonObject {
 		}
 
 		if (empty($error) && count($categories)>0) {
-			foreach($categories as $catid) {
+			foreach ($categories as $catid) {
 				$sql = 'INSERT INTO '.MAIN_DB_PREFIX.'agefodd_formateur_category(fk_trainer,fk_category,fk_user_author,datec,fk_user_mod,tms) ';
 				$sql .= ' VALUES ('.$this->id.','.$catid.','.$user->id.',\''.$this->db->idate(dol_now()).'\','.$user->id.',\''.$this->db->idate(dol_now()).'\')';
 
@@ -713,7 +730,7 @@ class Agefodd_teacher extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::".__METHOD__ . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -732,7 +749,8 @@ class Agefodd_teacher extends CommonObject {
 	 * @param User $user
 	 * @return number
 	 */
-	public function setTrainerTraining($training ,$user) {
+	public function setTrainerTraining($training, $user)
+	{
 		$error=0;
 
 		$this->db->begin();
@@ -749,7 +767,7 @@ class Agefodd_teacher extends CommonObject {
 		}
 
 		if (empty($error) && count($training)>0) {
-			foreach($training as $key=>$trainingid) {
+			foreach ($training as $key=>$trainingid) {
 				$sql = 'INSERT INTO '.MAIN_DB_PREFIX.'agefodd_formateur_training(fk_trainer,fk_training,fk_user_author,datec,fk_user_mod,tms) ';
 				$sql .= ' VALUES ('.$this->id.','.$trainingid.','.$user->id.',\''.$this->db->idate(dol_now()).'\','.$user->id.',\''.$this->db->idate(dol_now()).'\')';
 
@@ -766,7 +784,7 @@ class Agefodd_teacher extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::".__METHOD__ . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -779,7 +797,8 @@ class Agefodd_teacher extends CommonObject {
 	}
 }
 
-class AgfTrainerLine {
+class AgfTrainerLine
+{
 	public $id;
 	public $type_trainer;
 	public $archive;
@@ -794,7 +813,8 @@ class AgfTrainerLine {
 	public $thirdparty;
 	public $categories = array ();
 	public $trainings = array ();
-	public function __construct() {
+	public function __construct()
+	{
 		return 1;
 	}
 	/**
@@ -803,7 +823,8 @@ class AgfTrainerLine {
 	 * @param string $type
 	 * @return string
 	 */
-	public function getNomUrl($label = 'name', $type='card') {
+	public function getNomUrl($label = 'name', $type = 'card')
+	{
 		$link = dol_buildpath('/agefodd/trainer/'.$type.'.php', 1);
 		if ($label == 'name') {
 			return '<a href="' . $link . '?id=' . $this->id . '">' . $this->name . ' ' . $this->firstname . '</a>';
@@ -813,24 +834,28 @@ class AgfTrainerLine {
 	}
 }
 
-class AgfTrainerCategorie {
+class AgfTrainerCategorie
+{
 	public $catid;
 	public $dictid;
 	public $code;
 	public $label;
 	public $description;
-	public function __construct() {
+	public function __construct()
+	{
 		return 1;
 	}
 }
 
-class AgfTrainerTraining {
+class AgfTrainerTraining
+{
 	public $linkid;
 	public $trainingid;
 	public $ref;
 	public $ref_interne;
 	public $intitule;
-	public function __construct() {
+	public function __construct()
+	{
 		return 1;
 	}
 }

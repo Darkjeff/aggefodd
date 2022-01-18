@@ -1,0 +1,2 @@
+-- VPGSQL8.2 ALTER TABLE llx_agefodd_session_stagiaire ADD COLUMN "comment" varchar(255) NULL AFTER hour_foad;
+-- VMYSQL4.1 ALTER TABLE llx_agefodd_session_stagiaire ADD COLUMN `comment` varchar(255) NULL AFTER hour_foad;

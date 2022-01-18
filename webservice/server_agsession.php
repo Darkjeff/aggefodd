@@ -25,14 +25,14 @@
 // This is to make Dolibarr working with Plesk
 set_include_path($_SERVER['DOCUMENT_ROOT'] . '/htdocs');
 
-$res = @include ("../../master.inc.php"); // For root directory
+$res = @include "../../master.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../master.inc.php"); // For "custom" directory
+	$res = @include "../../../master.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
-require_once (NUSOAP_PATH . '/nusoap.php'); // Include SOAP
-require_once (DOL_DOCUMENT_ROOT . "/core/lib/ws.lib.php");
-require_once (DOL_DOCUMENT_ROOT . "/agsession/class/agsession.class.php");
+require_once NUSOAP_PATH . '/nusoap.php'; // Include SOAP
+require_once DOL_DOCUMENT_ROOT . "/core/lib/ws.lib.php";
+require_once DOL_DOCUMENT_ROOT . "/agsession/class/agsession.class.php";
 
 dol_syslog("Call Agsession webservices interfaces");
 
@@ -180,22 +180,22 @@ $server->wsdl->addComplexType('agsession', 'complexType', 'struct', 'all', '', a
 				'name' => 'date_res_site',
 				'type' => 'xsd:string'
 		),
-		
+
 		'date_res_confirm_site' => array(
 				'name' => 'date_res_confirm_site',
 				'type' => 'xsd:string'
 		),
-		
+
 		'date_res_trainer' => array(
 				'name' => 'date_res_trainer',
 				'type' => 'xsd:string'
 		),
-		
+
 		'date_ask_OPCA' => array(
 				'name' => 'date_ask_OPCA',
 				'type' => 'xsd:string'
 		),
-	
+
 		'is_OPCA' => array(
 				'name' => 'is_OPCA',
 				'type' => 'xsd:string'
@@ -573,7 +573,7 @@ $server->wsdl->addComplexType('agsession', 'complexType', 'struct', 'all', '', a
 // http://www.ibm.com/developerworks/webservices/library/ws-whichwsdl/
 $styledoc = 'rpc'; // rpc/document (document is an extend into SOAP 1.0 to support unstructured messages)
 $styleuse = 'encoded'; // encoded/literal/literal wrapped
-                     // Better choice is document/literal wrapped but literal wrapped not supported by nusoap.
+					 // Better choice is document/literal wrapped but literal wrapped not supported by nusoap.
 
 // Register WSDL
 $server->register('getAgsession',
@@ -612,7 +612,8 @@ $server->register('createAgsession',
  * @param string $ref_ext Ref external of object
  * @return mixed
  */
-function getAgsession($authentication, $id, $ref = '', $ref_ext = '') {
+function getAgsession($authentication, $id, $ref = '', $ref_ext = '')
+{
 	global $db, $conf, $langs;
 
 	dol_syslog("Function: getAgsession login=" . $authentication['login'] . " id=" . $id . " ref=" . $ref . " ref_ext=" . $ref_ext);
@@ -800,7 +801,8 @@ function getAgsession($authentication, $id, $ref = '', $ref_ext = '') {
  * @param Agsession $agsession $agsession
  * @return array Array result
  */
-function createAgsession($authentication, $agsession) {
+function createAgsession($authentication, $agsession)
+{
 	global $db, $conf, $langs;
 
 	$now = dol_now();

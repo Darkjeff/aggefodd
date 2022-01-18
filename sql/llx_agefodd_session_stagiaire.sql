@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_session_stagiaire (
   fk_soc integer NULL,
   status_in_session integer NULL,
   hour_foad real NULL,
+  comment varchar(255) NULL,
   fk_user_author integer NOT NULL,
   datec datetime NOT NULL,
   fk_user_mod integer NOT NULL,

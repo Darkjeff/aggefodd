@@ -24,17 +24,17 @@
  * \ingroup agefodd
  * \brief card of cursus
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agefodd_cursus.class.php');
-require_once ('../class/agefodd_formation_cursus.class.php');
-require_once ('../class/html.formagefodd.class.php');
-require_once ('../lib/agefodd.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
+require_once '../class/agefodd_cursus.class.php';
+require_once '../class/agefodd_formation_cursus.class.php';
+require_once '../class/html.formagefodd.class.php';
+require_once '../lib/agefodd.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -157,11 +157,9 @@ if ($action == 'create_confirm' && $user->rights->agefodd->creer) {
 		$result = $agf->create($user);
 
 		if ($result > 0) {
-
 			if ($url_return)
 				Header("Location: " . $url_return);
-			else
-				Header("Location: " . $_SERVER ['PHP_SELF'] . "?action=edit&id=" . $result);
+			else Header("Location: " . $_SERVER ['PHP_SELF'] . "?action=edit&id=" . $result);
 			exit();
 		} else {
 			setEventMessage($agf->error, 'errors');
@@ -358,6 +356,9 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 *
 */
 
+$urlToken = '';
+if (function_exists('newToken')) $urlToken = "&token=".newToken();
+
 print '<div class="tabsAction">';
 
 if ($action != 'create' && $action != 'edit') {
@@ -367,7 +368,7 @@ if ($action != 'create' && $action != 'edit') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->creer) {
-		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}
@@ -425,8 +426,7 @@ if ($action != 'edit' && $action != 'create') {
 
 		$var = true;
 
-		foreach ( $training->lines as $line ) {
-
+		foreach ($training->lines as $line) {
 			$var = ! $var;
 
 			if ($action == 'delete_training' && $line->id == GETPOST('lineid', 'int')) {

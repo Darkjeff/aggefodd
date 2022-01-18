@@ -1122,3 +1122,4 @@ AgfCloneTrainingModules=Clone modules training programm ?
 AgfDateNotSet=Session schedule undefined
 
 AgfTraineeStatus = Trainee status
+AgfSessionTraineeComment = Note

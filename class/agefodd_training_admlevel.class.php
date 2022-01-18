@@ -25,12 +25,13 @@
  */
 
 // Put here all includes required by your class file
-require_once (DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php");
+require_once DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php";
 
 /**
  * Administrative task related to a training object.
  */
-class Agefodd_training_admlevel extends CommonObject {
+class Agefodd_training_admlevel extends CommonObject
+{
 	public $error; // !< To return error code (or message)
 	public $errors = array (); // !< To return several error codes (or messages)
 	public $element = 'agefodd_training_admlevel'; // !< Id that identify managed objects
@@ -56,7 +57,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 *
 	 * @param DoliDb $db handler
 	 */
-	public function __construct($db) {
+	public function __construct($db)
+	{
 		$this->db = $db;
 		return 1;
 	}
@@ -68,7 +70,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, Id of created object if OK
 	 */
-	public function create($user, $notrigger = 0) {
+	public function create($user, $notrigger = 0)
+	{
 		global $conf, $langs;
 		$error = 0;
 
@@ -107,6 +110,7 @@ class Agefodd_training_admlevel extends CommonObject {
 		$sql .= "delais_alerte_end,";
 		$sql .= "fk_user_author,";
 		$sql .= "datec,";
+		$sql .= "tms,";
 		$sql .= "fk_user_mod,";
 		$sql .= "trigger_name";
 
@@ -121,6 +125,7 @@ class Agefodd_training_admlevel extends CommonObject {
 		$sql .= " " . (empty($this->delais_alerte) ? '0' : $this->delais_alerte) . ",";
 		$sql .= " " . (empty($this->delais_alerte_end) ? '0' : $this->delais_alerte_end) . ",";
 		$sql .= " " . $user->id . ",";
+		$sql .= " '" . $this->db->idate(dol_now()) . "',";
 		$sql .= " '" . $this->db->idate(dol_now()) . "',";
 		$sql .= " " . $user->id . ",";
 		$sql .= " " . (! isset($this->trigger_name) ? 'NULL' : "'" . $this->db->escape($this->trigger_name) . "'");
@@ -153,7 +158,7 @@ class Agefodd_training_admlevel extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::create " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -171,7 +176,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $id object
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function fetch($id) {
+	public function fetch($id)
+	{
 		$sql = "SELECT";
 		$sql .= " t.rowid,";
 
@@ -230,7 +236,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $training_id object
 	 * @return int int <0 if KO, >0 if OK
 	 */
-	public function fetch_all($training_id) {
+	public function fetch_all($training_id)
+	{
 		$sql = "SELECT";
 		$sql .= " t.rowid,";
 		$sql .= " t.fk_training,";
@@ -294,7 +301,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function update($user, $notrigger = 0) {
+	public function update($user, $notrigger = 0)
+	{
 		global $conf, $langs;
 		$error = 0;
 
@@ -361,7 +369,7 @@ class Agefodd_training_admlevel extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::update " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -380,7 +388,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function delete($user, $notrigger = 0) {
+	public function delete($user, $notrigger = 0)
+	{
 		return $this->delete_with_descendants();
 	}
 
@@ -391,7 +400,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function delete_training_task($user, $notrigger = 0) {
+	public function delete_training_task($user, $notrigger = 0)
+	{
 		global $conf, $langs;
 		$error = 0;
 
@@ -425,7 +435,7 @@ class Agefodd_training_admlevel extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::delete_training_task " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -443,7 +453,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $fromid of object to clone
 	 * @return int id of clone
 	 */
-	public function createFromClone($fromid) {
+	public function createFromClone($fromid)
+	{
 		global $user;
 
 		$error = 0;
@@ -488,7 +499,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 *
 	 * @return void
 	 */
-	public function initAsSpecimen() {
+	public function initAsSpecimen()
+	{
 		$this->id = 0;
 
 		$this->fk_training = '';
@@ -511,7 +523,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param $notrigger int 0=launch triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function shift_indice($user, $type = '', $notrigger = 0) {
+	public function shift_indice($user, $type = '', $notrigger = 0)
+	{
 		global $conf, $langs;
 		$error = 0;
 
@@ -694,7 +707,7 @@ class Agefodd_training_admlevel extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::update " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -713,7 +726,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param $training_id int to update
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function setParentActionId($user, $training_id) {
+	public function setParentActionId($user, $training_id)
+	{
 		$error = 0;
 
 		// Update request
@@ -745,7 +759,7 @@ class Agefodd_training_admlevel extends CommonObject {
 
 		// Commit or rollback
 		if ($error) {
-			foreach ( $this->errors as $errmsg ) {
+			foreach ($this->errors as $errmsg) {
 				dol_syslog(get_class($this) . "::setParentActionId " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -766,7 +780,8 @@ class Agefodd_training_admlevel extends CommonObject {
 	 * @param int $fk_parent_level id of parent
 	 * @return array|int array of object, or <0 if KO
 	 */
-	public function fetch_all_children_nested($training_id, $fk_parent_level = 0) {
+	public function fetch_all_children_nested($training_id, $fk_parent_level = 0)
+	{
 
 		$TNested = array();
 
@@ -787,7 +802,7 @@ class Agefodd_training_admlevel extends CommonObject {
 		$sql .= " t.fk_agefodd_training_admlevel";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_training_admlevel as t";
 		$sql .= " WHERE t.fk_training=" . intval($training_id);
-        $sql .= " AND t.fk_parent_level=" . intval($fk_parent_level);
+		$sql .= " AND t.fk_parent_level=" . intval($fk_parent_level);
 
 		$sql .= " ORDER BY t.indice ASC";
 
@@ -893,7 +908,8 @@ class Agefodd_training_admlevel extends CommonObject {
 /**
  * line Class
  */
-class AgfTrainingAdmlvlLine {
+class AgfTrainingAdmlvlLine
+{
 	public $rowid;
 	public $fk_training;
 	public $level_rank;
@@ -904,7 +920,8 @@ class AgfTrainingAdmlvlLine {
 	public $alerte_end;
 	public $fk_agefodd_training_admlevel;
 	public $trigger_name;
-	public function __construct() {
+	public function __construct()
+	{
 		return 1;
 	}
 }

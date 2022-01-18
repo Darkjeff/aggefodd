@@ -22,8 +22,8 @@
  * \ingroup agefodd
  * \brief File of class to generate report for agefodd
  */
-require_once('agefodd_export_excel_by_customer.class.php');
-require_once(DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
+require_once 'agefodd_export_excel_by_customer.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
 /**
  * Class to build report by customer
@@ -198,7 +198,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 					}
 					$str_sub_name .= $this->outputlangs->transnoentities('SalesRepresentatives') . $user_salesman->getFullName($this->outputlangs);
 				} elseif ($key == 's.type_session') {
-
 					if ($value == 0) {
 						$type_session = $this->outputlangs->transnoentities('AgfFormTypeSessionIntra');
 					} elseif ($value == 1) {
@@ -215,7 +214,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 						dol_syslog(get_class($this) . "::getSubTitlFileName sql=" . $sql, LOG_DEBUG);
 						$result = $this->db->query($sql);
 						if ($result) {
-
 							$num = $this->db->num_rows($result);
 							if ($num) {
 								while ($obj = $this->db->fetch_object($result)) {
@@ -331,7 +329,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 		if (count($this->lines) > 0) {
 			$requestername = ''; // init var
 			foreach ($this->lines as $line) {
-
 				if ($requestername != $line->socrequestername) {
 					$result = $this->write_line_total($array_sub_total);
 					if ($result < 0) {
@@ -538,7 +535,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 									$check_soc = true;
 								}
 								if ($check_soc) {
-
 									$output_trainee_soc_nom = false;
 									$output_trainee_socparent = false;
 									$output_trainee_socrequester_nom = false;
@@ -600,7 +596,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 										$this->error = $stagiaires->error;
 										return $result;
 									}
-									foreach ( $stagiaires->lines as $traine_line ) {
+									foreach ($stagiaires->lines as $traine_line) {
 										if ($traine_line->status_in_session == 3 || $traine_line->status_in_session == 4) {
 											$traineelist[$traine_line->stagerowid] = $traine_line->nom . ' ' . $traine_line->prenom;
 
@@ -640,7 +636,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 							return $result;
 						}
 						foreach ($stagiaires->lines as $traine_line) {
-
 							if ($traine_line->status_in_session == 3 || $traine_line->status_in_session == 4) {
 								$output_trainee = false;
 								// If filter by soc is done we output only trainee and conv related to this soc
@@ -651,7 +646,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 									$check_soc = true;
 								}
 								if ($check_soc) {
-
 									$output_trainee_soc_nom = false;
 									$output_trainee_socparent = false;
 									$output_trainee_socrequester_nom = false;
@@ -665,13 +659,12 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 									}
 
 
-										if (array_key_exists('so.nom', $filter)) {
-											if (strpos(dol_strtoupper($socstatic->name), dol_strtoupper($filter['so.nom'])) !== false) {
-												$output_trainee_soc_nom = true;
-											}
+									if (array_key_exists('so.nom', $filter)) {
+										if (strpos(dol_strtoupper($socstatic->name), dol_strtoupper($filter['so.nom'])) !== false) {
+											$output_trainee_soc_nom = true;
 										}
-										if (array_key_exists('socrequester.nom', $filter)) {
-
+									}
+									if (array_key_exists('socrequester.nom', $filter)) {
 										if (!empty($traine_line->fk_soc_requester) && $traine_line->fk_soc_requester!=-1) {
 											$socstaticrequester = new Societe($this->db);
 											$result = $socstaticrequester->fetch($traine_line->fk_soc_requester);
@@ -680,10 +673,10 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 												return $result;
 											}
 
-												if (strpos(dol_strtoupper($socstaticrequester->name), dol_strtoupper($filter['socrequester.nom'])) !== false) {
-													$output_trainee_socrequester_nom = true;
-												}
+											if (strpos(dol_strtoupper($socstaticrequester->name), dol_strtoupper($filter['socrequester.nom'])) !== false) {
+												$output_trainee_socrequester_nom = true;
 											}
+										}
 
 										if (strpos(dol_strtoupper($socstatic->name), dol_strtoupper($filter['socrequester.nom'])) !== false) {
 											$output_trainee_socrequester_nom = true;
@@ -703,8 +696,8 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 										if (!empty($traine_line->fk_soc_requester)) {
 											$traineesoc[]=$traine_line->fk_soc_requester;
 										}
-										if (count($traineesoc)>0){
-											$sql = 'SELECT fk_user FROM '.MAIN_DB_PREFIX.'societe_commerciaux WHERE fk_soc IN ('.implode(',',$traineesoc).')';
+										if (count($traineesoc)>0) {
+											$sql = 'SELECT fk_user FROM '.MAIN_DB_PREFIX.'societe_commerciaux WHERE fk_soc IN ('.implode(',', $traineesoc).')';
 											$sql .='  AND fk_user='.$filter['sale.fk_user_com'];
 											dol_syslog(get_class($this) . "::find salesman for thirdparty output_trainee_salesman sql=" . $sql, LOG_DEBUG);
 											$result = $this->db->query($sql);
@@ -719,7 +712,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 												dol_syslog(get_class($this) . "::write_file " . $this->error, LOG_ERR);
 												return - 1;
 											}
-										}else {
+										} else {
 											$output_trainee_salesman=true;
 										}
 									}
@@ -829,7 +822,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 				}
 				if (is_array($session_elem_fin->lines) && count($session_elem_fin->lines) > 0) {
 					foreach ($session_elem_fin->lines as $elem_line) {
-
 						// We manage invoice first
 						//var_dump
 						if ($elem_line->element_type == 'invoice') {
@@ -858,7 +850,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 								$check_soc = true;
 							}
 							if ($check_soc) {
-
 								$output_invoice_soc_nom = false;
 								$output_invoice_socparent = false;
 								$output_invoice_socrequester_nom = false;
@@ -868,7 +859,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 								if (array_key_exists('so.nom', $filter)) {
 									/*print '$filter[so.nom]='.$filter['so.nom'].'<br>';
 									print '$socinvoicestatic->name='.$socinvoicestatic->name.'<br>';
-									print '$facture->socid='.$facture->socid.'<br><BR>';
+									print '$facture->socid='.$facture->socid.'<br><br />';
 									var_dump(strpos(dol_strtoupper($socinvoicestatic->name), dol_strtoupper($filter['so.nom'])));*/
 									if (strpos(dol_strtoupper($socinvoicestatic->name), dol_strtoupper($filter['so.nom'])) !== false) {
 										$output_invoice_soc_nom = true;
@@ -880,7 +871,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 									}
 								}
 								if (array_key_exists('so.parent|sorequester.parent', $filter)) {
-
 									if ($socinvoicestatic->parent == $filter['so.parent|sorequester.parent'] || $socinvoicestatic->id == $filter['so.parent|sorequester.parent']) {
 										$output_invoice_socparent = true;
 									}
@@ -938,7 +928,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 								$invoice_found[$facture->id] = $facture->socid;
 								if (is_array($facture->lines) && count($facture->lines) > 0 && $facture->statut !== '0') {
 									foreach ($facture->lines as $invoice_lines) {
-
 										// Check if procut is in not in category of CHARGES
 										$is_not_frais = true;
 										if (!empty($invoice_lines->fk_product) && !empty($conf->global->AGF_CAT_PRODUCT_CHARGES)) {
@@ -1011,7 +1000,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 								$check_soc = true;
 							}
 							if ($check_soc) {
-
 								$output_propal_soc_nom = false;
 								$output_propal_socparent = false;
 								$output_propal_socrequester_nom = false;
@@ -1021,7 +1009,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 								if (array_key_exists('so.nom', $filter)) {
 									/*print '$filter[so.nom]='.$filter['so.nom'].'<br>';
 									print '$socinvoicestatic->name='.$socpropalstatic->name.'<br>';
-									print '$propal->socid='.$propal->socid.'<br><BR>';
+									print '$propal->socid='.$propal->socid.'<br><br />';
 									var_dump(strpos(dol_strtoupper($socpropalstatic->name), dol_strtoupper($filter['so.nom'])));*/
 									if (strpos(dol_strtoupper($socpropalstatic->name), dol_strtoupper($filter['so.nom'])) !== false) {
 										$output_propal_soc_nom = true;
@@ -1072,7 +1060,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 
 							//Check if proposal was no link to invoice already outputed
 							$output_propal_no_invoice_link_outputed = true;
-							//print '<BR><BR><BR>$propal->ref='.$propal->ref;
+							//print '<br /><br /><br />$propal->ref='.$propal->ref;
 							if (!empty($propal->id)) {
 								$result = $propal->fetchObjectLinked($propal->id, $propal->element, '', 'facture');
 								if ($result < 0) {
@@ -1087,20 +1075,18 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 									}
 								}
 							}
-							//print '<BR>$output_propal_no_invoiceoutputed='.$output_propal_no_invoice_link_outputed;
+							//print '<br />$output_propal_no_invoiceoutputed='.$output_propal_no_invoice_link_outputed;
 
 							//Check if proposal was no link to invoice already outputed by an OPCA funding
 							if (!empty($propal->socid) && $output_propal_no_invoice_link_outputed) {
-
 								foreach ($OPCA_array_socid as $trainee_socid => $opca_id) {
-									//print '<BR>';
+									//print '<br />';
 									//print '$opca_id='.$opca_id;
 									//print '$trainee_socid='.$trainee_socid;
 
 									if ($trainee_socid == $propal->socid) {
-
 										foreach ($invoice_found as $invoiceid => $invoicesocid) {
-											//print '<BR>';
+											//print '<br />';
 											//print '$invoiceid='.$invoiceid;
 											//print '$invoicesocid='.$invoicesocid;
 
@@ -1118,14 +1104,12 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 
 							//Check if proposal was no link to invoice already outputed by an OPCA funding but if invoice was rejected no output propal as well
 							if (!empty($propal->socid) && $output_propal_no_invoice_link_outputed) {
-
 								foreach ($OPCA_array_socid as $trainee_socid => $opca_id) {
 									//print '<BR>';
 									//print '$opca_id='.$opca_id;
 									//print '$trainee_socid='.$trainee_socid;
 
 									if ($trainee_socid == $propal->socid) {
-
 										foreach ($invoice_rejected as $invoiceid => $invoicesocid) {
 											//print '<BR>';
 											//print '$invoiceid='.$invoiceid;
@@ -1144,7 +1128,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 							if (!empty($propal->id) && $output_propal) {
 								if (is_array($propal->lines) && count($propal->lines) > 0) {
 									foreach ($propal->lines as $propal_lines) {
-
 										// Check if procut is in not in category of CHARGES
 										$is_not_frais = true;
 										if (!empty($propal_lines->fk_product)) {
@@ -1248,7 +1231,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 					|| array_key_exists('sale.fk_user_com', $filter)
 					|| array_key_exists('f.datef', $filter))
 				&& (!array_key_exists('sesscal.date_session', $filter))) {
-
 				$result = $this->fetch_invoice_without($filter);
 				if ($result < 0) {
 					return $result;
@@ -1325,7 +1307,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 
 					if (is_array($facture->lines) && count($facture->lines) > 0) {
 						foreach ($facture->lines as $invoice_lines) {
-
 							// Check if procut is in not in category of CHARGES
 							$is_not_frais = true;
 							if (!empty($invoice_lines->fk_product)) {
@@ -1366,7 +1347,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 
 						$array_sub_total[21] += $facture->total_ht;
 						$array_sub_total[22] += $facture->total_ttc;
-
 					}
 
 					$line_to_output[15] = $productlist;
@@ -1676,7 +1656,6 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 
 			if ($num) {
 				while ($obj = $this->db->fetch_object($resql)) {
-
 					$line = new ReportByCustomerLine();
 
 					$line->id = $obj->rowid;

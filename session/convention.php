@@ -24,30 +24,31 @@
  * \ingroup agefodd
  * \brief Manage convention template
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../lib/agefodd.lib.php');
-require_once ('../class/agsession.class.php');
-require_once ('../class/agefodd_session_calendrier.class.php');
-require_once ('../class/agefodd_formation_catalogue.class.php');
-require_once ('../class/agefodd_session_element.class.php');
-require_once ('../class/agefodd_session_formateur.class.php');
-require_once ('../class/agefodd_convention.class.php');
-require_once ('../class/agefodd_contact.class.php');
-require_once ('../class/agefodd_place.class.php');
-require_once ('../class/html.formagefodd.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
-require_once ('../class/agefodd_session_stagiaire.class.php');
-require_once ('../class/agefodd_stagiaire.class.php');
-require_once ('../core/modules/agefodd/modules_agefodd.php');
-require_once (DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+require_once '../lib/agefodd.lib.php';
+require_once '../class/agsession.class.php';
+require_once '../class/agefodd_session_calendrier.class.php';
+require_once '../class/agefodd_formation_catalogue.class.php';
+require_once '../class/agefodd_session_catalogue.class.php';
+require_once '../class/agefodd_session_element.class.php';
+require_once '../class/agefodd_session_formateur.class.php';
+require_once '../class/agefodd_convention.class.php';
+require_once '../class/agefodd_contact.class.php';
+require_once '../class/agefodd_place.class.php';
+require_once '../class/html.formagefodd.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+require_once '../class/agefodd_session_stagiaire.class.php';
+require_once '../class/agefodd_stagiaire.class.php';
+require_once '../core/modules/agefodd/modules_agefodd.php';
+require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
+require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -67,11 +68,13 @@ $model_doc = GETPOST('model_doc', 'alpha');
 
 $langs->load("companies");
 
+$urlToken = '';
+if (function_exists('newToken')) $urlToken = "&token=".newToken();
+
 /*
  * Actions delete
  */
 if ($action == 'confirm_delete' && $confirm == "yes" && $user->rights->agefodd->creer) {
-
 	$agf = new Agefodd_convention($db);
 	$result = $agf->remove($id);
 
@@ -271,7 +274,6 @@ if ($action == 'create_confirm' && $user->rights->agefodd->creer) {
 			setEventMessage($langs->trans('ErrorFieldRequired', $langs->transnoentities('AgfElementToUse')), 'errors');
 			$action = 'create';
 		} else {
-
 			if (! empty($intro1))
 				$agf->intro1 = $intro1;
 			if (! empty($intro2))
@@ -353,21 +355,22 @@ $formAgefodd = new FormAgefodd($db);
  * Affichage de la fiche convention en mode création
  */
 if ($action == 'create' && $user->rights->agefodd->creer) {
-
 	$agf = new Agsession($db);
 	$resql = $agf->fetch($sessid);
 
 	// We try to find is a convetion have already been done for this customers
 	// If yes we retrieve the old value
 	// else we use default
-	$agf_last = new Agefodd_convention($db);
-	$result = $agf_last->fetch_last_conv_per_socity($socid);
-	if ($result > 0) {
-		$agf_conv = new Agefodd_convention($db);
-		if (! empty($agf_last->sessid)) {
-			$result = $agf_conv->fetch($agf_last->sessid, $socid);
-			if ($agf_last->sessid) {
-				$last_conv = 'ok';
+	if (!empty($conf->global->AGF_USE_PREV_CONVENTION_BY_SOC)) {
+		$agf_last = new Agefodd_convention($db);
+		$result = $agf_last->fetch_last_conv_per_socity($socid);
+		if ($result > 0) {
+			$agf_conv = new Agefodd_convention($db);
+			if (! empty($agf_last->sessid) && empty($conf->global->AGF_ALWAYS_USE_DEFAULT_CONVENTION)) {
+				$result = $agf_conv->fetch($agf_last->sessid, $socid);
+				if ($agf_last->sessid) {
+					$last_conv = 'ok';
+				}
 			}
 		}
 	}
@@ -417,7 +420,6 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 		$intro2 .= ucfirst(strtolower($agf->contactcivilite)) . ' ' . $agf->contactname;
 		$intro2 .= ' ' . $langs->trans('AgfConvIntro2_5');
 	} else {
-
 		// Trainee link to the company convention
 		$stagiaires = new Agefodd_session_stagiaire($db);
 		$result = $stagiaires->fetch_stagiaire_per_session($sessid, $socid, 1);
@@ -425,8 +427,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			setEventMessage($stagiaires->error, 'errors');
 		} else {
 			if (is_array($stagiaires->lines) && count($stagiaires->lines) > 0) {
-
-				foreach ( $stagiaires->lines as $line ) {
+				foreach ($stagiaires->lines as $line) {
 					if (! empty($line->fk_socpeople_sign)) {
 						$socpsign = new Contact($db);
 						$socpsign->fetch($line->fk_socpeople_sign);
@@ -450,12 +451,20 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	$art1 = $langs->trans('AgfConvArt1_1') . "\n";
 	$art1 .= $langs->trans('AgfConvArt1_2') . ' ' . $agf->formintitule . ' ' . $langs->trans('AgfConvArt1_3') . " \n" . "\n";
 
-	$obj_peda = new Formation($db);
-	$resql = $obj_peda->fetch_objpeda_per_formation($agf->formid);
+	$obj_peda = new SessionCatalogue($db);
+	$ret = $obj_peda->fetchSessionCatalogue($agf->id);
+
+	if (empty($ret)) { // pas de clone
+		$obj_peda = new Formation($db);
+		$resql = $obj_peda->fetch_objpeda_per_formation($agf->formid);
+	} else {
+		$obj_peda->fetch_objpeda_per_session_catalogue($ret);
+	}
+
 	if (count($obj_peda->lines) > 0) {
 		$art1 .= $langs->trans('AgfConvArt1_4') . "\n";
 	}
-	foreach ( $obj_peda->lines as $line ) {
+	foreach ($obj_peda->lines as $line) {
 		$art1 .= "-	" . $line->intitule . "\n";
 	}
 	if (count($obj_peda->lines) > 0) {
@@ -466,8 +475,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 
 	if ($agf->dated == $agf->datef)
 		$art1 .= $langs->trans('AgfConvArt1_8') . ' ' . dol_print_date($agf->datef);
-	else
-		$art1 .= $langs->trans('AgfConvArt1_9') . ' ' . dol_print_date($agf->dated) . ' ' . $langs->trans('AgfConvArt1_10') . ' ' . dol_print_date($agf->datef);
+	else $art1 .= $langs->trans('AgfConvArt1_9') . ' ' . dol_print_date($agf->dated) . ' ' . $langs->trans('AgfConvArt1_10') . ' ' . dol_print_date($agf->datef);
 
 	$art1 .= "\n";
 
@@ -479,13 +487,12 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	$blocNumber = count($calendrier->lines);
 	$old_date = 0;
 	$duree = 0;
-	for($i = 0; $i < $blocNumber; $i ++) {
+	for ($i = 0; $i < $blocNumber; $i ++) {
 		if ($calendrier->lines[$i]->date_session != $old_date) {
 			if ($i > 0)
 				$art1 .= "), ";
 			$art1 .= dol_print_date($calendrier->lines[$i]->date_session, 'daytext') . ' (';
-		} else
-			$art1 .= '/';
+		} else $art1 .= '/';
 		$art1 .= dol_print_date($calendrier->lines[$i]->heured, 'hour');
 		$art1 .= ' - ';
 		$art1 .= dol_print_date($calendrier->lines[$i]->heuref, 'hour');
@@ -498,7 +505,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	// Formateur
 	$formateurs = new Agefodd_session_formateur($db);
 	$nbform = $formateurs->fetch_formateur_per_session($agf->id);
-	foreach ( $formateurs->lines as $trainer ) {
+	foreach ($formateurs->lines as $trainer) {
 		$TTrainer[] = $trainer->firstname . ' ' . $trainer->lastname;
 	}
 	if ($nbform > 0) {
@@ -508,8 +515,13 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	$art1 .= "\n" . $langs->trans('AgfConvArt1_13');
 
 	if ($conf->global->AGF_CONV_ADD_SANCTION) {
-		$training = new Formation($db);
-		$training->fetch($agf->formid);
+		$training = new SessionCatalogue($db);
+		$ret = $training->fetchSessionCatalogue($agf->id);
+		if (empty($ret)) { // pas de clone
+			$training = new Formation($db);
+			$training->fetch($agf->formid);
+		}
+
 		if (!empty($training->sanction)) {
 			$art1 .=  "\n".$training->sanction;
 		}
@@ -542,7 +554,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	}
 	$art4 .= "\n" . $langs->trans('AgfConvArt4_2');
 	if (!empty($conf->global->AGF_CONV_SOUSTRAITANCE)) {
-		$art4 .= "\n" . $langs->trans('AgfConvArt4_4',$mysoc->name);
+		$art4 .= "\n" . $langs->trans('AgfConvArt4_4', $mysoc->name);
 	}
 
 	// texte 5
@@ -556,8 +568,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			$stagiaires = new Agefodd_session_stagiaire($db);
 			$resulttrainee = $stagiaires->fetch_stagiaire_per_session($agf->id);
 
-			foreach ( $stagiaires->lines as $line ) {
-
+			foreach ($stagiaires->lines as $line) {
 				$opca = new Agefodd_opca($db);
 				$opca->getOpcaForTraineeInSession($line->socid, $agf->id, $line->stagerowid);
 
@@ -636,8 +647,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 		setEventMessage($agf_element->error, 'errors');
 	}
 	print '<select id="idtypelement" name="idtypelement" class="flat">';
-	foreach ( $agf_element->lines as $line ) {
-
+	foreach ($agf_element->lines as $line) {
 		if ($line->element_type == 'propal' && ! empty($line->propalref)) {
 			$propal = new Propal($db);
 			$propal->fetch($line->fk_element);
@@ -665,7 +675,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	}
 	print '</select>';
 	if (! empty($agf->fk_product)) {
-		print '<BR>';
+		print '<br />';
 		print '<input type="checkbox" value="1" name="only_product_session" id="only_product_session">' . $langs->trans('AgfOutputOnlySessionProductInConv');
 	}
 	print '</td></tr>';
@@ -704,13 +714,13 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	// Trainee link to thhe company convention
 	$stagiaires->fetch_stagiaire_per_session($sessid, $socid, 1);
 
-	foreach ( $stagiaires->lines as $traine_line ) {
+	foreach ($stagiaires->lines as $traine_line) {
 		// $options_trainee_array_selected [$traine_line->stagerowid] = $traine_line->nom . ' ' . $traine_line->prenom . ' (' . $traine_line->socname . ')';
 		$options_trainee_array_selected_id[] = $traine_line->stagerowid;
 	}
 
 	$stagiaires->fetch_stagiaire_per_session($sessid);
-	foreach ( $stagiaires->lines as $traine_line ) {
+	foreach ($stagiaires->lines as $traine_line) {
 		// if (!array_key_exists($traine_line->stagerowid,$options_trainee_array_selected)) {
 		$options_trainee_array[$traine_line->stagerowid] = $traine_line->nom . ' ' . $traine_line->prenom . ' (' . $traine_line->socname . ')';
 		// $options_trainee_array_id [] = $traine_line->stagerowid;
@@ -827,8 +837,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			print '<select id="idtypelement" name="idtypelement" class="flat">';
 			$agf_element = new Agefodd_session_element($db);
 			$agf_element->fetch_by_session_by_thirdparty($agf->sessid, $agf->socid);
-			foreach ( $agf_element->lines as $line ) {
-
+			foreach ($agf_element->lines as $line) {
 				if ($agf->fk_element == $line->fk_element && $agf->element_type == $line->element_type) {
 					$selected = 'selected="selected"';
 				} else {
@@ -862,7 +871,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			}
 			print '</select>';
 			if (! empty($agf_session->fk_product)) {
-				print '<BR>';
+				print '<br />';
 				print '<input type="checkbox" value="1" name="only_product_session"  id="only_product_session" ' . (empty($agf->only_product_session) ? '' : 'checked="checked"') . '>' . $langs->trans('AgfOutputOnlySessionProductInConv');
 			}
 			print '</td></tr>';
@@ -898,7 +907,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			$options_trainee_array_selected = $agf->line_trainee;
 			$stagiaires = new Agefodd_session_stagiaire($db);
 			$nbstag = $stagiaires->fetch_stagiaire_per_session($agf->sessid);
-			foreach ( $stagiaires->lines as $traine_line ) {
+			foreach ($stagiaires->lines as $traine_line) {
 				$options_trainee_array[$traine_line->stagerowid] = $traine_line->nom . ' ' . $traine_line->prenom . ' (' . $traine_line->socname . ')';
 			}
 
@@ -959,14 +968,13 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			print '<tr><td align="center" colspan=2>';
 			print '<input type="submit" class="butAction" value="' . $langs->trans("Save") . '"> &nbsp; ';
 			print '<input type="submit" name="cancel" class="butActionDelete" value="' . $langs->trans("Cancel") . '">';
-			print '<a class="butActionDelete" href="convention.php?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+			print '<a class="butActionDelete" href="convention.php?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 			print '</td></tr>';
 			print '</table>';
 			print '</form>';
 
 			print '</div>' . "\n";
 		} else {
-
 			/*
 			 * Confirmation de la suppression
 			 */
@@ -1032,7 +1040,6 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			print '<tr><td valign="top" width="200px">' . $langs->trans("AgfConvModelDoc") . '</td>';
 			print '<td>';
 			if (! empty($agf->model_doc)) {
-
 				if (! empty($id_model_rfltr)) {
 					dol_include_once('/referenceletters/class/referenceletters.class.php');
 					if (class_exists('ReferenceLetters')) {
@@ -1046,22 +1053,21 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					$class = $agf->model_doc;
 					if (file_exists($dir . $file) || file_exists($dir . 'override/' . $file)) {
 						if (file_exists($dir . $file))
-							require_once ($dir . $file);
-						else
-							require_once ($dir . 'override/' . $file);
+							require_once $dir . $file;
+						else require_once $dir . 'override/' . $file;
 						$module = new $class($db);
 						print $module->description;
 					}
 				}
 			}
-			print print '</td></tr>';
+			print '</td></tr>';
 
 			if (!empty($conf->global->MAIN_MULTILANGS)) {
 				$langs->load('admin');
 				$defaultlang=$agf->doc_lang?$agf->doc_lang:$langs->getDefaultLang();
 				print '<tr><td valign="top" width="200px">' . $langs->trans("DefaultLanguage") . '</td>';
 				print '<td>';
-				$langs_available=$langs->get_available_languages(DOL_DOCUMENT_ROOT,12);
+				$langs_available=$langs->get_available_languages(DOL_DOCUMENT_ROOT, 12);
 				print $langs_available[$defaultlang];
 				print '</td></tr>';
 			}
@@ -1071,7 +1077,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 
 			$stagiaires_session = new Agefodd_session_stagiaire($db);
 			if (is_array($agf->line_trainee) && count($agf->line_trainee) > 0) {
-				foreach ( $agf->line_trainee as $trainee_session_id ) {
+				foreach ($agf->line_trainee as $trainee_session_id) {
 					$result = $stagiaires_session->fetch($trainee_session_id);
 					if ($result < 0) {
 						setEventMessage($stagiaires->error, 'errors');
@@ -1082,14 +1088,13 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						setEventMessage($stagiaires->error, 'errors');
 					}
 
-					print $stagiaire->nom . ' ' . $stagiaire->prenom . ' (' . $stagiaire->socname . ')<BR>';
+					print $stagiaire->nom . ' ' . $stagiaire->prenom . ' (' . $stagiaire->socname . ')<br />';
 				}
 			}
 
 			print '</td></tr>';
 
 			if (empty($id_model_rfltr)) {
-
 				print '<tr><td valign="top" width="200px">' . $langs->trans("AgfConventionIntro1") . '</td>';
 				print '<td>' . nl2br($agf->intro1) . '</td></tr>';
 
@@ -1157,7 +1162,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->creer) {
-		print '<a class="butActionDelete" href="convention.php?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="convention.php?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}

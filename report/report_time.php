@@ -22,16 +22,16 @@
  * \brief		report part
  * (Agefodd).
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agsession.class.php');
-require_once ('../lib/agefodd.lib.php');
-require_once ('../class/html.formagefodd.class.php');
-require_once ('../class/report_time.class.php');
+require_once '../class/agsession.class.php';
+require_once '../lib/agefodd.lib.php';
+require_once '../class/html.formagefodd.class.php';
+require_once '../class/report_time.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 
@@ -65,7 +65,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportTime'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/time/';
+$upload_dir = $conf->agefodd->dir_output . '/report/time';
 
 $agf = new Agsession($db);
 
@@ -92,9 +92,7 @@ if (! empty($search_session_status) && count($search_session_status)>0) {
  * Actions
  */
 if ($action == 'builddoc') {
-
 	if (count($filter)>0) {
-
 		$outputlangs = $langs;
 		$newlang = $lang_id;
 		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
@@ -125,7 +123,6 @@ if ($action == 'builddoc') {
 		setEventMessage($langs->trans("AgfRptSelectAtLeastOneCriteria"), 'errors');
 	}
 } elseif ($action == 'remove_file') {
-
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 	$langs->load("other");
@@ -133,8 +130,7 @@ if ($action == 'builddoc') {
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
-	else
-		setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
+	else setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
 	$action = '';
 }
 
@@ -150,7 +146,7 @@ print '<table class="border" width="100%">';
 print '<tr>';
 print '<td>' . $langs->trans('AgfReportTimeTypeReport').'</td>';
 print '<td>';
-print $form->selectarray('type_report', $report->TType_report, $type_report,0);
+print $form->selectarray('type_report', $report->TType_report, $type_report, 0);
 print '</td>';
 print '</tr>';
 
@@ -158,9 +154,9 @@ print '<tr>';
 print '<td>' . $langs->trans('AgfReportTimeCalTime').'</td>';
 print '<td>';
 print $langs->trans('From').' ';
-print $form->selectDate($caldt_st, "caldt_st", 0,0,1);
+print $form->selectDate($caldt_st, "caldt_st", 0, 0, 1);
 print $langs->trans('to').' ';
-print $form->selectDate($caldt_end, "caldt_end", 0,0,1);
+print $form->selectDate($caldt_end, "caldt_end", 0, 0, 1);
 print '</td>';
 print '</tr>';
 
@@ -171,7 +167,7 @@ print '</tr>';
 
 print '<tr>';
 print '<td>' . $langs->trans('AgfStatusSession') . '</td>';
-print '<td>' . $formAgefodd->multiselect_session_status('search_session_status',$search_session_status,'t.active=1') . '</td>';
+print '<td>' . $formAgefodd->multiselect_session_status('search_session_status', $search_session_status, 't.active=1') . '</td>';
 print '</tr>';
 
 print '</table>' . "\n";
@@ -202,4 +198,3 @@ print '</form>' . "\n";
 
 llxFooter();
 $db->close();
-

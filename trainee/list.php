@@ -24,15 +24,15 @@
  * \ingroup agefodd
  * \brief list of trainee
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agefodd_stagiaire.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php');
+require_once '../class/agefodd_stagiaire.class.php';
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php';
 
 $langs->load('agefodd@agefodd');
 
@@ -59,13 +59,10 @@ $search_mail = GETPOST("search_mail", 'none');
 $search_namefirstname = GETPOST("search_namefirstname", 'none');
 
 //Since 8.0 sall get parameters is sent with rapid search
-$search_by=GETPOST('search_by', 'alpha');
-if (!empty($search_by)) {
-	$sall=GETPOST('sall', 'alpha');
-	if (!empty($sall)) {
-		${$search_by}=$sall;
-	}
-}
+$sall = GETPOST('sall');
+$search_by = "search_namefirstname";
+if (!empty($sall))
+	${$search_by} = $sall;
 
 // Do we click on purge search criteria ?
 if (GETPOST("button_removefilter_x", 'none')) {
@@ -86,7 +83,7 @@ $agf = new Agefodd_stagiaire($db);
 $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element, true);
 
-$search_array_options=$extrafields->getOptionalsFromPost($extralabels,'','search_');
+$search_array_options=$extrafields->getOptionalsFromPost($extralabels, '', 'search_');
 
 $arrayfields=array(
 		's.rowid'			=>array('label'=>"Id", 'checked'=>1),
@@ -99,10 +96,8 @@ $arrayfields=array(
 );
 
 // Extra fields
-if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
-{
-	foreach($extrafields->attribute_label as $key => $val)
-	{
+if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label)) {
+	foreach ($extrafields->attribute_label as $key => $val) {
 		if ($extrafields->attribute_type[$key]!='separate') {
 			$arrayfields["ef.".$key]=array('label'=>$extrafields->attribute_label[$key], 'checked'=>(($extrafields->attribute_list[$key]!==3)?0:1), 'position'=>$extrafields->attribute_pos[$key]);
 		}
@@ -147,16 +142,14 @@ if (!empty($limit)) {
 	$option .= '&limit=' . $limit;
 }
 
-foreach ($search_array_options as $key => $val)
-{
+foreach ($search_array_options as $key => $val) {
 	$crit=$val;
-	$tmpkey=preg_replace('/search_options_/','',$key);
+	$tmpkey=preg_replace('/search_options_/', '', $key);
 	$typ=$extrafields->attribute_type[$tmpkey];
 	$mode_search=0;
 	if (in_array($typ, array('int','double','real'))) $mode_search=1;								// Search on a numeric
 	if (in_array($typ, array('sellist','link','chkbxlst','checkbox')) && $crit != '0' && $crit != '-1') $mode_search=2;	// Search on a foreign key int
-	if ($crit != '' && (! in_array($typ, array('select','sellist')) || $crit != '0') && (! in_array($typ, array('link')) || $crit != '-1'))
-	{
+	if ($crit != '' && (! in_array($typ, array('select','sellist')) || $crit != '0') && (! in_array($typ, array('link')) || $crit != '-1')) {
 		$filter['ef.'.$tmpkey]= natural_search('ef.'.$tmpkey, $crit, $mode_search);
 		$option .= '&search_options_'.$tmpkey.'=' . $crit;
 	}
@@ -188,7 +181,6 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
 $result = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $filter);
 
 if ($result >= 0) {
-
 	print '<form method="get" action="' . $_SERVER ['PHP_SELF'] . '" name="searchFormList" id="searchFormList">' . "\n";
 	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 	print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
@@ -297,7 +289,7 @@ if ($result >= 0) {
 
 	// Action column
 	print '<td class="liste_titre" align="right">';
-	if(method_exists($form, 'showFilterButtons')) {
+	if (method_exists($form, 'showFilterButtons')) {
 		$searchpicto=$form->showFilterButtons();
 
 		print $searchpicto;
@@ -352,12 +344,11 @@ if ($result >= 0) {
 		}
 	}
 
-	print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"],"",'','','align="center"', $sortfield, $sortorder,'maxwidthsearch ');
+	print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"], "", '', '', 'align="center"', $sortfield, $sortorder, 'maxwidthsearch ');
 	print "</tr>\n";
 
 	$var = true;
-	foreach ( $agf->lines as $line ) {
-
+	foreach ($agf->lines as $line) {
 		// Affichage liste des stagiaires
 		$var = ! $var;
 		print "<tr $bc[$var]>";
@@ -399,7 +390,7 @@ if ($result >= 0) {
 
 		// Extra fields
 		if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label)) {
-			foreach ( $extrafields->attribute_label as $key => $val ) {
+			foreach ($extrafields->attribute_label as $key => $val) {
 				if (! empty($arrayfields["ef." . $key]['checked'])) {
 					$align = $extrafields->getAlignFlag($key);
 					print '<td';
@@ -411,11 +402,11 @@ if ($result >= 0) {
 						print '</td>';
 						if (! $i)
 							$totalarray['nbfield'] ++;
-							if (! empty($val['isameasure'])) {
-								if (! $i)
-									$totalarray['pos'][$totalarray['nbfield']] = 'ef.' . $tmpkey;
-									$totalarray['val']['ef.' . $tmpkey] += $line->array_options[$tmpkey];
-							}
+					if (! empty($val['isameasure'])) {
+						if (! $i)
+							$totalarray['pos'][$totalarray['nbfield']] = 'ef.' . $tmpkey;
+							$totalarray['val']['ef.' . $tmpkey] += $line->array_options[$tmpkey];
+					}
 				}
 			}
 		}

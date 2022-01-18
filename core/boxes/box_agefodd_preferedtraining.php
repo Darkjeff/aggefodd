@@ -27,7 +27,8 @@ include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
 /**
  * Class to manage the box
  */
-class box_agefodd_preferedtraining extends ModeleBoxes {
+class box_agefodd_preferedtraining extends ModeleBoxes
+{
 	var $boxcode = "agefodd_preferedtraining";
 	var $boximg = "agefodd@agefodd";
 	var $boxlabel;
@@ -42,7 +43,8 @@ class box_agefodd_preferedtraining extends ModeleBoxes {
 	/**
 	 * Constructor
 	 */
-	function __construct() {
+	function __construct()
+	{
 		global $langs,$user;
 		$langs->load("boxes");
 
@@ -57,7 +59,8 @@ class box_agefodd_preferedtraining extends ModeleBoxes {
 	 * @param int $max of records to load
 	 * @return void
 	 */
-	function loadBox() {
+	function loadBox()
+	{
 		global $conf, $user, $langs, $db;
 
 		$this->max = $max;
@@ -86,8 +89,7 @@ class box_agefodd_preferedtraining extends ModeleBoxes {
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
-			foreach($agf->lines as $key=>$line) {
-
+			foreach ($agf->lines as $key=>$line) {
 				$this->info_box_contents[$key][0] = array(
 						'td' => 'align="left"',
 						'url' => (dol_buildpath('/agefodd/training/card.php', 1) . '?id='.$line->id.'&mainmenu=agefodd'),
@@ -112,9 +114,10 @@ class box_agefodd_preferedtraining extends ModeleBoxes {
 	 * @param array $head with properties of box title
 	 * @param array $contents with properties of box lines
 	 * @param integer $nooutput nooutput
-	 * @return void
+	 * @return string
 	 */
-	function showBox($head = null, $contents = null, $nooutput = 0) {
-		parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
+	function showBox($head = null, $contents = null, $nooutput = 0)
+	{
+		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

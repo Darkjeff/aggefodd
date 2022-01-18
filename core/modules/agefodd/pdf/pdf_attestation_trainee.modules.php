@@ -27,12 +27,17 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
+dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
+require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
-class pdf_attestation_trainee extends ModelePDFAgefodd {
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+/**
+ * Put here description of your class
+ */
+class pdf_attestation_trainee extends ModelePDFAgefodd
+{
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -47,7 +52,8 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 	 * \brief		Constructor
 	 * \param		db		Database handler
 	 */
-	function __construct($db) {
+	function __construct($db)
+	{
 		global $conf, $langs, $mysoc;
 
 		$this->db = $db;
@@ -92,7 +98,8 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 	 * file		Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $session_trainee_id) {
+	function write_file($agf, $outputlangs, $file, $session_trainee_id)
+	{
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -144,19 +151,35 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 			$pdf->SetAutoPageBreak(1, 0);
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_L))
-			{
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_L)) {
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_L);
 				$tplidx = $pdf->importPage(1);
 			}
 
-			// Récuperation des objectifs pedagogique de la formation
-			$agf_op = new Formation($this->db);
-			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
 
-			// Récupération de la duree de la formation
-			$agf_duree = new Formation($this->db);
-			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
+			/** SWITCH OBJECT FORMATION - SESSION_CATALOGUE ---------------------------------  */
+			$agf_sessioncal = new SessionCatalogue($this->db); // formation clone
+			$ret = $agf_sessioncal->fetchSessionCatalogue($id); // par default ça fetch le clone
+
+			if (empty($ret)) { // pas de clone
+				$agf_session = new Agsession($this->db);
+				$retSession = $agf_session->fetch($id);
+
+				if ($retSession > 0 ) {
+					$agf_op = new Formation($this->db);
+					$agf_op->fetch($agf_session->fk_formation_catalogue);
+					$agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
+				} else {
+					$agf_op = new Formation($this->db); // prevent error on foreach
+					setEventMessage('errorloadSession', 'errors');
+				}
+			} else {
+				$agf_op = new SessionCatalogue($this->db);
+				$agf_op->fetch($ret);
+				$agf_op->fetch_objpeda_per_session_catalogue($ret);
+			}
+			/** ---------------------------------  */
+
 
 			// New page
 			$pdf->AddPage();
@@ -208,11 +231,10 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 				$dir = $conf->societe->multidir_output [$staticsoc->entity] . '/' . $staticsoc->id . '/logos/';
 				if (! empty($staticsoc->logo)) {
 					$logo_client = $dir . $staticsoc->logo;
-					if (file_exists($logo_client) && is_readable($logo_client)){
+					if (file_exists($logo_client) && is_readable($logo_client)) {
 						$heightlogo = pdf_getHeightForLogo($logo_client);
 						$pdf->Image($logo_client, $this->page_largeur - $this->marge_gauche - $this->marge_droite - ( $width_logo * 1.5), $this->marge_haute, $heightlogo);
 					}
-
 				}
 			}
 
@@ -277,7 +299,6 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 			$newY = $pdf->GetY();
 			// Bloc objectifs pedagogiques
 			if (count($agf_op->lines) > 0) {
-
 				$this->str = $outputlangs->transnoentities('AgfPDFAttestation7');
 				$newY = $newY + 10;
 				$pdf->SetXY($this->marge_gauche + 1, $newY);
@@ -285,15 +306,14 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', 12);
 				$hauteur = 0;
-				for($y = 0; $y < count($agf_op->lines); $y ++) {
+				for ($y = 0; $y < count($agf_op->lines); $y ++) {
 					$newY = $pdf->GetY() + 1;
 					$pdf->SetXY($this->marge_gauche + 62, $pdf->GetY());
 					$width = 160;
 					$StringWidth = $pdf->GetStringWidth($agf_op->lines [$y]->intitule);
 					if ($StringWidth > $width)
 						$nblines = ceil($StringWidth / $width);
-					else
-						$nblines = 1;
+					else $nblines = 1;
 					$hauteur = $nblines * 5;
 					$pdf->Cell(10, 5, $agf_op->lines [$y]->priorite . '. ', 0, 0, 'R', 0);
 					$pdf->MultiCell($width, 0, $outputlangs->transnoentities($agf_op->lines [$y]->intitule), 0, 'L', 0);
@@ -350,15 +370,14 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager))
-			{
+			if (! is_object($hookmanager)) {
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
 
 			return 1; // Pas d'erreur
@@ -377,7 +396,8 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs		Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
+	{
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -392,7 +412,8 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 	 * \param		outputlang		Object lang for output
 	 * \remarks	Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs) {
+	function _pagefoot(&$pdf, $object, $outputlangs)
+	{
 		global $conf, $langs, $mysoc;
 
 		if (empty($conf->global->AGF_HIDE_DOC_FOOTER)) {
@@ -402,7 +423,7 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 				$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot10') . ' ' . $conf->global->AGF_ORGANISME_PREF;
 			}
 			if (! empty($conf->global->AGF_ORGANISME_NUM)) {
-				$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot11',$conf->global->AGF_ORGANISME_NUM);
+				$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot11', $conf->global->AGF_ORGANISME_NUM);
 			}
 
 			$pdf->SetXY($this->marge_gauche + 1, $this->page_hauteur - $this->marge_basse);

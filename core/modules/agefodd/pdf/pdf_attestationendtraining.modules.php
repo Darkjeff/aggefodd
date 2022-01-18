@@ -28,13 +28,18 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
+dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
+require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
-class pdf_attestationendtraining extends ModelePDFAgefodd {
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+/**
+ * Put here description of your class
+ */
+class pdf_attestationendtraining extends ModelePDFAgefodd
+{
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -49,7 +54,8 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 	 * \brief Constructor
 	 * \param db Database handler
 	 */
-	function __construct($db) {
+	function __construct($db)
+	{
 		global $conf, $langs, $mysoc;
 
 		$this->db = $db;
@@ -101,7 +107,8 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 	 * file Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $socid) {
+	function write_file($agf, $outputlangs, $file, $socid)
+	{
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -147,19 +154,34 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 			$pdf->SetAutoPageBreak(1, 0);
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
-			{
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $pdf->importPage(1);
 			}
 
-			// Récuperation des objectifs pedagogique de la formation
-			$agf_op = new Formation($this->db);
-			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
+			/** SWITCH OBJECT FORMATION - SESSION_CATALOGUE ---------------------------------  */
+			$agf_sessioncal = new SessionCatalogue($this->db); // formation clone
+			$ret = $agf_sessioncal->fetchSessionCatalogue($id); // par default ça fetch le clone
 
-			// Récupération de la duree de la formation
-			$agf_duree = new Formation($this->db);
-			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
+			if (empty($ret)) { // pas de clone
+				$agf_session = new Agsession($this->db);
+				$retSession = $agf_session->fetch($id);
+
+				if ($retSession > 0 ) {
+					$agf_op = new Formation($this->db);
+					$agf_op->fetch($agf_session->fk_formation_catalogue);
+					$agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
+				} else {
+					$agf_op = new Formation($this->db); // prevent error on foreach
+					setEventMessage('errorloadSession', 'errors');
+				}
+			} else {
+				$agf_op = new SessionCatalogue($this->db);
+				$agf_op->fetch($ret);
+				$agf_op->fetch_objpeda_per_session_catalogue($ret);
+			}
+			/** ---------------------------------  */
+
 
 			// Recuperation des stagiaires participant à la formation
 			$agf2 = new Agefodd_session_stagiaire($this->db);
@@ -176,9 +198,8 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 			$heightforfooter = $this->marge_basse + 8;
 			if ($result) {
 				$trainee_output = 0;
-				for($i = 0; $i < count($agf2->lines); $i ++) {
+				for ($i = 0; $i < count($agf2->lines); $i ++) {
 					if (($agf2->lines[$i]->status_in_session == 3 || $agf2->lines[$i]->status_in_session == 4)) {
-
 						$trainee_output ++;
 						// New page
 						$pdf->AddPage();
@@ -272,7 +293,6 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 
 						$tab_top = $newY + 10;
 						if (count($agf_op->lines) > 0) {
-
 							$pdf->SetFont(pdf_getPDFFont($outputlangs), 'U', 12);
 							$this->str = $outputlangs->transnoentities('AgfPDFAttestationEndEval');
 							$newY = $pdf->GetY() + 5;
@@ -287,10 +307,9 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 						$newY = $pdf->GetY();
 						// Bloc objectifs pedagogiques
 						if (count($agf_op->lines) > 0) {
-
 							$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', 10);
 							$hauteur = 0;
-							for($y = 0; $y < count($agf_op->lines); $y ++) {
+							for ($y = 0; $y < count($agf_op->lines); $y ++) {
 								$strobj = $agf_op->lines[$y]->priorite . '. ' . $agf_op->lines[$y]->intitule;
 								// $newY++;
 								$pdf->SetXY($this->marge_gauche, $newY);
@@ -298,8 +317,7 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 								$StringWidth = $pdf->GetStringWidth($strobj);
 								if ($StringWidth > $width)
 									$nblines = ceil($StringWidth / $width);
-								else
-									$nblines = 1;
+								else $nblines = 1;
 
 								$beforeY = $pdf->GetY();
 								$pdf->MultiCell($width, 0, $outputlangs->transnoentities($strobj), 0, 'L', 0);
@@ -324,7 +342,9 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 						}
 
 						// Lieu
-						$newY = $pdf->GetY() + 10;
+						// GetY match with the last "X" Position in the goal table
+						// $height_obj match with the last table line height
+						$newY = $pdf->GetY() + $height_obj;
 						$pdf->SetFont(pdf_getPDFFont($outputlangs), 'U', 12);
 						$this->str = $outputlangs->transnoentities('Lieu :');
 						$pdf->SetXY($this->marge_gauche + 1, $newY);
@@ -357,12 +377,17 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 						$pdf->SetXY($this->page_largeur - $this->marge_gauche - $this->marge_droite - 55, $newY);
 						$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
 						// Formateur
+						/* Tous les autres documents utilise le representant et pas le formateur en signature ...
+						 * Remise en conformité du document
+						 *
 						$trainer_arr = array ();
 						foreach ( $agf_session_trainer->lines as $trainer ) {
 							$trainer_arr[] = $trainer->firstname . " " . $trainer->lastname;
 						}
 						$trainer_str = implode("\n", $trainer_arr);
-						$pdf->MultiCell(80, 0, $outputlangs->transnoentities('AgfTrainerPDF') . ':' . "\n" . $trainer_str, 0, 'L', 0);
+						$pdf->MultiCell(80, 0, $outputlangs->transnoentities('AgfTrainerPDF') . ':' . "\n" . $trainer_str, 0, 'L', 0);*/
+						$trainer_str = $conf->global->AGF_ORGANISME_REPRESENTANT;
+						$pdf->MultiCell(80, 0, $outputlangs->transnoentities('AgfRepresant') . ':' . "\n" . $trainer_str, 0, 'L', 0);
 
 						// Incrustation image tampon
 						$tampon_exitst = 1;
@@ -415,7 +440,7 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 9);
 				$this->str = $outputlangs->transnoentities('AgfOnlyPresentTraineeGetAttestation', $outputlangs->transnoentities('PL_NONE'));
 				$pdf->MultiCell(0, 3, $outputlangs->convToOutputCharset($this->str), 0, 'C'); // Set interline to 3
-				setEventMessage($this->str,'warnings');
+				setEventMessage($this->str, 'warnings');
 			}
 			$pdf->Close();
 			$pdf->Output($file, 'F');
@@ -424,15 +449,14 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager))
-			{
+			if (! is_object($hookmanager)) {
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
 
 			return 1; // Pas d'erreur
@@ -456,7 +480,8 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 	 * @param int $hidebottom Hide bottom bar of array
 	 * @return void
 	 */
-	function _tableau(&$pdf, $tab_top, $tab_height, $nexY, $outputlangs, $hidetop = 0, $hidebottom = 0) {
+	function _tableau(&$pdf, $tab_top, $tab_height, $nexY, $outputlangs, $hidetop = 0, $hidebottom = 0)
+	{
 		global $conf;
 		// $tab_height=80;
 		$default_font_size = pdf_getPDFFontSize($outputlangs);
@@ -468,7 +493,7 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 		$this->printRect($pdf, $this->marge_gauche, $tab_top, $this->page_largeur - $this->marge_gauche - $this->marge_droite, $tab_height, $hidetop, $hidebottom); // Rect prend une longueur en 3eme param et 4eme param
 
 		// Objectifs (Objectif Peda)
-		                                                                                                                                                       // $pdf->line($this->marge_gauche, $tab_top+6, $this->page_largeur-$this->marge_droite, $tab_top+6); // line prend une position y en 2eme param et 4eme param
+																																							   // $pdf->line($this->marge_gauche, $tab_top+6, $this->page_largeur-$this->marge_droite, $tab_top+6); // line prend une position y en 2eme param et 4eme param
 		$pdf->SetXY($this->posxdesc - 1, $tab_top + 1);
 		$pdf->MultiCell(108, 2, $outputlangs->transnoentities("AgfObjectifs"), '', 'L');
 
@@ -500,7 +525,8 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
+	{
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -611,7 +637,8 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 	 * \param outputlang Object lang for output
 	 * \remarks Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs) {
+	function _pagefoot(&$pdf, $object, $outputlangs)
+	{
 		$pdf->SetDrawColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
 		$pdf->SetTextColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
 		return pdf_agfpagefoot($pdf, $outputlangs, '', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, 1, $hidefreetext);

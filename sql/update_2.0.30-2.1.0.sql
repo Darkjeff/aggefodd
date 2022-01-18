@@ -2,15 +2,15 @@
 CREATE TABLE IF NOT EXISTS llx_agefodd_training_admlevel (
   rowid integer NOT NULL auto_increment PRIMARY KEY,
   fk_agefodd_training_admlevel integer NOT NULL default '0',
-  fk_training integer  NOT NULL,
+  fk_training integer  NOT NULL default 0,
   level_rank integer NOT NULL default 0,
   fk_parent_level integer default 0,
-  indice integer NOT NULL,
-  intitule varchar(150) NOT NULL,
-  delais_alerte integer NOT NULL,
-  fk_user_author integer NOT NULL,
+  indice integer NOT NULL default 0,
+  intitule varchar(150) NOT NULL default '',
+  delais_alerte integer NOT NULL default 0,
+  fk_user_author integer NOT NULL default 0,
   datec datetime NOT NULL,
-  fk_user_mod integer NOT NULL,
+  fk_user_mod integer NOT NULL default 0,
   tms timestamp NOT NULL
 ) ENGINE=InnoDB;
 
@@ -28,8 +28,8 @@ UPDATE llx_agefodd_training_admlevel as ori, llx_agefodd_training_admlevel as up
 ALTER TABLE llx_agefodd_stagiaire ADD COLUMN import_key varchar(14);
 ALTER TABLE llx_agefodd_stagiaire_certif ADD COLUMN import_key varchar(14);
 ALTER TABLE llx_agefodd_session_stagiaire ADD COLUMN import_key varchar(14);
-ALTER TABLE llx_agefodd_stagiaire ADD COLUMN date_birth datetime default NULL AFTER mail;
-ALTER TABLE llx_agefodd_stagiaire ADD COLUMN place_birth varchar(100) default NULL AFTER date_birth;
+ALTER TABLE llx_agefodd_stagiaire ADD COLUMN date_birth datetime default NULL;
+ALTER TABLE llx_agefodd_stagiaire ADD COLUMN place_birth varchar(100) default NULL;
 
 CREATE TABLE IF NOT EXISTS llx_agefodd_certificate_type (
   rowid integer NOT NULL auto_increment PRIMARY KEY,
@@ -53,14 +53,14 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_certif_state (
 
 ALTER TABLE llx_agefodd_stagiaire_type MODIFY datec datetime;
 
-ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN note_private text AFTER fk_user_mod;
-ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN note_public  text AFTER note_private;
-ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN fk_product integer AFTER note_public;
+ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN note_private text;
+ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN note_public  text;
+ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN fk_product integer;
 
-ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN nb_subscribe_min integer NULL AFTER fk_product;
-ALTER TABLE llx_agefodd_session ADD COLUMN nb_subscribe_min integer NULL AFTER force_nb_stagiaire;
+ALTER TABLE llx_agefodd_formation_catalogue ADD COLUMN nb_subscribe_min integer NULL;
+ALTER TABLE llx_agefodd_session ADD COLUMN nb_subscribe_min integer NULL;
 
-ALTER TABLE llx_agefodd_session_stagiaire ADD COLUMN status_in_session integer NULL AFTER fk_agefodd_stagiaire_type;
+ALTER TABLE llx_agefodd_session_stagiaire ADD COLUMN status_in_session integer NULL;
 
 UPDATE llx_agefodd_session SET fk_soc=NULL where fk_soc=-1;
 UPDATE llx_agefodd_session SET nb_stagiaire=(SELECT count(rowid) FROM llx_agefodd_session_stagiaire WHERE fk_session_agefodd = llx_agefodd_session.rowid) WHERE (llx_agefodd_session.force_nb_stagiaire=0 OR llx_agefodd_session.force_nb_stagiaire IS NULL);

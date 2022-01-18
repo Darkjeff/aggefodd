@@ -22,16 +22,16 @@
  * \brief		report part
  * (Agefodd).
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agsession.class.php');
-require_once ('../lib/agefodd.lib.php');
-require_once ('../class/html.formagefodd.class.php');
-require_once ('../class/report_bpf.class.php');
+require_once '../class/agsession.class.php';
+require_once '../lib/agefodd.lib.php';
+require_once '../class/html.formagefodd.class.php';
+require_once '../class/report_bpf.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
@@ -55,7 +55,7 @@ $langs->load("exports");
 
 
 llxHeader('', $langs->trans('AgfMenuReportBPF'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/bpf/';
+$upload_dir = $conf->agefodd->dir_output . '/report/bpf';
 
 
 $form = new Form($db);
@@ -77,9 +77,7 @@ if (! empty($search_date_end)) {
  * Actions
  */
 if ($action == 'builddoc') {
-
 	if (count($filter) > 0 && !empty($filter['search_date_start']) && !empty($filter['search_date_end'])) {
-
 		$outputlangs = $langs;
 		$newlang = $lang_id;
 		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
@@ -105,15 +103,14 @@ if ($action == 'builddoc') {
 		} else {
 			setEventMessage($langs->trans("FileSuccessfullyBuilt"));
 		}
-		if (count($report_bpf->warnings)>0) {
+		if (count($report_bpf->warnings) > 0) {
 			setEventMessage($langs->trans("AgfReportBPFDataInconsistency"), 'errors');
-			setEventMessages(null,$report_bpf->warnings, 'warnings');
+			setEventMessages(null, $report_bpf->warnings, 'warnings');
 		}
 	} else {
 		setEventMessage($langs->trans("AgfRptSelectAtLeastOneCriteria"), 'errors');
 	}
 } elseif ($action == 'remove_file') {
-
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 	$langs->load("other");
@@ -121,8 +118,7 @@ if ($action == 'builddoc') {
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
-	else
-		setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
+	else setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
 	$action = '';
 }
 
@@ -132,7 +128,7 @@ print load_fiche_titre($langs->trans("AgfMenuReportBPF"));
 
 print "<br>\n";
 
-print ' <a href="'.dol_buildpath('/agefodd/report/report_bpf_help.php',1).'">'.$langs->trans('AgfMenuReportBPFHelp').'</a>';
+print ' <a href="'.dol_buildpath('/agefodd/report/report_bpf_help.php', 1).'">'.$langs->trans('AgfMenuReportBPFHelp').'</a>';
 
 
 print "<br>\n";
@@ -144,22 +140,22 @@ print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" name="search_fo
 print '<table class="border" width="100%">';
 
 if (empty($search_date_start)) {
-	$search_date_start = dol_get_first_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'),'%Y'));
+	$search_date_start = dol_get_first_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'), '%Y'));
 }
 if (empty($search_date_end)) {
-	$search_date_end= dol_get_last_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'),'%Y'));
+	$search_date_end= dol_get_last_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'), '%Y'));
 }
 
 print '<tr>';
 print '<td>' . $langs->trans('From').'</td>';
 print '<td>';
-print $form->select_date($search_date_start,'search_date_start',0,0,0,'',1,1);
+print $form->select_date($search_date_start, 'search_date_start', 0, 0, 0, '', 1, 1);
 print '</td>';
 print '</tr>';
 print '<tr>';
 print '<td>' . $langs->trans('to').'</td>';
 print '<td>';
-print $form->select_date($search_date_end,'search_date_end',0,0,0,'',1,1);
+print $form->select_date($search_date_end, 'search_date_end', 0, 0, 0, '', 1, 1);
 print '</td>';
 print '</tr>';
 
@@ -201,4 +197,3 @@ print '</form>' . "\n";
 
 llxFooter();
 $db->close();
-

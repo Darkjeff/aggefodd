@@ -22,22 +22,22 @@
  * \ingroup agefodd
  * \brief session of trainee
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once ('../class/agefodd_formateur.class.php');
-require_once ('../lib/agefodd.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php');
-require_once ('../class/agsession.class.php');
-require_once ('../class/agefodd_session_formateur.class.php');
-require_once ('../class/agefodd_session_formateur_calendrier.class.php');
-require_once ('../class/agefodd_session_calendrier.class.php');
-require_once ('../class/html.formagefodd.class.php');
+require_once '../class/agefodd_formateur.class.php';
+require_once '../lib/agefodd.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
+require_once '../class/agsession.class.php';
+require_once '../class/agefodd_session_formateur.class.php';
+require_once '../class/agefodd_session_formateur_calendrier.class.php';
+require_once '../class/agefodd_session_calendrier.class.php';
+require_once '../class/html.formagefodd.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
-require_once ('../class/agefodd_session_element.class.php');
+require_once '../class/agefodd_session_element.class.php';
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -132,7 +132,7 @@ if (! empty($search_company)) {
 	$filter ['so.nom'] = $search_company;
 	$option .= '&search_company=' . $search_company;
 }
-if (! empty($search_sale)) {
+if (! empty($search_sale) && $search_sale > 0) {
 	$filter ['sale.fk_user_com'] = $search_sale;
 	$option .= '&search_sale=' . $search_sale;
 }
@@ -170,7 +170,6 @@ if ($id) {
 		$head = trainer_prepare_head($agf);
 
 		dol_fiche_head($head, 'sessionlist', $langs->trans("AgfTeacher"), 0, 'user');
-		dol_fiche_end();
 		dol_agefodd_banner_tab($agf, 'id');
 
 		dol_fiche_end();
@@ -277,7 +276,7 @@ if ($id) {
 		$style = 'pair';
 		if (count($agf_session->lines) > 0) {
 			$dureetotal = 0;
-			foreach ( $agf_session->lines as $line ) {
+			foreach ($agf_session->lines as $line) {
 				$duree = 0;
 
 				if ($style != 'class="impair"') {
@@ -313,7 +312,7 @@ if ($id) {
 					$calendrier = new Agefodd_sesscalendar($db);
 					$calendrier->fetch_all($line->rowid);
 					if (is_array($calendrier->lines) && count($calendrier->lines) > 0) {
-						foreach ( $calendrier->lines as $linecal ) {
+						foreach ($calendrier->lines as $linecal) {
 							$duree += ($linecal->heuref - $linecal->heured);
 						}
 					}
@@ -326,7 +325,7 @@ if ($id) {
 					$calendrier = new Agefoddsessionformateurcalendrier($db);
 					$calendrier->fetch_all($line->trainersessionid);
 					if (is_array($calendrier->lines) && count($calendrier->lines) > 0) {
-						foreach ( $calendrier->lines as $linecal ) {
+						foreach ($calendrier->lines as $linecal) {
 							$duree += ($linecal->heuref - $linecal->heured);
 						}
 					}
@@ -340,7 +339,7 @@ if ($id) {
 				print '<td>' . $hour . ':' . $rmin . '</td>';
 
 				// durrée Jours
-				$duration_days = round($duree / 7 / 3600,1);
+				$duration_days = round($duree / 7 / 3600, 1);
 				/*if ($duration_days==0 && $duree!=0) {
 					$duration_days=0.5;
 				}*/
@@ -351,10 +350,8 @@ if ($id) {
 					// Montant trainer HF
 					$agf_fin = new Agefodd_session_element($db);
 					if (!empty($contact->socid)) {
-
 						//TODO manage multi contact
 						if ($conf->companycontacts->enabled) {
-
 							$agf_fin->fk_soc_array=array();
 
 							$sql_innercontact = "SELECT c.fk_soc_source ";
@@ -362,14 +359,12 @@ if ($id) {
 							$sql_innercontact.= " WHERE c.fk_contact=".$contact->id;
 
 							$resql_innercontact = $db->query($sql_innercontact);
-							if ($resql_innercontact)
-							{
+							if ($resql_innercontact) {
 								while ($obj_innercontact = $db->fetch_object($resql_innercontact)) {
 									$agf_fin->fk_soc_array[$obj_innercontact->fk_soc_source]=$obj_innercontact->fk_soc_source;
 								}
-
 							} else {
-								setEventMessage($db->lasterror,'errors');
+								setEventMessage($db->lasterror, 'errors');
 							}
 
 							$agf_fin->fk_soc_array[$contact->socid]=$contact->socid;
@@ -377,11 +372,11 @@ if ($id) {
 
 						$agf_fin->fk_soc=$contact->socid;
 					}
-					$agf_fin->fetch_by_session($line->rowid,$line->trainersessionid);
+					$agf_fin->fetch_by_session($line->rowid, $line->trainersessionid);
 					$sellprice = $agf_fin->trainer_cost_amount;
 
 					// Remove charges of product of category 'frais'
-					$result = $agf_fin->get_charges_amount($line->rowid, '66,67', 'invoice_supplier_trainer',$line->trainersessionid);
+					$result = $agf_fin->get_charges_amount($line->rowid, '66,67', 'invoice_supplier_trainer', $line->trainersessionid);
 					if (! empty($result) && $result != - 1) {
 						$sellprice -= $result;
 					}

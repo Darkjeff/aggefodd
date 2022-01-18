@@ -22,8 +22,8 @@
  * \ingroup agefodd
  * \brief File of class to generate report for agefodd
  */
-require_once ('agefodd_export_excel.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
+require_once 'agefodd_export_excel.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
 /**
  * Class to build commercial report
@@ -99,21 +99,17 @@ class ReportCommercial extends AgefoddExportExcel
 	{
 		dol_syslog(get_class($this) . "::write_filter ");
 		// Create a format for the column headings
-		try
-		{
+		try {
 			// Manage filter
-			if (count($filter) > 0)
-			{
-				foreach ( $this->sheet_array as $keysheet => $sheet )
-				{
+			if (count($filter) > 0) {
+				foreach ($this->sheet_array as $keysheet => $sheet) {
 					$this->workbook->setActiveSheetIndex($keysheet);
 
-					foreach ( $filter as $key => $value )
-					{
+					foreach ($filter as $key => $value) {
 						$filterName = '';
 						$filterValue = '';
 
-						switch($key) {
+						switch ($key) {
 							case 'startyear':
 								$filterName = $this->outputlangs->transnoentities('AgfReportCommercialBaseYear');
 								$filterValue = $value;
@@ -162,20 +158,17 @@ class ReportCommercial extends AgefoddExportExcel
 								$TValues = array();
 
 								// Client
-								if(in_array(1, $value))
-								{
+								if (in_array(1, $value)) {
 									$TValues[] = 'C';
 								}
 
 								// Prospect
-								if(in_array(2, $value))
-								{
+								if (in_array(2, $value)) {
 									$TValues[] = 'P';
 								}
 
 								// Client/Prospect
-								if(in_array(3, $value))
-								{
+								if (in_array(3, $value)) {
 									$TValues[] = 'CP';
 								}
 
@@ -194,8 +187,7 @@ class ReportCommercial extends AgefoddExportExcel
 								$filterName = $this->outputlangs->transnoentities('AgfReportCommercialDetail');
 						}
 
-						if(! empty($filterName))
-						{
+						if (! empty($filterName)) {
 							$this->workbook->getActiveSheet()->setCellValueByColumnAndRow(1, $this->row[$keysheet], $filterName);
 							$this->workbook->getActiveSheet()->setCellValueByColumnAndRow(2, $this->row[$keysheet], $filterValue);
 							$this->row[$keysheet]++;
@@ -203,9 +195,7 @@ class ReportCommercial extends AgefoddExportExcel
 					}
 				}
 			}
-		}
-		catch ( Exception $e )
-		{
+		} catch ( Exception $e ) {
 			$this->error = $e->getMessage();
 			return - 1;
 		}
@@ -224,12 +214,9 @@ class ReportCommercial extends AgefoddExportExcel
 	{
 		$str_sub_name = '';
 
-		if (count($filter) > 0)
-		{
-			foreach ( $filter as $key => $value )
-			{
-				switch($key)
-				{
+		if (count($filter) > 0) {
+			foreach ($filter as $key => $value) {
+				switch ($key) {
 					case 'startyear':
 						$str_sub_name .= '-' . $this->outputlangs->transnoentities('Year') . $value;
 						break;
@@ -278,20 +265,17 @@ class ReportCommercial extends AgefoddExportExcel
 						$TValues = array();
 
 						// Client
-						if(in_array(1, $value))
-						{
+						if (in_array(1, $value)) {
 							$TValues[] = 'C';
 						}
 
 						// Prospect
-						if(in_array(2, $value))
-						{
+						if (in_array(2, $value)) {
 							$TValues[] = 'P';
 						}
 
 						// Client/Prospect
-						if(in_array(3, $value))
-						{
+						if (in_array(3, $value)) {
 							$TValues[] = 'CP';
 						}
 
@@ -340,10 +324,9 @@ class ReportCommercial extends AgefoddExportExcel
 		$this->keywords = $this->outputlangs->transnoentities('AgfMenuReportCommercial');
 
 
-		$this->year_to_report_array = array((int)$filter['startyear']);
+		$this->year_to_report_array = array((int) $filter['startyear']);
 
-		for($i = 1; $i < $filter['nbyears']; $i++)
-		{
+		for ($i = 1; $i < $filter['nbyears']; $i++) {
 			$this->year_to_report_array[] = $filter['startyear'] - $i;
 		}
 
@@ -351,7 +334,7 @@ class ReportCommercial extends AgefoddExportExcel
 		$result = $this->fetch_data($filter);
 		if ($this->debug) {
 			print '<table>';
-			foreach( $this->TFacture as $fid => $datadedug) {
+			foreach ($this->TFacture as $fid => $datadedug) {
 				print $datadedug;
 			}
 			print '</table>';
@@ -368,7 +351,6 @@ class ReportCommercial extends AgefoddExportExcel
 		// Construct header (column name) with year array fill in fetch_ca method
 		$array_column_header = array ();
 		if (count($this->year_to_report_array) > 0) {
-
 			$array_column_header[0][1] = array (
 				'type' => 'text',
 				'title' => 'Société - Code - Client/Prospect - Maison-mère' // TODO translate
@@ -380,7 +362,7 @@ class ReportCommercial extends AgefoddExportExcel
 			);
 
 			$y=0;
-			foreach ( $this->year_to_report_array as $year_todo ) {
+			foreach ($this->year_to_report_array as $year_todo) {
 				$array_column_header[0][3+$y] = array (
 					'type' => 'number',
 					'title' => $year_todo
@@ -394,8 +376,7 @@ class ReportCommercial extends AgefoddExportExcel
 			);
 		}
 
-		if (count($this->year_to_report_array) > 0)
-		{
+		if (count($this->year_to_report_array) > 0) {
 			$this->setArrayColumnHeader($array_column_header);
 
 			$result = $this->write_header();
@@ -406,26 +387,21 @@ class ReportCommercial extends AgefoddExportExcel
 
 			$TTotal = array_fill(1, count($this->year_to_report_array) + 1, 0);
 
-			foreach($this->TData as $TDataLine)
-			{
+			foreach ($this->TData as $TDataLine) {
 				$fill = '';
 
-				if($TDataLine['isParentCompany'])
-				{
+				if ($TDataLine['isParentCompany']) {
 					$fill = '9fc5e8';
 				}
 
-				if($TDataLine['isStandaloneCompany'])
-				{
+				if ($TDataLine['isStandaloneCompany']) {
 					$fill = 'd9d9d9';
 				}
 
 				$total = 0;
 
-				foreach($TDataLine['row'] as $index => $value)
-				{
-					if($index < 3)
-					{
+				foreach ($TDataLine['row'] as $index => $value) {
+					if ($index < 3) {
 						continue;
 					}
 
@@ -440,8 +416,7 @@ class ReportCommercial extends AgefoddExportExcel
 				$TTotal[count($this->year_to_report_array)+1] += $total;
 
 				$result = $this->write_line($TDataLine['row'], 0, $fill);
-				if ($result < 0)
-				{
+				if ($result < 0) {
 					return $result;
 				}
 			}
@@ -451,8 +426,7 @@ class ReportCommercial extends AgefoddExportExcel
 			$TTotalRow = array_merge(array('TOTAUX', ''), $TTotal);
 
 			$result = $this->write_line($TTotalRow);
-			if ($result < 0)
-			{
+			if ($result < 0) {
 				return $result;
 			}
 		}
@@ -471,16 +445,13 @@ class ReportCommercial extends AgefoddExportExcel
 	public function fetch_data($filter)
 	{
 		$TCompanies = $this->fetch_companies($filter);
-		if($TCompanies < 0)
-		{
+		if ($TCompanies < 0) {
 			return -1;
 		}
 
-		foreach($TCompanies as $company)
-		{
+		foreach ($TCompanies as $company) {
 			$result = $this->fetch_company_data($company, $filter);
-			if($result < 0)
-			{
+			if ($result < 0) {
 				return -1;
 			}
 		}
@@ -495,17 +466,14 @@ class ReportCommercial extends AgefoddExportExcel
 				FROM '  . MAIN_DB_PREFIX . 'societe s
 				LEFT JOIN ' . MAIN_DB_PREFIX . 'societe parent ON (parent.rowid = s.parent)
 				LEFT JOIN ' . MAIN_DB_PREFIX . 'societe_commerciaux sc ON (sc.fk_soc = s.rowid)
-				WHERE s.entity = ' . getEntity('societe').'
+				WHERE s.entity in ( ' . getEntity('societe').' )
 				AND COALESCE(parent.rowid, 0) = ' . $parentID. '
 				AND s.fk_typent != 103';
 
 		// On n'applique les filtres que sur la maison-mère, sauf client/prospect
-		if(empty($parentID))
-		{
-			if (! empty($filter['soc.rowid']))
-			{
-				if (! is_array($filter['soc.rowid']))
-				{
+		if (empty($parentID)) {
+			if (! empty($filter['soc.rowid'])) {
+				if (! is_array($filter['soc.rowid'])) {
 					$filter['soc.rowid'] = array($filter['soc.rowid']);
 				}
 
@@ -513,27 +481,22 @@ class ReportCommercial extends AgefoddExportExcel
 				AND s.rowid IN (' . implode(', ', $filter['soc.rowid']) . ')';
 			}
 
-			if (! empty($filter['sale.fk_user']))
-			{
+			if (! empty($filter['sale.fk_user'])) {
 				$sql .= '
 				AND sc.fk_user = ' . $filter['sale.fk_user'];
 			}
 
-			if (! empty($filter['s.active']))
-			{
+			if (! empty($filter['s.active'])) {
 				$sql .= '
 				AND s.status = 1';
 			}
 
-			if (! empty($filter['s.created_during_selected_period']))
-			{
+			if (! empty($filter['s.created_during_selected_period'])) {
 				$sql .= '
 				AND s.datec <= "' . $filter['startyear'] . '"
 				AND s.datec > "' . ($filter['startyear'] - $filter['nbyears']) . '"';
 			}
-		}
-		else
-		{
+		} else {
 			$sql .= '
 				AND s.client IN (' . implode(', ', $filter['s.client']) . ')';
 		}
@@ -545,8 +508,7 @@ class ReportCommercial extends AgefoddExportExcel
 
 		$resql = $this->db->query($sql);
 
-		if(! $resql)
-		{
+		if (! $resql) {
 			$this->error = $this->db->lasterror();
 			return -1;
 		}
@@ -555,13 +517,11 @@ class ReportCommercial extends AgefoddExportExcel
 
 		$num = $this->db->num_rows($resql);
 
-		for($i = 0; $i < $num ; $i++)
-		{
+		for ($i = 0; $i < $num ; $i++) {
 			$companystatic = new Societe($this->db);
 			$objp = $this->db->fetch_object($resql);
 			$companystatic->id = $objp->rowid;
-			foreach(get_object_vars($objp) as $key => $value)
-			{
+			foreach (get_object_vars($objp) as $key => $value) {
 				$companystatic->{ $key } = $value;
 			}
 
@@ -581,13 +541,11 @@ class ReportCommercial extends AgefoddExportExcel
 		// Company name
 
 		$companyName = $societe->nom;
-		if(! empty($societe->code_client))
-		{
+		if (! empty($societe->code_client)) {
 			$companyName .= ' - ' . $societe->code_client;
 		}
 
-		switch($societe->client)
-		{
+		switch ($societe->client) {
 			case 1: // Client
 				$companyName .= ' - C';
 				break;
@@ -609,10 +567,8 @@ class ReportCommercial extends AgefoddExportExcel
 
 		$commercial_id = $TSalesRep[0]['id'];
 
-		if($commercial_id > 0)
-		{
-			if(empty($this->TCache['salesrep'][$commercial_id]))
-			{
+		if ($commercial_id > 0) {
+			if (empty($this->TCache['salesrep'][$commercial_id])) {
 				$commercial = new User($this->db);
 				$commercial->fetch($commercial_id);
 
@@ -620,17 +576,14 @@ class ReportCommercial extends AgefoddExportExcel
 
 				$TNameComponents = preg_split('/[\s+|\-]/', $commercialName);
 
-				foreach ($TNameComponents as $name)
-				{
+				foreach ($TNameComponents as $name) {
 					$salesrepInitials .= strtoupper(substr($name, 0, 1));
 				}
 
 				$commercial->_initials = $salesrepInitials;
 
 				$this->TCache['salesrep'][$commercial_id] = $commercial;
-			}
-			else
-			{
+			} else {
 				$commercial = $this->TCache['salesrep'][$commercial_id];
 			}
 
@@ -640,14 +593,12 @@ class ReportCommercial extends AgefoddExportExcel
 		//
 		$TChildren = $this->fetch_companies($filter, $societe->rowid);
 
-		if($TChildren < 0)
-		{
+		if ($TChildren < 0) {
 			return -1;
 		}
 
 
-		if(empty($societe->parent) && ! empty($TChildren))
-		{
+		if (empty($societe->parent) && ! empty($TChildren)) {
 			$companyName .= ' - M';
 		}
 
@@ -655,18 +606,15 @@ class ReportCommercial extends AgefoddExportExcel
 		$TDataRow[2] = $salesrepInitials;
 
 		$result = $this->fetch_company_ca_data($TDataRow, $societe->rowid, $filter);
-		if($result < 0)
-		{
+		if ($result < 0) {
 			return -1;
 		}
 
-		if(empty($societe->parent))
-		{
+		if (empty($societe->parent)) {
 			$TDataRowParent = $TDataRow;
 		}
 
-		if(! empty($filter['detail']))
-		{
+		if (! empty($filter['detail'])) {
 			$this->TData[] = array(
 				'isParentCompany' => empty($societe->parent) && ! empty($TChildren)
 				, 'isStandaloneCompany' => empty($societe->parent) && empty($TChildren)
@@ -675,31 +623,23 @@ class ReportCommercial extends AgefoddExportExcel
 		}
 
 
-		foreach ($TChildren as $child)
-		{
+		foreach ($TChildren as $child) {
 			$return = $this->fetch_company_data($child, $filter, $TDataRowParent);
-			if($return < 0)
-			{
+			if ($return < 0) {
 				return -1;
 			}
 		}
 
-		if(empty($filter['detail']))
-		{
-			if(empty($societe->parent))
-			{
+		if (empty($filter['detail'])) {
+			if (empty($societe->parent)) {
 				$this->TData[] = array(
 					'isParentCompany' => empty($societe->parent) && ! empty($TChildren)
 					, 'isStandaloneCompany' => empty($societe->parent) && empty($TChildren)
 					, 'row' => $TDataRowParent
 				);
-			}
-			else
-			{
-				foreach($TDataRow as $index => $cell)
-				{
-					if($index < 3)
-					{
+			} else {
+				foreach ($TDataRow as $index => $cell) {
+					if ($index < 3) {
 						continue;
 					}
 
@@ -721,47 +661,38 @@ class ReportCommercial extends AgefoddExportExcel
 		/** @see ReportCommercial::get_ca_data_sql_query() */
 		$TTypesTodo = array();
 
-		if(! isset($filter['s.type_session']) || $filter['s.type_session'] == '0')
-		{
-
-			if($this->subro_extrafield_exists)
-			{
+		if (! isset($filter['s.type_session']) || $filter['s.type_session'] == '0') {
+			if ($this->subro_extrafield_exists) {
 				$TTypesTodo[] = 'noopcaintranoextra';
 				$TTypesTodo[] = 'noopcaintraextra';
 				$TTypesTodo[] = 'opcaintranoextra';
 				$TTypesTodo[] = 'opcaintraextra';
-			}
-			else
-			{
+			} else {
 				$TTypesTodo[] = 'noopcaintra';
 				$TTypesTodo[] = 'opcaintra';
 			}
 		}
 
-		if(! isset($filter['s.type_session']) || $filter['s.type_session'] == '1')
-		{
+		if (! isset($filter['s.type_session']) || $filter['s.type_session'] == '1') {
 			$TTypesTodo[] = 'noopcainter';
 			$TTypesTodo[] = 'opcainter';
 		}
 
-		foreach($TTypesTodo as $type)
-		{
+		foreach ($TTypesTodo as $type) {
 			$sql = $this->get_ca_data_sql_query($type, $companyID, $filter);
 			dol_syslog(get_class($this).'::'.__METHOD__. ' $companyID='.$companyID.' $type='.$type);
 			$resql = $this->db->query($sql);
 
-			if(! $resql)
-			{
+			if (! $resql) {
 				$this->error = $this->db->lasterror();
 				return -1;
 			}
 
 			$num = $this->db->num_rows($resql);
 
-			for($i = 0; $i < $num; $i++)
-			{
+			for ($i = 0; $i < $num; $i++) {
 				$obj = $this->db->fetch_object($resql);
-				if($this->debug && ! array_key_exists($obj->facid, $this->TFacture)) {
+				if ($this->debug && ! array_key_exists($obj->facid, $this->TFacture)) {
 					$this->TFacture[$obj->facid] = '<tr><td>'.$companyID. '</td><td>.'. $type. '</td><td>'. $obj->facid.'<td></tr>';
 					//$this->TFacture[$obj->facid] = $obj->facid;
 				}
@@ -799,8 +730,7 @@ class ReportCommercial extends AgefoddExportExcel
 	{
 		global $conf;
 
-		switch($filter['accounting_date'])
-		{
+		switch ($filter['accounting_date']) {
 			case 'session_start':
 				$dateField = 's.dated';
 				break;
@@ -816,8 +746,7 @@ class ReportCommercial extends AgefoddExportExcel
 
 		$multiplier = 1;
 
-		if($type == 'opcainter' || $type == 'opcaintraextra')
-		{
+		if ($type == 'opcainter' || $type == 'opcaintraextra') {
 			$multiplier = '(
 				SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(CASE WHEN opca.fk_soc_trainee = ' . $companyID . ' THEN 1 ELSE NULL END) / COUNT(*) END
 				FROM ' . MAIN_DB_PREFIX . 'facture f2
@@ -831,8 +760,7 @@ class ReportCommercial extends AgefoddExportExcel
 			)';
 		}
 
-		if($type == 'opcaintranoextra')
-		{
+		if ($type == 'opcaintranoextra') {
 			$multiplier = '(
 				SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(CASE WHEN COALESCE(ags.fk_soc, ass.fk_soc_link) = ' . $companyID . ' THEN 1 ELSE NULL END) / COUNT(*) END
 				FROM ' . MAIN_DB_PREFIX . 'facture f2
@@ -847,8 +775,7 @@ class ReportCommercial extends AgefoddExportExcel
 			)';
 		}
 
-		if($type == 'noopcaintra' || $type == 'noopcaintranoextra')
-		{
+		if ($type == 'noopcaintra' || $type == 'noopcaintranoextra') {
 			$multiplier = '(
 				SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT( CASE WHEN COALESCE(ags.fk_soc, s2.fk_soc, s2.fk_soc_requester, ass.fk_soc_link) = ' . $companyID . ' THEN 1 ELSE NULL END) / COUNT(*) END
 				FROM ' . MAIN_DB_PREFIX . 'facture f2
@@ -871,8 +798,7 @@ class ReportCommercial extends AgefoddExportExcel
 				INNER JOIN ' . MAIN_DB_PREFIX . 'agefodd_session_element se ON (se.fk_element = f.rowid AND se.element_type = "invoice")
 				INNER JOIN ' . MAIN_DB_PREFIX . 'agefodd_session s ON (s.rowid = se.fk_session_agefodd)';
 
-		if($this->subro_extrafield_exists)
-		{
+		if ($this->subro_extrafield_exists) {
 			$sql.= '
 				LEFT JOIN ' . MAIN_DB_PREFIX . 'agefodd_session_extrafields sextra ON (sextra.fk_object = s.rowid)';
 		}
@@ -881,8 +807,7 @@ class ReportCommercial extends AgefoddExportExcel
 				WHERE f.fk_statut > 0
 				AND f.fk_statut < 3';
 
-		if(! empty($conf->global->AGF_CAT_PRODUCT_CHARGES))
-		{
+		if (! empty($conf->global->AGF_CAT_PRODUCT_CHARGES)) {
 			$sql .= '
 				AND COALESCE(fd.fk_product, 0) NOT IN (
 					SELECT fk_product
@@ -894,12 +819,10 @@ class ReportCommercial extends AgefoddExportExcel
 		if (! empty($conf->global->FACTURE_DEPOSITS_ARE_JUST_PAYMENTS))
 			$sql .= '
 				AND f.type IN (0,1,2)';
-		else
-			$sql .= '
+		else $sql .= '
 				AND f.type IN (0,1,2,3)';
 
-		switch ($type)
-		{
+		switch ($type) {
 			case 'noopcaintra':
 
 				$sql.= '
@@ -1049,4 +972,3 @@ class ReportCommercial extends AgefoddExportExcel
 		return $sql;
 	}
 }
-

@@ -22,23 +22,23 @@
  * \ingroup agefodd
  * \brief list of session
  */
-$res = @include ("../../main.inc.php"); // For root directory
+$res = @include "../../main.inc.php"; // For root directory
 if (! $res)
-	$res = @include ("../../../main.inc.php"); // For "custom" directory
+	$res = @include "../../../main.inc.php"; // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once (DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
-require_once ('../class/agsession.class.php');
-require_once ('../class/agefodd_formation_catalogue.class.php');
-require_once ('../class/agefodd_place.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
-require_once ('../lib/agefodd.lib.php');
-require_once ('../class/html.formagefodd.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php');
-require_once ('../class/agefodd_formateur.class.php');
+require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once '../class/agsession.class.php';
+require_once '../class/agefodd_formation_catalogue.class.php';
+require_once '../class/agefodd_place.class.php';
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+require_once '../lib/agefodd.lib.php';
+require_once '../class/html.formagefodd.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php';
+require_once '../class/agefodd_formateur.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
-require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
+require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -47,7 +47,7 @@ if (! $user->rights->agefodd->lire)
 $sortorder = GETPOST('sortorder', 'alpha');
 $sortfield = GETPOST('sortfield', 'alpha');
 $page = GETPOST('page', 'int');
-$limit = GETPOST('limit','int')?GETPOST('limit','int'):$conf->liste_limit;
+$limit = GETPOST('limit', 'int')?GETPOST('limit', 'int'):$conf->liste_limit;
 
 // Search criteria
 $search_trainning_name = GETPOST("search_trainning_name", 'none');
@@ -92,7 +92,7 @@ if (! empty($search_session_ref)) {
 	$filter['s.ref'] = $search_session_ref;
 	$option .= '&search_session_ref=' . $search_session_ref;
 }
-if (! empty($search_sale)) {
+if (! empty($search_sale) && $search_sale > 0) {
 	$filter ['sale.fk_user_com'] = $search_sale;
 	$option .= '&search_sale=' . $search_sale;
 }
@@ -167,18 +167,6 @@ $formother = new FormOther($db);
 $title = $langs->trans("AgfMenuSessListOpe");
 llxHeader('', $title);
 
-if ($training_view && ! empty($search_training_ref)) {
-	$agf = new Formation($db);
-	$result = $agf->fetch('', $search_training_ref);
-
-	$head = training_prepare_head($agf);
-
-	dol_fiche_head($head, 'sessions', $langs->trans("AgfCatalogDetail"), 0, 'label');
-
-	$agf->printFormationInfo();
-	print '</div>';
-}
-
 if ($site_view) {
 	$agf = new Agefodd_place($db);
 	$result = $agf->fetch($search_site);
@@ -220,7 +208,7 @@ if ($resql != - 1) {
 		print '<input type="hidden" name="limit" value="' . $limit . '"/>';
 	}
 
-	print_barre_liste($title, $page, $_SERVER ['PHP_SELF'], $option, $sortfield, $sortorder, '', $num, $nbtotalofrecords,'title_generic.png', 0, '', '', $limit);
+	print_barre_liste($title, $page, $_SERVER ['PHP_SELF'], $option, $sortfield, $sortorder, '', $num, $nbtotalofrecords, 'title_generic.png', 0, '', '', $limit);
 
 	// If the user can view prospects other than his'
 	if ($user->rights->societe->client->voir || $socid) {
@@ -322,9 +310,8 @@ if ($resql != - 1) {
 
 
 	$var = true;
-    $oldid = null;
-	foreach ( $agf->lines as $line ) {
-
+	$oldid = null;
+	foreach ($agf->lines as $line) {
 		if ($line->rowid != $oldid) {
 			// Affichage tableau des sessions
 			$var = ! $var;
@@ -384,7 +371,7 @@ if ($resql != - 1) {
 			print '<td>' . $line->morethanzday . '</td>';
 			print '<td>' . $line->task3 . '</td>';
 
-            $line->type_session = intval($line->type_session);
+			$line->type_session = intval($line->type_session);
 
 			print '<td>' . $line->nb_stagiaire . '</td>';
 			print '<td>' . (!empty($line->type_session) ? $langs->trans('AgfFormTypeSessionInter') : $langs->trans('AgfFormTypeSessionIntra')) . '</td>';
@@ -398,7 +385,7 @@ if ($resql != - 1) {
 			print '<td></td>'; // dates
 			print '<td></td>'; // datef
 			print '<td></td>'; // intitule
-			                   // trainer
+							   // trainer
 			print '<td>';
 			$trainer = new Agefodd_teacher($db);
 			if (! empty($line->trainerrowid)) {

@@ -3,28 +3,228 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## Version 5.0.5
- - bug : same tiers historized even if no soc change. 
-   fix : historize function from agefodd_stagiaire_soc_history.php
-         test on soc change    
-          
-        
+## Version 6.18 - Released on *26/11/2021*
+- FIX : the footer of the convention pdf page which was grayed out grayed out all the following pages - *12/01/2020* - 6.18.7
+- FIX : accesibility handicap bool to int on postgres - *20/12/2021* - 6.18.6
+  ERROR:  column "accessibility_handicap" is of type boolean but expression is of type integer at character 2009
+- FIX : Compatibility with external access 1.31 - *20/12/2021* - 6.18.5
+- FIX : Compatibility V15 : ActionComm::getActions($db, ...) is not static anymore - *17/12/2021* - 6.18.4 
+- FIX : PostgreSQL compatibility, remove display width from create table llx_c_formation_nature_action - *14/12/2021* - 6.18.3
+- FIX : From 4.4 to 6.18 littles fixes.. - *06/12/2021* - 6.18.2 
+- FIX : handle non-secable blocks on PDF for training agreement (convention de formation) *2021-11-23* - 6.18.1
+- FIX : Installation system for sql files *19/11/2021* - 6.18.0  
+  Voir procedure d'ajout de table dans le fichier  [README.md](sql/README.md)
+
+## Version 6.17 - Released on *29/10/2021*
+- FIX : the current month's filter was reapplied when navigating to another page and when exporting listincsv - *12/01/2022* - 6.17.5
+- FIX : duree and duree_session used with GETPOST int or GETPOST intcomma if empty - *05/01/2022* - 6.17.4
+- FIX : Installation error missing tables *19/11/2021* - 6.17.3
+- FIX : traduction export cumul hours participant *27/10/2021* - 6.17.2
+- FIX : optimize multicompany handling *27/10/2021* - 6.17.1 (OpenDSI)
+- NEW : PDF generation of trainings from catalog now handle trainings overloaded using
+        sessionCatalogue *08/10/2021* - 6.17.0
+- NEW : Creation of sessionCatalogue object, clone of formation catalogue +
+        Add ability to modify informations of the training on sessions - *29/09/2021* - 6.17.0
+- NEW add participant status for a session
+  - sum of hours spent for a session by a participant *22/10/2021* - 6.17.0
+
+# Version 6.16 - Released on *01/10/2021*
+- FIX: remove some legacy code – *23/10/2021* - 6.16.1
+- NEW uniformize order lines with propal lines in convention PDF - *20/09/2021* - 6.16.0 (OpenDSI)
+- NEW : Better layout of elements on session card & tab on lib - *20/09/2021* - 6.15.0  
+   and remove useless buttons session card  :  
+  - Modify subcribers and subrogation
+  - Modify calendar
+  - Modify Trainer
+
+- NEW : UI modification & edit trainee in view replace img save button by dolibar friendly save button - *20/09/2021* - 6.14.0
+
+# Version 6.12 - Released on *17/09/2021*
+- FIX : Refonte graphique des listes de l'onglet planning par participant d'une session;  - *16-11-2021* - 6.12.10 
+        Affichage feuilles d'émargement pdf, taille des cases de signature;
+        Affichage erroné du statut d'une facture sur l'onglet document par participant d'une session de formation
+- FIX : On trainee in session deletion, delete the hours for this trainee in the session *27-10-2021* - 6.12.9
+- FIX : Add legends to agenda for trainers *21-10-2021* - 6.12.8
+- FIX : Change the notes of the line hour et the notes of the misc line *22-10-2021* - 6.12.7
+- FIX : sql entities management *22/10/2021* 6.12.6
+- FIX  : unavailability at the right place for trainer *15/10/2021* 6.12.5
+- FIX : If a trainee has a status excused or canceled, inputs are darkened on exertal acess -> time slot edition - *12/10/2021* - 6.12.4
+- FIX : Add missing fields in API update period method - *27/09/2021* - 6.12.3
+- FIX : Modification du placement du "Lieu" dans les pdf_attestationendtraining pour que celui ci soit lisible peu importe le cas - *2021-09-23* - 6.12.2
+- FIX : export commercial on session *17/09/2021* 6.12.1  
+  ajout du nom et du prénom du commercial lié à la session dans l'export std dolibarr des sessions 
+- NEW : Add comment on trainee session - *16/09/2021* - 6.12.0
+- NEW : New liste agenda ajax history - 6.11.0  
+  refonte visuelle de la liste agenda. un appel ajax load desormais la liste standard dolibarr avec les filtres correspondant à la session
+- NEW : Triggers on session element object - *16/09/2021* - 6.11.0
+- NEW : change format date liste session - 6.10.0  
+  changement du format date dans les listes des sessions 
+- NEW : change acces to real in same day + trad button update to save - 6.10.0  
+  la possibilité de modifier un creneau lorsque l'on est à j-0 et changement de traduction du bouton modifier vers enregistrer 
+- NEW : double validation on  card time slot - 6.10.0  
+  les formulaires de l'onglet creneau ne sont plus dissossiés, le click sur le bouton enregistrer sauvegarde l'ensemble de la page.
+
+# Version 6.9 - Released on *12/08/2021*
+
+- FIX : Add missing fields in API update period method - *27/09/2021* - 6.9.8
+- FIX : filter month and year doesn't work - *17/09/2021* - 6.9.7
+- FIX : certificat trad - *03/09/2021* - 6.9.6
+- FIX : empty value of the sales representative selector is now -1 instead of ''; all lists/reports with filter on sales
+        representative required fixing - *08/09/2021* - 6.9.5
+- FIX : default value for $this->fk_user_author in create function of agefodd_session_calendrier.class.php - *15/09/2021* - 6.9.4
+- FIX : generate_all in Session - *18/08/2021* - 6.9.3
+- FIX : transnoentities in PDF - *17/08/2021* - 6.9.2
+- FIX : translation key conflict - *16/08/2021* - 6.9.1
+- NEW : add fk_user_author, tms and datec to API agefodd (calendar) get and post | fix global filter on ref session, id session and trainee list - *10/08/2021* - 6.9.0
+
+# Version 6.8 - Released on *06/08/2021*
+
+- FIX : mass generation of certificates of completion - 11/08/2021 - 6.8.3
+- FIX : gives the same behavior for users as for contacts (external access suppliar invoice) - *11/08/2021* - 6.8.2
+- FIX : adapt size of the tampon signature - *06/08/2021* - 6.8.1
+- NEW : Create new PDF model: certification de réalisation (officiel France) - *03/08/2021* - 6.8.0
+- NEW : separate supplier invoices from sessions - *08/27/2021* - 6.7.0
+- NEW : add "note" field on products/services lignes on a bill (external access) - *27/07/2021* - 6.7.0
+- FIX : behaviour changes of js pluggin for traineelist conf between dol9.0 and dol13.0 - *27/07/2021* - 6.6.1
+- FIX : broken tabs and table overflow in EA traineelist - *15/07/2021* - 6.6.1
+- NEW : traineelist table in EA is a dataTable - *15/07/2021* - 6.6.1
+
+
+## Version 6.6
+
+- NEW : list of session trainee in external access + conf to select fields and order of columns - *2021-06-30* - 6.6.0
+- NEW : Nouveau champs "commercial en charge" sur une session *02/07/2021* - 6.5.1
+- NEW : NEW trigger on session trainee update - OpenDsi - *23/06/2021* - 6.5.0
+- FIX : Email format on document trainee before sending by mail - OpenDsi - *23/06/2021* - 6.4.4
+- NEW : add missing hooks *2021-06-21* - 6.4.3
+- FIX : it is now possible to filter the session list by a single date (start / end) *2021-06-21* - 6.4.2
+- FIX : compat v13/14 NOCSRFCHECK & NOTOKENRENEWAL sur interface.php *2021-06-18* - 6.4.1
+- NEW : add nature action field  and autofill. *2021-06-18* - 6.4.0
+- FIX : Missing hours and type column are diplayed. *2021-06-18* - 6.3.2
+- FIX : API for session list returned error if there were no sessions. It now returns an empty set. *2021-06-16* - 6.3.1
+- NEW : Duration on training is now optional if AGF_OPTIONNAL_TRAINING_DURATION is activated *2021-06-09* - 6.3
+- NEW : TK2003-0577 - Qualiopi Accessibilité handicap ajout d'un champ sur formation case à cochée *2021-06-4* - 6.1
+
+- NEW : ajout 3 champs (liste déroulante d'utilisateurs) dans la config (admin)  *2021-06-01* - target -> 6.0
+  - Référent Administratif
+  - Référent Pédagogique
+  - Référent Handicap
+
+- FIX : Requete trop longue + totaux faux
+- FIX : FIX Doublon sur liste - *2021-06-01* - 4.9.23
+- FIX : Sending mail to trainer is broken for in-house trainers - *2021-05-20* - 4.8.27
+- FIX : Calendar color for ongoing session (orange) - *2021-05-20* - 5.1.12
+
+---------------------------------
+
+## Version 5.2 - Préremplissage d'une convention par société
+- FIX : Sql error when we search on session/list_soc.php - *30/11/2021* - 5.2.14
+- FIX : fix getpost for intitule_custo of sessions *2021-11-10* - 5.2.13
+- FIX : Fonction "remove" agsession : suppression des liens de cette session dans la table "agefodd_session_element" - *2021-10-27* - 5.2.12
+- FIX : input type for external access doesn't work on each browser, then we use input type text with defined pattern - *2021-10-11* - 5.2.11
+- FIX : Dolibarr retrocompatibilty V9 - *2021-09-29* - 5.2.10
+- FIX : Empty info on contact training tab  - *2021-09-29* - 5.2.9
+- FIX : Modification du placement du "Lieu" dans les pdf_attestationendtraining pour que celui ci soit lisible peu importe le cas - *2021-09-23* - 5.2.8
+- FIX : Les marge n'apparaissent pas sur certaines pages lorsque la description d'un ou des produits est trop longue - *2021-07-06* - 5.2.7
+- FIX : Add conf 'AGF_CERTIF_ALERT_DATE_NB_MONTHS' to change certificate alert date *25/06/2021* 5.2.6
+- FIX : Modify sql query syntax on CheckDataIntegrity screen to make it work with Postgresql *23/06/2021* 5.2.5
+- FIX : Modify sql query syntax to match with Postgresql *23/06/2021* 5.2.4
+- FIX : ADD unavailability on agenda *03/06/2021* 5.2.3
+- FIX : AgefoddTitleAndCOdeInt splited on 2 lines for preventing overlaping lines on crabe invoice pdf *01/06/2021* 5.2.2
+- FIX : TCPDF_PARSER_ERROR when concatenating PDF files with Agefodd - *2021-05-07* - 4.8.26
+- FIX : Current timeslot deduction in edit mode (#DA020229) - *2021-04-19* - 4.9.15
+- NEW : Conf pour utiliser le préremplissage d'une convention par société - *2021-05-17* - 5.2.0
+
+---------------------------------
+
+## Version 5.1 - Ajout Compatibilité V13 de Dolibarr
+
+- FIX : Cost display on session card and on thirdparty view with "trainee" filter - *2021-09-27* - 5.1.16
+- FIX : Calendar color for ongoing session (orange) - *2021-05-20* - 5.1.12
+- FIX : Cost per trainee calcul soc list *23/06/2021* - 5.1.15
+- FIX : SQL error if we add calendar entry from date to date and we don't set debut hour or end hour *2021-04-20* 5.1.6
+- FIX : parent level not set when we create new administrative task *2021-04-19* - 5.1.5
+
+- FIX : Session status quick edit *19/04/2021* - 5.1.5
+
+- FIX : Compatibility V13 : Box compatibility *06/04/2021* - 5.1.2
+- FIX : conf AGF_ALWAYS_USE_DEFAULT_CONVENTION pour que la dernière convention d'un tiers ne soit pas systématiquement chargée lors de la création d'une nouvelle *2021-04-01* - 5.1.3
+- FIX : MySQL version compatibility : tms have no default value for
+  - class agefodd_formation_catalogue
+  - class agefodd_training_admlevel
+- FIX : Compatibility V13 : Replace contactid to contact_id *17/03/2021* - 5.0.8
+- FIX : Compatibility V13 : Replace SIGNATURE to USER_SIGNATURE *17/03/2021* - 5.0.7
+- FIX : Compatibility V13 : Add token parameter to action add/delete/update *17/03/2021* - 5.0.6
+
 ## Version 5.0
+
+- FIX : Postgresql compatibility - *07/09/2021* - 5.0.21
+- FIX : Sorting the "certificat (carte de credit)" drop-down list alphabetically in the linked documents of a session *25/06/2021* 5.0.20
+- FIX : Add conf 'AGF_CERTIF_ALERT_DATE_NB_MONTHS' to change certificate alert date *25/06/2021* 5.0.19
+- FIX : SQL error if we add calendar entry from date to date and we don't set debut hour or end hour *2021-04-20* 5.0.10
+- FIX : parent level not set when we create new administrative task *2021-04-19* - 5.0.9
+- FIX : conf AGF_ALWAYS_USE_DEFAULT_CONVENTION pour que la dernière convention d'un tiers ne soit pas systématiquement chargée lors de la création d'une nouvelle *2021-04-01* - 5.0.8
+- FIX : same tiers historized even if no soc change *26/06/2021* - 5.0.5
+  historize function from agefodd_stagiaire_soc_history.php
+         test on soc change
+
 - WARNING : The changes may create regressions for external modules with
   classes that extend `pdf_fiche_presence.modules.php`
-- FIX tickets #11916, #11888, #11861 and #12049 : PDF templates for
-  attendance sheets had wrong page break rules leading to orphans/widows
+- FIX tickets #11916, #11888, #11861 and #12049 : *24/12/2021*
+  PDF templates for attendance sheets had wrong page break rules leading to orphans/widows
   and, in some cases, successions of pages containing one single cell
-  overlapping the page break threshold [2020-12-24]
+  overlapping the page break threshold
+
 
 ## Version 4.12
-
+- FIX : training extrafields import handle *2021-12-03* - 4.12.24
+- FIX : green color hidden conf *2021-05-07* - 4.9.12
+- FIX : BPF doublon *2021-05-04* - 4.9.11
+- FIX : Avoid call to fetch_all method with limit set to 1 000 000 in case of MAIN_DISABLE_FULL_SCANLIST activated [2020-04-08]
+- FIX : conf AGF_ALWAYS_USE_DEFAULT_CONVENTION pour que la dernière convention d'un tiers ne soit pas systématiquement chargée lors de la création d'une nouvelle [2021-04-01]
 - FIX : Multicell html in PDF [2020-12-18]
 - FIX : Dol V13 compatibility [2020-12-09]
 - FIX : Fix d'un bug d’affichage de bordure sur le bloc société dans la génération PDF de certaines feuilles d’émargement [2021-03-04]
+- FIX : parent level not set when we create new administrative task [2021-04-19]
 
 ___
 ## OLDER
+
+***** ChangeLog for 4.9 *****
+- FIX : Requete trop longue + totaux faux
+- FIX : FIX Doublon sur liste - *2021-06-01* - 4.9.23
+
+***** ChangeLog for 4.8.26 and above *****
+- FIX : session list no longer filterable unless filtered by sales representative - 2021-08-10* - 4.8.28
+- FIX : Sending mail to trainer is broken for in-house trainers - *2021-05-20* - 4.8.27
+- FIX : TCPDF_PARSER_ERROR when concatenating PDF files with Agefodd - *2021-05-07* - 4.8.26
+- FIX : Current timeslot deduction in edit mode (#DA020229) - *2021-04-19* - 4.9.15
+
+***** ChangeLog for 4.8.26 compared to 4.8.25 *****
+FIX : pagination fonctionnelle sur liste des sessions
+
+***** ChangeLog for 4.8.25 compared to 4.8.24 *****
+FIX : green color hidden conf
+
+***** ChangeLog for 4.9.18 compared to 4.9.17 *****
+FIX : BPF doublon *2021-05-04* - 4.9.18
+
+***** ChangeLog for 4.11.10 compared to 4.11.9 *****
+FIX : parent level not set when we create new administrative task
+
+***** ChangeLog for 4.9.12 compared to 4.9.11 *****
+FIX : Text formating for sites access instructions without wysiwyg
+FIX : HTML 5 form validation for module external access view
+
+***** ChangeLog for 4.8.24 compared to 4.8.23 *****
+FIX : ignore administrative tasks from archived sessions in the agefodd home page counters
+
+***** ChangeLog for 4.8.23 compared to 4.8.22 *****
+FIX : parent level not set when we create new administrative task
+
+***** ChangeLog for 4.4.11 compared to 4.4.12 *****
+FIX : create invoice from session -> keep product type value for invoice line
+
 
 ***** ChangeLog for 3.0.18 compared to 3.0.17 *****
 NEW : Can add image on location

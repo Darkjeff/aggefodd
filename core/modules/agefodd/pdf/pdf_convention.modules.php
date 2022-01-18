@@ -31,11 +31,15 @@ dol_include_once('/agefodd/class/agefodd_convention.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
+require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php');
+require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
+
+/**
+ * Put here description of your class
+ */
 class pdf_convention extends ModelePDFAgefodd
 {
 	var $emetteur; // Objet societe qui emet
@@ -52,7 +56,8 @@ class pdf_convention extends ModelePDFAgefodd
 	 * \brief Constructor
 	 * \param db Database handler
 	 */
-	function __construct($db) {
+	function __construct($db)
+	{
 		global $conf, $langs, $mysoc;
 
 		$langs->load("agefodd@agefodd");
@@ -104,7 +109,8 @@ class pdf_convention extends ModelePDFAgefodd
 	 * file Name of file to generate
 	 * \return int 1=ok, 0=k
 	 */
-	function write_file($agf, $outputlangs, $file, $socid, $courrier) {
+	function write_file($agf, $outputlangs, $file, $socid, $courrier)
+	{
 		global $user, $langs, $conf, $mysoc, $db;
 
 		$default_font_size = pdf_getPDFFontSize($outputlangs);
@@ -299,7 +305,7 @@ class pdf_convention extends ModelePDFAgefodd
 							$wlogo = pdf_getWidthForLogo($logo_client);
 							$X =  ($this->page_largeur / 2) - ($wlogo / 2) ;
 							$Y = $this->marge_haute;
-							$pdf->Image($logo_client,$X ,$Y, $wlogo, $hlogo,'','','',true);
+							$pdf->Image($logo_client, $X, $Y, $wlogo, $hlogo, '', '', '', true);
 						}
 					}
 				}
@@ -372,6 +378,7 @@ class pdf_convention extends ModelePDFAgefodd
 
 				// Pied de page
 				$hauteurpied = $this->_pagefoot($pdf, $agf, $outputlangs);
+				$this->hauteurpied = $hauteurpied;
 
 				/*
 				 * Page 1
@@ -437,25 +444,66 @@ class pdf_convention extends ModelePDFAgefodd
 				$pdf->SetXY($posX, $posY);
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
 				$art = 0;
-				$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv8') . ' ';
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-				$posY += $this->hApresTitreArticle;
 
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv9') . ' ';
-				$this->str .= $outputlangs->transnoentities('AgfPDFConv10');
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+				/**
+				 * @param string $rightTranslationKey Titre du chapitre
+				 * @param string $leftTranslationKey  Par défaut "AgfPDFConv7" qui correspond à "Article"
+				 * @return string
+				 */
+				$funcGetChapterTitle = function ($rightTranslationKey, $leftTranslationKey = 'AgfPDFConv7') use (&$art, $outputlangs) {
+					return
+						$outputlangs->transnoentities($leftTranslationKey)
+						. ' '
+						. ++$art
+						. ' - '
+						. $outputlangs->transnoentities($rightTranslationKey);
+				};
+				/**
+				 * @param string $title   Titre complet du chapitre (y compris le préfixe "Article - ")
+				 * @param string $content Contenu du chapitre (HTML possible)
+				 */
+				$funcPrintChapter = function ($title, $content) use (&$pdf, $outputlangs, &$posY, &$posX, $tplidx, &$agf, $hauteurpied) {
+					/** @var TCPDI $pdf */
+					$pdf->startTransaction();
+					$pdf->SetFont('', '', $this->defaultFontSize);
+					$str = '<h3>' . $title . '</h3>';
+					$pdf->MultiCell(0, 4, $str, 0, 'L', false, 1, '', '', true, 0, true);
+					$posY = $pdf->GetY() + $this->hApresTitreArticle;// + $this->hApresCorpsArticle;
+					$breakMargin = $hauteurpied;
+					if ($posY >= $pdf->getPageHeight() - $hauteurpied - 10) {
+						// rollback, page break, reprint
+						$pdf->rollbackTransaction(true);
+						$pdf->SetAutoPageBreak(0, 0);
+						$this->_pagefoot($pdf, $agf, $outputlangs);
+						$pdf->AddPage(); if (! empty($tplidx)) { $pdf->useTemplate($tplidx); }
+						$this->_pagehead($pdf, $agf, 1, $outputlangs);
+						$pdf->SetAutoPageBreak(1, $breakMargin);
+						//                      $pdf->setPageOrientation('', 1, $hauteurpied);
+						$posY = $this->marge_haute;
+						$posX = $this->marge_gauche;
+						$pdf->SetXY($posX, $posY);
+						$pdf->SetFont('', '', $this->defaultFontSize);
+						$str = '<h3>' . $title . '</h3> ';
+						$pdf->MultiCell(0, 4, $str, 0, 'L', false, 1, '', '', true, 0, true);
+						$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+					} else {
+						$pdf->commitTransaction();
+					}
 
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv11');
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-				$posY += $this->hApresTitreArticle;
 
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+					$pdf->SetXY($posX, $posY);
+					$str = str_replace("\n", '<br>', $outputlangs->convToOutputCharset($content));
+					$pdf->MultiCell(0, 4, $str, 0, 'L', false, 1, '', '', true, 0, true);
+					$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+					$pdf->SetXY($posX, $posY);
+				};
+
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv8');
+				$funcPrintChapter(
+					$chapterTitle,
+					$outputlangs->transnoentities('AgfPDFConv9') . ' ' . $outputlangs->transnoentities('AgfPDFConv10')
+				);
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv11');
 				$this->str = $agf_conv->art1;
 
 				if (preg_match('/Nb_participants/', $this->str)) {
@@ -468,41 +516,24 @@ class pdf_convention extends ModelePDFAgefodd
 						$this->str = str_replace('Nb_participants', $nbstag, $this->str);
 					}
 				}
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+				$funcPrintChapter($chapterTitle, $this->str);
 
 				if (! empty($conf->global->AGF_ADD_PROGRAM_TO_CONV)) {
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-					$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv12');
-					$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-					$posY += $this->hApresTitreArticle;
-
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+					$chapterTitle = $funcGetChapterTitle('AgfPDFConv12');
 					$this->str = $agf_conv->art2;
-					$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-					$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+					$funcPrintChapter($chapterTitle, $agf_conv->art2);
 				}
 
-				$pdf->startTransaction();
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv13');
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-				$posY += $this->hApresTitreArticle;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv13');
 				if (preg_match('/List_Participants/', $agf_conv->art3)) {
 					if (is_array($agf_conv->line_trainee) && count($agf_conv->line_trainee) > 0) {
 						$nbstag = count($agf_conv->line_trainee);
 						$stagiaires_session_conv = new Agefodd_session_stagiaire($this->db);
 
-						foreach ( $agf_conv->line_trainee as $trainee_session_id ) {
+						foreach ($agf_conv->line_trainee as $trainee_session_id) {
 							$result = $stagiaires_session_conv->fetch($trainee_session_id);
 							if ($result < 0) {
-								setEventMessage($stagiaires->error, 'errors');
+								setEventMessage($stagiaires_session_conv->error, 'errors');
 							}
 							$stagiaire_conv = new Agefodd_stagiaire($this->db);
 							$result = $stagiaire_conv->fetch($stagiaires_session_conv->fk_stagiaire);
@@ -518,7 +549,7 @@ class pdf_convention extends ModelePDFAgefodd
 						} else {
 							$trainee_list_str = ' ' . $langs->trans('AgfConvArt3_3') . ' ' . implode(', ', $traine_list);
 						}
-					} else if (count($traine_list) == 0) {
+					} elseif (count($traine_list) == 0) {
 						$trainee_list_str = $langs->transnoentities('AgfConvArt3_5');
 					}
 
@@ -526,190 +557,32 @@ class pdf_convention extends ModelePDFAgefodd
 				} else {
 					$art3 = $agf_conv->art3;
 				}
-				$this->str = $art3;
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+				$funcPrintChapter($chapterTitle, $art3);
 
-				if ($posY > $this->page_hauteur - $hauteurpied) {
-					$pdf = $pdf->rollbackTransaction();
-					$art --;
-					$this->_pagefoot($pdf, $agf, $outputlangs);
-
-					// New page
-					$pdf->AddPage();
-					if (! empty($tplidx)) {
-						$pdf->useTemplate($tplidx);
-					}
-
-					$pagenb ++;
-					$this->_pagehead($pdf, $agf, 1, $outputlangs);
-					$this->defaultFontSize = 9;
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-					$pdf->MultiCell(0, 3, '', 0, 'J'); // Set interline to 3
-					$pdf->SetTextColor($this->colortext[0], $this->colortext[1], $this->colortext[2]);
-					$posX = $this->marge_gauche;
-					$posY = $this->marge_haute;
-
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-					$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv13');
-					$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-					$posY += $this->hApresTitreArticle;
-
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-
-					$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($art3), 0, 'L');
-					$posY = $pdf->GetY() + $this->hApresCorpsArticle;
-				} else {
-
-					// Pied de page
-					$this->_pagefoot($pdf, $agf, $outputlangs);
-
-					/*
-					 * Page 2
-					 */
-
-					// New page
-					$pdf->AddPage();
-					if (! empty($tplidx)) {
-						$pdf->useTemplate($tplidx);
-					}
-
-					$pagenb ++;
-					$this->_pagehead($pdf, $agf, 1, $outputlangs);
-					$this->defaultFontSize = 9;
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-					$pdf->MultiCell(0, 3, '', 0, 'J'); // Set interline to 3
-					$pdf->SetTextColor($this->colortext[0], $this->colortext[1], $this->colortext[2]);
-					$posX = $this->marge_gauche;
-					$posY = $this->marge_haute;
-				}
 
 				if (empty($conf->global->AGF_ALLOW_CONV_WITHOUT_FINNACIAL_DOC)) {
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-					$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . ' - ' . $outputlangs->transnoentities('AgfPDFConv14');
-					$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-					$posY += $this->hApresTitreArticle;
+					$chapterTitle = $funcGetChapterTitle('AgfPDFConv14');
+					$funcPrintChapter($chapterTitle, $agf_conv->art4);
 
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-					$this->str = $agf_conv->art4;
-					$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-					$hauteur = dol_nboflines_bis($this->str, 50) * 3;
-					$posY += $hauteur + 2;
-
-					// Tableau "bon de commande"
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFillColor($this->color1[0], $this->color1[1], $this->color1[2]);
-					$pdf->SetFillColor(210, 210, 210);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize - 1);
-					$header = array(
-							$outputlangs->transnoentities("Designation"),
-							$outputlangs->transnoentities("VAT"),
-							$outputlangs->transnoentities("PriceUHT"),
-							$outputlangs->transnoentities("ReductionShort"),
-							$outputlangs->transnoentities('Qté'),
-							$langs->transnoentities("TotalHT"),
-							$langs->transnoentities("TotalTTC")
-					);
-					$w = array(
-							80,
-							13,
-							19,
-							13,
-							8,
-							20,
-							20
-					);
-					for($i = 0; $i < count($header); $i ++) {
-						$pdf->Cell($w[$i], 6, $header[$i], 1, 0, 'C', 1);
-					}
-					$posY += 6;
-					$fill = false;
-					$total_ht = 0;
-					$total_tva = 0;
-					$total_ttc = 0;
-					for($i = 0; $i < count($agf_comdetails->lines); $i ++) {
-						$pdf->SetXY($posX, $posY);
-						$posY = $pdf->GetY();
-						$pdf->writeHTMLCell($w[0], 0, $posX, $posY, $outputlangs->transnoentities($agf_comdetails->lines[$i]->description), 1, 1);
-						$posY_after = $pdf->GetY();
-						$hauteur = ($posY_after - $posY);
-
-						$pdf->SetXY($posX + $w[0], $posY);
-						$pdf->Cell($w[1], $hauteur, vatrate($agf_comdetails->lines[$i]->tva_tx, 1), 1, 0, 'C', $fill);
-						$pdf->Cell($w[2], $hauteur, price($agf_comdetails->lines[$i]->price, 0, $outputlangs, 1, - 1, 2), 1, 0, 'R', $fill);
-						$pdf->Cell($w[3], $hauteur, dol_print_reduction($agf_comdetails->lines[$i]->remise_percent, $outputlangs), 1, 0, 'R', $fill);
-						$pdf->Cell($w[4], $hauteur, $agf_comdetails->lines[$i]->qty, 1, 0, 'C', $fill);
-						$pdf->Cell($w[5], $hauteur, price($agf_comdetails->lines[$i]->total_ht, 0, $outputlangs), 1, 0, 'R', $fill);
-						$pdf->Cell($w[6], $hauteur, price($agf_comdetails->lines[$i]->total_ttc, 0, $outputlangs), 1, 0, 'R', $fill);
-
-						$pdf->Ln();
-						$posY = $pdf->GetY();
-
-						$total_ht += $agf_comdetails->lines[$i]->total_ht;
-						$total_tva += $agf_comdetails->lines[$i]->total_tva;
-						$total_ttc += $agf_comdetails->lines[$i]->total_ttc;
-					}
-
-					$pdf->SetXY($posX, $posY);
-					$pdf->Cell(array_sum($w), 0, '', 'T');
-					// $posY += 6;
-
-					// total HT
-					$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
-					$pdf->Cell($w[5], 5, $langs->transnoentities("TotalHT"), 0, 0, 'R', 1);
-					$pdf->Cell($w[6], 5, price($total_ht, 0, $outputlangs), 1, 0, 'R');
-					$posY += 6;
-					// total TVA
-					$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
-					$pdf->Cell($w[5], 5, $langs->transnoentities("TotalVAT"), 0, 0, 'R', 1);
-					$pdf->Cell($w[6], 5, price($total_tva, 0, $outputlangs), 1, 0, 'R');
-					$posY += 6;
-					// total TTC
-					$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
-					$pdf->Cell($w[5], 5, $langs->transnoentities("TotalTTC"), 0, 0, 'R', 1);
-					$pdf->Cell($w[6], 5, price($total_ttc, 0, $outputlangs), 1, 0, 'R');
-					$posY += 5;
-					// txt "montant euros"
-					$pdf->SetXY($posX, $posY);
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', $this->defaultFontSize - 2);
-					$pdf->Cell(0, 4, $outputlangs->transnoentities("AmountInCurrency", $outputlangs->transnoentitiesnoconv("Currency" . $conf->currency)), 0, 0, 'R', 0);
-					$posY += $this->hApresCorpsArticle + 4;
+					$posY = $this->printTableauDispositionsFinancieres($pdf, $agf, $outputlangs, $agf_comdetails);
 				}
 
+				$posX = $this->marge_gauche;
 				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv28');
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY += $this->hApresTitreArticle;
 
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-				$this->str = $agf_conv->art9;
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv28');
+				$funcPrintChapter($chapterTitle, $agf_conv->art9);
 
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv15');
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY += $this->hApresTitreArticle;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv15');
 				$this->str = $agf_conv->art5;
 
 				if (preg_match('/List_OPCA/', $this->str)) {
-
 					$TOPCA = array();
 
 					if (! empty($agf->type_session)) { // Session inter-entreprises : OPCA gérés par participant
 						dol_include_once('/agefodd/class/agefodd_opca.class.php');
 
-						foreach ( $agf_conv->line_trainee as $idSessionTrainee ) {
+						foreach ($agf_conv->line_trainee as $idSessionTrainee) {
 							$sessionTrainee = new Agefodd_session_stagiaire($db);
 							$sessionTrainee->fetch($idSessionTrainee);
 
@@ -736,61 +609,17 @@ class pdf_convention extends ModelePDFAgefodd
 					$this->str = str_replace('List_OPCA', $listOPCA, $this->str);
 				}
 
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
+				$funcPrintChapter($chapterTitle, $this->str);
 
-				// Pied de page
-				$this->_pagefoot($pdf, $agf, $outputlangs);
-
-				/*
-				 * Page 3
-				 */
-
-				// New page
-				$pdf->AddPage();
-				if (! empty($tplidx)) {
-					$pdf->useTemplate($tplidx);
-				}
-
-				$pagenb ++;
-				$this->_pagehead($pdf, $agf, 1, $outputlangs);
-
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-				$pdf->MultiCell(0, 3, '', 0, 'J'); // Set interline to 3
-				$pdf->SetTextColor($this->colortext[0], $this->colortext[1], $this->colortext[2]);
-				$posX = $this->marge_gauche;
-				$posY = $this->marge_haute;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv16');
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-				$posY += $this->hApresTitreArticle;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+				$this->forcePageBreak($pdf, $agf, $outputlangs);
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv16');
 				$this->str = $agf_conv->art6;
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'J');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv7') . ' ' . ++ $art . " - " . $outputlangs->transnoentities('AgfPDFConv17');
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-				$posY += $this->hApresTitreArticle;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+				$funcPrintChapter($chapterTitle, $this->str);
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv17');
 				$this->str = $agf_conv->art7;
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize + 3);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv18');
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0);
-				$posY += $this->hApresTitreArticle;
-
+				$funcPrintChapter($chapterTitle, $this->str);
+				//
+				$chapterTitle = $funcGetChapterTitle('AgfPDFConv18');
 				$pdf->SetXY($posX, $posY);
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
 				$literal = array(
@@ -814,55 +643,11 @@ class pdf_convention extends ModelePDFAgefodd
 				$this->str = $outputlangs->transnoentities('AgfPDFConv20') . ' ' . $mysoc->town . ', ' . $date . $outputlangs->transnoentities('AgfPDFConv21') . ' ';
 				$nombre = $pdf->PageNo(); // page suivante = annexe1
 				$this->str .= $outputlangs->transnoentities('AgfPDFConv22') . " " . $literal[$nombre - 1] . " (" . $nombre . ") " . $outputlangs->transnoentities('AgfPDFConv23') . ' ';
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-				$posY = $pdf->GetY() + $this->hApresCorpsArticle;
-
-				// Entete signature
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv24');
-				$pdf->Cell($this->espaceH_dispo / 2, 4, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C');
-
-				$pdf->SetXY($this->milieu, $posY);
-				$this->str = $outputlangs->transnoentities('AgfPDFConv25');
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C');
-
-				$posY += 6;
-
-				// signature de l'organisme de formation
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-				$this->str = $mysoc->name . "\n" . $langs->transnoentities('AgfConvArtSigOrg') . " " . $conf->global->AGF_ORGANISME_REPRESENTANT . " (*)";
-				$pdf->MultiCell($this->espaceH_dispo / 2, 4, $outputlangs->convToOutputCharset($this->str), 0, 'C');
-				$hauteurA = dol_nboflines_bis($this->str, 50) * 3;
-
-				// Incrustation image tampon
-				if ($conf->global->AGF_INFO_TAMPON) {
-					$dir = $conf->agefodd->dir_output . '/images/';
-					$img_tampon = $dir . $conf->global->AGF_INFO_TAMPON;
-					if (file_exists($img_tampon))
-						$pdf->Image($img_tampon, $posX + $this->marge_gauche, $pdf->GetY() + 6, 60);
-				}
-
-				// signature du client
-				$pdf->SetXY($this->milieu, $posY);
-				if (! empty($agf_conv->sig))
-					$this->str = $agf_conv->sig;
-
-				$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'C');
-				$hauteurB = dol_nboflines_bis($this->str, 50) * 3;
-				$hauteur = max($hauteurA, $hauteurB);
-				$posY += $hauteur + 40;
-
-				$pdf->SetXY($posX, $posY);
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', $this->defaultFontSize - 3);
-				$this->str = "(*) " . $outputlangs->transnoentities('AgfPDFConv26') . ' ';
-				$this->str .= $outputlangs->transnoentities('AgfPDFConv27');
-				$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C');
-				$posY += 4 + $this->hApresCorpsArticle;
-
+				$funcPrintChapter($chapterTitle, $this->str);
+				$this->printBlocSignatures($pdf, $agf, $outputlangs);
 				// Pied de page
 				$this->_pagefoot($pdf, $agf, $outputlangs);
+				$pdf->SetAutoPageBreak(0, 0);
 
 				/*
 				 * Page 4 (Annexe 1)
@@ -871,18 +656,18 @@ class pdf_convention extends ModelePDFAgefodd
 					$agfTraining = new Formation($db);
 					$agfTraining->fetch($agf->fk_formation_catalogue);
 					$agfTraining->generatePDAByLink();
-                    $addFile = '';
+					$addFile = '';
 					$infile = $conf->agefodd->dir_output . '/fiche_pedago_' . $agf->fk_formation_catalogue . '.pdf';
-                    $infileModules = $conf->agefodd->dir_output . '/fiche_pedago_modules_' . $agf->fk_formation_catalogue . '.pdf';
-                    if (is_file($infile)) {
-                        $addFile = $infile;
-                    } elseif (is_file($infileModules)) {
-                        $addFile = $infileModules;
-                    }
-                    if (!empty($addFile)) {
+					$infileModules = $conf->agefodd->dir_output . '/fiche_pedago_modules_' . $agf->fk_formation_catalogue . '.pdf';
+					if (is_file($infile)) {
+						$addFile = $infile;
+					} elseif (is_file($infileModules)) {
+						$addFile = $infileModules;
+					}
+					if (!empty($addFile)) {
 						$count = $pdf->setSourceFile($addFile);
 						// import all page
-						for($i = 1; $i <= $count; $i ++) {
+						for ($i = 1; $i <= $count; $i ++) {
 							// New page
 							$pdf->AddPage();
 							$pagenb ++;
@@ -960,7 +745,8 @@ class pdf_convention extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
+	{
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -971,18 +757,213 @@ class pdf_convention extends ModelePDFAgefodd
 
 	/**
 	 * \brief Show footer of page
-	 * \param pdf PDF factory
-	 * \param object Object invoice
-	 * \param outputlang Object lang for output
-	 * \remarks Need this->emetteur object
+	 * @param TCPDI $pdf PDF factory
+	 * @param object $object
+	 * @param Translate $outputlangs Object lang for output
+	 * @return int
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs) {
+	function _pagefoot(&$pdf, $object, $outputlangs)
+	{
 		global $conf, $langs, $mysoc;
+		$breakMargin = $this->hauteurpied;
+		$pdf->SetAutoPageBreak(0, 0);
 
 		$outputlangs->load("agefodd@agefodd");
 
 		$pdf->SetDrawColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
 		$pdf->SetTextColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
-		return pdf_agfpagefoot($pdf, $outputlangs, 'AGEFODD_CONVENTION_FREE_TEXT', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, 1, $hidefreetext);
+		$ret = pdf_agfpagefoot($pdf, $outputlangs, 'AGEFODD_CONVENTION_FREE_TEXT', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, 1, $hidefreetext);
+		$pdf->SetAutoPageBreak(1, $breakMargin);
+		return $ret;
+	}
+
+	/**
+	 * @param TCPDI $pdf
+	 * @param Object $agf
+	 * @param Translate $outputlangs
+	 */
+	function forcePageBreak(&$pdf, $agf, $outputlangs)
+	{
+		$breakMargin = $this->hauteurpied;
+		$pdf->SetAutoPageBreak(0, 0);
+		$this->_pagefoot($pdf, $agf, $outputlangs);
+		$pdf->SetTextColor($this->colorheaderText[0], $this->colorheaderText[1], $this->colorheaderText[2]);
+		$pdf->AddPage(); if (! empty($tplidx)) { $pdf->useTemplate($tplidx); }
+		$this->_pagehead($pdf, $agf, 1, $outputlangs);
+		$pdf->SetAutoPageBreak(1, $breakMargin);
+	}
+
+	/**
+	 * @param TCPDI $pdf
+	 * @param Object $agf
+	 * @param Translate $outputlangs
+	 */
+	function printBlocSignatures(&$pdf, $agf, $outputlangs)
+	{
+		global $mysoc, $langs, $conf;
+		static $recurseLevel = 0;
+		$curPage = $pdf->getPage();
+		$pdf->startTransaction();
+		$breakMargin = $this->hauteurpied;
+		$posX = $this->marge_gauche;
+		$posY = $pdf->GetY();
+		$pdf->SetAutoPageBreak(1, $breakMargin);
+		// Entete signature
+		$pdf->SetXY($posX, $posY);
+		$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
+		$this->str = $outputlangs->transnoentities('AgfPDFConv24');
+		$pdf->Cell($this->espaceH_dispo / 2, 4, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C');
+
+		$pdf->SetXY($this->milieu, $posY);
+		$this->str = $outputlangs->transnoentities('AgfPDFConv25');
+		$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C');
+
+		$posY += 6;
+
+		// signature de l'organisme de formation
+		$pdf->SetXY($posX, $posY);
+		$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+		$this->str = $mysoc->name . "\n" . $langs->transnoentities('AgfConvArtSigOrg') . " " . $conf->global->AGF_ORGANISME_REPRESENTANT . " (*)";
+		$pdf->MultiCell($this->espaceH_dispo / 2, 4, $outputlangs->convToOutputCharset($this->str), 0, 'C');
+		$hauteurA = dol_nboflines_bis($this->str, 50) * 3;
+
+		// Incrustation image tampon
+		if ($conf->global->AGF_INFO_TAMPON) {
+			$dir = $conf->agefodd->dir_output . '/images/';
+			$img_tampon = $dir . $conf->global->AGF_INFO_TAMPON;
+			if (file_exists($img_tampon))
+				$pdf->Image($img_tampon, $posX + $this->marge_gauche, $pdf->GetY() + 6, 60);
+		}
+
+		// signature du client
+		$pdf->SetXY($this->milieu, $posY);
+		if (! empty($agf_conv->sig))
+			$this->str = $agf_conv->sig;
+
+		$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'C');
+		$hauteurB = dol_nboflines_bis($this->str, 50) * 3;
+		$hauteur = max($hauteurA, $hauteurB);
+		$posY += $hauteur + 40;
+
+		$pdf->SetXY($posX, $posY);
+		$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', $this->defaultFontSize - 3);
+		$this->str = "(*) " . $outputlangs->transnoentities('AgfPDFConv26') . ' ';
+		$this->str .= $outputlangs->transnoentities('AgfPDFConv27');
+		$pdf->Cell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C');
+		$posY += 4 + $this->hApresCorpsArticle;
+
+		if ($pdf->GetPage() > $curPage) {
+			$pdf->rollbackTransaction(true);
+			$this->forcePageBreak($pdf, $agf, $outputlangs);
+			$recurseLevel++;
+			if ($recurseLevel < 2) $this->printBlocSignatures($pdf, $agf, $outputlangs);
+		} else {
+			$pdf->commitTransaction();
+		}
+	}
+
+	/**
+	 * @param TCPDI $pdf
+	 * @param Object $agf
+	 * @param Translate $outputlangs
+	 * @return int
+	 */
+	function printTableauDispositionsFinancieres(&$pdf, $agf, $outputlangs, $agf_comdetails)
+	{
+		global $langs;
+		static $recurseLevel = 0;
+		$curPage = $pdf->getPage();
+		$pdf->startTransaction();
+		$breakMargin = $this->hauteurpied;
+		$posX = $this->marge_gauche;
+		$posY = $pdf->GetY();
+		$pdf->SetAutoPageBreak(1, $breakMargin);
+		// Tableau "bon de commande"
+		$pdf->SetFillColor($this->color1[0], $this->color1[1], $this->color1[2]);
+		$pdf->SetFillColor(210, 210, 210);
+		$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize - 1);
+		$header = array(
+			$outputlangs->transnoentities("Designation"),
+			$outputlangs->transnoentities("VAT"),
+			$outputlangs->transnoentities("PriceUHT"),
+			$outputlangs->transnoentities("ReductionShort"),
+			$outputlangs->transnoentities('Qté'),
+			$langs->transnoentities("TotalHT"),
+			$langs->transnoentities("TotalTTC")
+		);
+		$w = array(
+			80,
+			13,
+			19,
+			13,
+			8,
+			20,
+			20
+		);
+		for ($i = 0; $i < count($header); $i ++) {
+			$pdf->Cell($w[$i], 6, $header[$i], 1, 0, 'C', 1);
+		}
+		$posY += 6;
+		$fill = false;
+		$total_ht = 0;
+		$total_tva = 0;
+		$total_ttc = 0;
+		for ($i = 0; $i < count($agf_comdetails->lines); $i ++) {
+			$pdf->SetXY($posX, $posY);
+			$posY = $pdf->GetY();
+			$pdf->writeHTMLCell($w[0], 0, $posX, $posY, $outputlangs->transnoentities($agf_comdetails->lines[$i]->description), 1, 1);
+			$posY_after = $pdf->GetY();
+			$hauteur = ($posY_after - $posY);
+
+			$pdf->SetXY($posX + $w[0], $posY);
+			$pdf->Cell($w[1], $hauteur, vatrate($agf_comdetails->lines[$i]->tva_tx, 1), 1, 0, 'C', $fill);
+			$pdf->Cell($w[2], $hauteur, price($agf_comdetails->lines[$i]->price, 0, $outputlangs, 1, - 1, 2), 1, 0, 'R', $fill);
+			$pdf->Cell($w[3], $hauteur, dol_print_reduction($agf_comdetails->lines[$i]->remise_percent, $outputlangs), 1, 0, 'R', $fill);
+			$pdf->Cell($w[4], $hauteur, $agf_comdetails->lines[$i]->qty, 1, 0, 'C', $fill);
+			$pdf->Cell($w[5], $hauteur, price($agf_comdetails->lines[$i]->total_ht, 0, $outputlangs), 1, 0, 'R', $fill);
+			$pdf->Cell($w[6], $hauteur, price($agf_comdetails->lines[$i]->total_ttc, 0, $outputlangs), 1, 0, 'R', $fill);
+
+			$pdf->Ln();
+			$posY = $pdf->GetY();
+
+			$total_ht += $agf_comdetails->lines[$i]->total_ht;
+			$total_tva += $agf_comdetails->lines[$i]->total_tva;
+			$total_ttc += $agf_comdetails->lines[$i]->total_ttc;
+		}
+
+		$pdf->SetXY($posX, $posY);
+		$pdf->Cell(array_sum($w), 0, '', 'T');
+		// $posY += 6;
+
+		// total HT
+		$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
+		$pdf->Cell($w[5], 5, $langs->transnoentities("TotalHT"), 0, 0, 'R', 1);
+		$pdf->Cell($w[6], 5, price($total_ht, 0, $outputlangs), 1, 0, 'R');
+		$posY += 6;
+		// total TVA
+		$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
+		$pdf->Cell($w[5], 5, $langs->transnoentities("TotalVAT"), 0, 0, 'R', 1);
+		$pdf->Cell($w[6], 5, price($total_tva, 0, $outputlangs), 1, 0, 'R');
+		$posY += 6;
+		// total TTC
+		$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
+		$pdf->Cell($w[5], 5, $langs->transnoentities("TotalTTC"), 0, 0, 'R', 1);
+		$pdf->Cell($w[6], 5, price($total_ttc, 0, $outputlangs), 1, 0, 'R');
+		$posY += 5;
+		// txt "montant euros"
+		$pdf->SetXY($posX, $posY);
+		$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', $this->defaultFontSize - 2);
+		$pdf->Cell(0, 4, $outputlangs->transnoentities("AmountInCurrency", $outputlangs->transnoentitiesnoconv("Currency" . $conf->currency)), 0, 0, 'R', 0);
+		$posY += $this->hApresCorpsArticle + 4;
+
+		if ($pdf->GetPage() > $curPage) {
+			$pdf->rollbackTransaction(true);
+			$this->forcePageBreak($pdf, $agf, $outputlangs);
+			$recurseLevel++;
+			if ($recurseLevel < 2) $posY = $this->printTableauDispositionsFinancieres($pdf, $agf, $outputlangs, $agf_comdetails);
+		} else {
+			$pdf->commitTransaction();
+		}
+		return $posY;
 	}
 }

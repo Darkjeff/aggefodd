@@ -27,7 +27,8 @@ include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
 /**
  * Class to manage the box
  */
-class box_agefodd_stats extends ModeleBoxes {
+class box_agefodd_stats extends ModeleBoxes
+{
 	var $boxcode = "agefodd_stats";
 	var $boximg = "agefodd@agefodd";
 	var $boxlabel;
@@ -42,7 +43,8 @@ class box_agefodd_stats extends ModeleBoxes {
 	/**
 	 * Constructor
 	 */
-	function __construct() {
+	function __construct()
+	{
 		global $langs,$user;
 		$langs->load("boxes");
 
@@ -57,7 +59,8 @@ class box_agefodd_stats extends ModeleBoxes {
 	 * @param int $max of records to load
 	 * @return void
 	 */
-	function loadBox() {
+	function loadBox()
+	{
 		global $conf, $user, $langs, $db;
 
 		$this->max = $max;
@@ -159,8 +162,6 @@ class box_agefodd_stats extends ModeleBoxes {
 			);
 			$key ++;
 		}
-
-
 	}
 
 	/**
@@ -169,9 +170,10 @@ class box_agefodd_stats extends ModeleBoxes {
 	 * @param array $head with properties of box title
 	 * @param array $contents with properties of box lines
 	 * @param integer $nooutput nooutput
-	 * @return void
+	 * @return string
 	 */
-	function showBox($head = null, $contents = null, $nooutput = 0) {
-		parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
+	function showBox($head = null, $contents = null, $nooutput = 0)
+	{
+		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

@@ -20,10 +20,10 @@
 
 CREATE TABLE IF NOT EXISTS llx_agefodd_convention (
   rowid integer NOT NULL auto_increment PRIMARY KEY,
-  fk_agefodd_session integer NOT NULL,
-  fk_societe integer NOT NULL,
+  fk_agefodd_session integer NOT NULL default 0,
+  fk_societe integer NOT NULL default 0,
   element_type	varchar(50) DEFAULT NULL,
-  fk_element	integer  DEFAULT NULL,
+  fk_element	integer  DEFAULT NULL default 0,
   model_doc	varchar(200) DEFAULT NULL,
   doc_lang varchar(6) DEFAULT NULL,
   intro1 text NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_convention (
   sig text,
   only_product_session integer DEFAULT 0,
   notes text NOT NULL,
-  fk_user_author integer NOT NULL,
+  fk_user_author integer NOT NULL default 0,
   datec datetime NOT NULL,
   fk_user_mod integer NOT NULL,
   tms timestamp NOT NULL
