@@ -115,7 +115,6 @@ if ($action == 'builddoc') {
 
 	$langs->load("other");
 	$file = $conf->agefodd->dir_output . '/' . GETPOST('file', 'none');
-	var_dump($file);
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
