@@ -54,8 +54,8 @@ $langs->load('bills');
 $langs->load("exports");
 
 
-llxHeader('', $langs->trans('AgfMenuReportBPF'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/bpf/';
+llxHeader('', $langs->trans('AgfMenuReportBPF'), '', '', '', '');
+$upload_dir = $conf->agefodd->dir_output . '/report/bpf';
 
 
 $form = new Form($db);
@@ -93,7 +93,7 @@ if ($action == 'builddoc') {
 
 		// $report_by_cust->file = $upload_dir . 'reportbycust-' . dol_print_date(dol_now(), 'dayhourlog') . '.xlsx';
 		$file_sub_title = $report_bpf->getSubTitlFileName($filter);
-		$report_bpf->file = $upload_dir . 'reportbpf-' . $file_sub_title . '.xlsx';
+		$report_bpf->file = $upload_dir . '/reportbpf-' . $file_sub_title . '.xlsx';
 
 		$result = $report_bpf->write_file($filter);
 		if ($result < 0) {
@@ -114,7 +114,8 @@ if ($action == 'builddoc') {
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 	$langs->load("other");
-	$file = $upload_dir . '/' . GETPOST('file', 'none');
+	$file = $conf->agefodd->dir_output . '/' . GETPOST('file', 'none');
+	var_dump($file);
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
@@ -165,10 +166,10 @@ print '</table>' . "\n";
 $liste = array (
 		'excel2007' => 'Excel 2007'
 );
-print $formfile->showdocuments('export', '', $upload_dir, $_SERVER["PHP_SELF"], $liste, 1, (! empty($modelexport) ? $modelexport : 'excel2007'), 1, 0, 0, 150, 1);
+print $formfile->showdocuments('agefodd', 'report/bpf', $upload_dir, $_SERVER["PHP_SELF"], $liste, 1, (! empty($modelexport) ? $modelexport : 'excel2007'), 1, 0, 0, 150, 1);
 
 // TODO : Hack to update link on document form because merge export is always link to export ...
-echo '<script type="text/javascript">
+/*echo '<script type="text/javascript">
 		jQuery(document).ready(function () {
                     	jQuery(function() {
                         	$("a[data-ajax|=\'false\'][href*=\'export\']")
@@ -191,7 +192,7 @@ echo '<script type="text/javascript">
 								   });
                         	});
                     });
-		</script>';
+		</script>';*/
 
 print '</form>' . "\n";
 
