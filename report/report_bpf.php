@@ -55,7 +55,7 @@ $langs->load("exports");
 
 
 llxHeader('', $langs->trans('AgfMenuReportBPF'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/bpf';
+$upload_dir = $conf->agefodd->dir_output . '/report/bpf/';
 
 
 $form = new Form($db);
