@@ -2222,6 +2222,13 @@ class ReportBPF extends AgefoddExportExcel
 		return $res;
 	}
 
+	/**
+	 * Récupreration des facture Bizzare (genre payeur est financeur alternatif mais pas employé sur stagiaire, multi financement entre client/emploeyr et OPCA
+	 *
+	 * @param $filter
+	 * @return int
+	 * @throws Exception
+	 */
 	public function _getAmountFinCHack($filter) {
 
 		$financialDataKey = 'C-1 Produits provenant des entreprises pour la formation de leurs salariés';
