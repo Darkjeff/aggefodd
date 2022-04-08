@@ -565,7 +565,7 @@ function agefodd_admin_prepare_head()
 	$head = array();
 
 	$head [$h] [0] = dol_buildpath("/agefodd/admin/admin_agefodd.php", 1);
-	$head [$h] [1] = '<i class="fa fa-graduation-cap" aria-hidden="true"></i> ' . $langs->trans("Settings");
+	$head [$h] [1] = '<i class="fa fa-graduation-cap" aria-hidden="true"></i> ' . $langs->trans("AgfSettings");
 	$head [$h] [2] = 'settings';
 	$h++;
 
