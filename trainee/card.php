@@ -668,7 +668,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		'methodename' => 'sendAgendaToTrainee',
 	);
 	$cronJob = new Cronjob($db);
-	$cronJob->fetch_all('DESC', 't.rowid', 0, 0, $status, $filtercron);
+	$cronJob->fetchAll('DESC', 't.rowid', 0, 0, $status, $filtercron);
 	if (!empty($cronJob->lines)) {
 		print '<tr><td>' . $form->textwithtooltip($langs->trans("AgfSendAgendaMail"), $langs->trans("AgfSendAgendaMailHelp"), 2, 1, img_help(1, '')). '</td>';
 		$statutarray=array('0' => $langs->trans("Yes"), '1' => $langs->trans("No"));
@@ -881,7 +881,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 					'methodename' => 'sendAgendaToTrainee',
 				);
 				$cronJob = new Cronjob($db);
-				$cronJob->fetch_all('DESC', 't.rowid', 0, 0, $status, $filter);
+				$cronJob->fetchAll('DESC', 't.rowid', 0, 0, $status, $filter);
 
 				if (!empty($cronJob->lines)) {
 					print '<tr><td>' . $form->textwithtooltip($langs->trans("AgfSendAgendaMail"), $langs->trans("AgfSendAgendaMailHelp"), 2, 1, img_help(1, '')). '</td>';
@@ -981,7 +981,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 					'methodename' => 'sendAgendaToTrainee',
 				);
 				$cronJob = new Cronjob($db);
-				$cronJob->fetch_all('DESC', 't.rowid', 0, 0, $status, $filter);
+				$cronJob->fetchAll('DESC', 't.rowid', 0, 0, $status, $filter);
 
 				if (!empty($cronJob->lines)) {
 					print '<tr><td>' . $form->textwithtooltip($langs->trans("AgfSendAgendaMail"), $langs->trans("AgfSendAgendaMailHelp"), 2, 1, img_help(1, '')). '</td>';
