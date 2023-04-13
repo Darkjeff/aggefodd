@@ -2389,7 +2389,7 @@ function getTraineeAvailableFields()
 			'methodename' => 'sendAgendaToTrainee',
 	);
 	$cronJob = new Cronjob($db);
-	$cronJob->fetch_all('DESC', 't.rowid', 0, 0, $status, $filter);
+	$cronJob->fetchAll('DESC', 't.rowid', 0, 0, $status, $filter);
 
 	if (!empty($cronJob->lines)) {
 		$TTraineeFields['disable_auto_mail'] = $langs->transnoentities("AgfSendAgendaMail");
