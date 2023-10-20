@@ -37,6 +37,8 @@ require_once ('../lib/agefodd.lib.php');
 
 require_once (DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php');
 
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 // Security check
 if (! $user->rights->agefodd->agefodd_formation_catalogue->lire)
 	accessforbidden();
@@ -97,7 +99,7 @@ dol_agefodd_banner_tab($agf, 'id');
 print '<div class="underbanner clearboth"></div>';
 
 print '<form name="create_contact" action="' . $_SERVER ['PHP_SELF'] . '" method="POST">' . "\n";
-print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
+print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
 print '<input type="hidden" name="action" value="updatetrainer">' . "\n";
 print '<input type="hidden" name="id" value="'.$id.'">' . "\n";
 

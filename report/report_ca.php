@@ -22,17 +22,17 @@
  * \brief		report part
  * (Agefodd).
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agsession.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once '../class/html.formagefodd.class.php';
-require_once '../class/agefodd_formateur.class.php';
-require_once '../class/report_ca.class.php';
+require_once ('../class/agsession.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../class/agefodd_formateur.class.php');
+require_once ('../class/report_ca.class.php');
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
@@ -44,9 +44,9 @@ if (! $user->rights->agefodd->lire)
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 
-$search_year = GETPOST('search_year', 'int');
+$search_year = GETPOST('search_year','int');
 $search_accounting_date = GETPOST('search_accounting_date', 'none');
-if (empty($search_accounting_date))  $search_accounting_date = 'invoice';
+if(empty($search_accounting_date))  $search_accounting_date = 'invoice';
 $search_sale = GETPOST('search_sale', 'int');
 $search_type_session = GETPOST("search_type_session", 'int');
 $search_parent = GETPOST('search_parent', 'int');
@@ -122,7 +122,9 @@ if (! empty($search_by_session)) {
  * Actions
  */
 if ($action == 'builddoc') {
+
 	if (count($filter)>0) {
+
 		$outputlangs = $langs;
 		$newlang = $lang_id;
 		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
@@ -138,7 +140,7 @@ if ($action == 'builddoc') {
 
 		//$report_by_cust->file = $upload_dir . 'reportbycust-' . dol_print_date(dol_now(), 'dayhourlog') . '.xlsx';
 		$file_sub_title=$report_ca->getSubTitlFileName($filter);
-		$report_ca->file = $upload_dir . 'reportca-' . $file_sub_title . '.xlsx';
+		$report_ca->file = $upload_dir . '/reportca-' . $file_sub_title . '.xlsx';
 
 
 		$result = $report_ca->write_file($filter);
@@ -154,6 +156,7 @@ if ($action == 'builddoc') {
 		setEventMessage($langs->trans("AgfRptSelectAtLeastOneCriteria"), 'errors');
 	}
 } elseif ($action == 'remove_file') {
+
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 	$langs->load("other");
@@ -161,7 +164,8 @@ if ($action == 'builddoc') {
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
-	else setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
+	else
+		setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
 	$action = '';
 }
 
@@ -205,7 +209,8 @@ print '<tr>';
 print '<td>' . $langs->trans('ParentCompany') . '</td>';
 $extrafields = new ExtraFields($db);
 $extrafields->fetch_name_optionals_label('thirdparty');
-if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison', $extrafields->attributes['societe']['type'])) {
+if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison',$extrafields->attributes['societe']['type'])) {
+
 	$filter='extra.ts_maison=1';
 } else {
 	$filter='';
@@ -273,3 +278,4 @@ print '</form>' . "\n";
 
 llxFooter();
 $db->close();
+

@@ -24,33 +24,34 @@
  * \ingroup agefodd
  * \brief trainees of session
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agsession.class.php';
-require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-require_once '../class/html.formagefodd.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once '../class/agefodd_session_stagiaire.class.php';
-require_once '../class/agefodd_opca.class.php';
-require_once '../class/agefodd_session_stagiaire_heures.class.php';
-require_once '../class/agefodd_session_calendrier.class.php';
+require_once ('../class/agsession.class.php');
+require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once ('../class/agefodd_session_stagiaire.class.php');
+require_once ('../class/agefodd_opca.class.php');
+require_once ('../class/agefodd_session_stagiaire_heures.class.php');
+require_once ('../class/agefodd_session_calendrier.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire_certif.class.php');
 
 // Security check
 if (! $user->rights->agefodd->lire) {
 	accessforbidden();
 }
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 $hookmanager->initHooks(array(
 		'agefoddsessionsubscribers'
 ));
 
 $action = GETPOST('action', 'alpha');
-if (empty($action)) {
+if(empty($action)) {
 	// Le mode par defaut devient l'édition
 	$action = 'edit';
 }
@@ -88,12 +89,14 @@ $parameters = array(
 		'edithours'=>$edithours,
 
 );
+
 $reshook = $hookmanager->executeHooks('doActions', $parameters, $agf, $action); // Note that $action and $object may have been modified by some hooks
 if ($reshook < 0)
 	setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 
 
 if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd->modifier)) {
+
 	if ($stag_update_x > 0) {
 		$agf = new Agsession($db);
 
@@ -113,25 +116,28 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 
 		$agfsta->status_in_session = GETPOST('stagiaire_session_status', 'int');
 		$agfsta->hour_foad = GETPOST('hour_foad', 'int');
-		$agfsta->comment = GETPOST('comment', 'alpha');
+        $agfsta->comment = GETPOST('comment', 'alpha');
 
 		if ($agfsta->update($user) > 0) {
+
 			if (! empty($conf->global->AGF_USE_REAL_HOURS) && GETPOST('stagiaire_session_status', 'int') != Agefodd_session_stagiaire::STATUS_IN_SESSION_PARTIALLY_PRESENT) {
 				$heures = new Agefoddsessionstagiaireheures($db);
 				$result = $heures->setRealTimeAccordingTraineeStatus($user, GETPOST('sessid', 'int'), $agfsta->fk_stagiaire);
 				if ($result < 0) {
 					setEventMessage($heures->error, 'errors');
 				}
-				$result = $heures->setStatusAccordingTime($user, GETPOST('sessid', 'int'), $agfsta->fk_stagiaire);
-				if ($result < 0) {
-					setEventMessage($heures->error, 'errors');
-				} elseif ($result<>$agfsta->status_in_session) {
-					$sta = new Agefodd_stagiaire($db);
-					$res = $sta->fetch($agfsta->fk_stagiaire);
-					if ($res < 0) {
-						setEventMessage($sta->error, 'errors');
+				if (! empty($conf->global->AGF_SESSION_TRAINEE_STATUS_AUTO) && $agf->datef > dol_now()) {
+					$result = $heures->setStatusAccordingTime($user, GETPOST('sessid', 'int'), $agfsta->fk_stagiaire);
+					if ($result < 0) {
+						setEventMessage($heures->error, 'errors');
+					} elseif(!empty($result) && $result<>$agfsta->status_in_session) {
+						$sta = new Agefodd_stagiaire($db);
+						$res = $sta->fetch($agfsta->fk_stagiaire);
+						if ($res < 0) {
+							setEventMessage($sta->error, 'errors');
+						}
+						setEventMessage($langs->trans('AgfStatusRecalculateWithRealTime',$sta->nom.' '.$sta->prenom), 'warnings');
 					}
-					setEventMessage($langs->trans('AgfStatusRecalculateWithRealTime', $sta->nom.' '.$sta->prenom), 'warnings');
 				}
 			}
 
@@ -139,12 +145,14 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 			$result = $agf->fetch(GETPOST('sessid', 'int'));
 
 			if ($result > 0) {
+
 				if (is_array($agf->array_options) && key_exists('options_use_subro_inter', $agf->array_options) && ! empty($agf->array_options['options_use_subro_inter'])) {
 					$agf->type_session = 1;
 				}
 
 				// TODO : si session inter => ajout des infos OPCA dans la table
 				if ($agf->type_session == 1) {
+
 					$opca = new Agefodd_opca($db);
 					/*
 					 *  Test si les infos existent déjà
@@ -186,7 +194,7 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 				setEventMessage($agf->error, 'errors');
 			}
 			if ($part) {
-				require_once '../class/agefodd_stagiaire.class.php';
+				require_once ('../class/agefodd_stagiaire.class.php');
 				$stag = new Agefodd_stagiaire($db);
 				$stag->fetch($agfsta->fk_stagiaire);
 
@@ -204,6 +212,7 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 	}
 
 	if ($stag_add_x > 0) {
+
 		$agf = new Agefodd_session_stagiaire($db);
 
 		$agf->fk_session_agefodd = GETPOST('sessid', 'int');
@@ -214,9 +223,9 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 		$agf->status_in_session = GETPOST('stagiaire_session_status', 'int');
 		$agf->fk_socpeople_sign = $fk_socpeople_sign;
 		$agf->hour_foad = GETPOST('hour_foad', 'int');
-		$agf->comment = GETPOST('comment', 'alpha');
+        $agf->comment = GETPOST('comment', 'alpha');
 
-		require_once '../class/agefodd_stagiaire.class.php';
+		require_once ('../class/agefodd_stagiaire.class.php');
 		$stag = new Agefodd_stagiaire($db);
 		$stag->fetch($agf->fk_stagiaire);
 		$agf->fk_soc = $stag->socid;
@@ -233,16 +242,19 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 }
 
 if ($action == 'remove_opcafksocOPCA') {
+
 	$agf = new Agsession($db);
 
 	$result = $agf->fetch(GETPOST('sessid', 'int'));
 
 	if ($result > 0) {
+
 		if (is_array($agf->array_options) && key_exists('options_use_subro_inter', $agf->array_options) && ! empty($agf->array_options['options_use_subro_inter'])) {
 			$agf->type_session = 1;
 		}
 
 		if ($agf->type_session == 1) {
+
 			if (is_array($agf->array_options) && key_exists('options_use_subro_inter', $agf->array_options) && ! empty($agf->array_options['options_use_subro_inter'])) {
 				$agf->type_session = 1;
 			}
@@ -278,13 +290,16 @@ if ($action == 'remove_opcafksocOPCA') {
  * Action editrealhours
  */
 if ($action == 'editrealhours') {
+
 	$hours = GETPOST('realhours', 'none');
 	$sessid = ( int ) GETPOST('id', 'none');
 	$edit = GETPOST('edit', 'none');
 
 	if (! empty($hours)) {
-		foreach ($hours as $staId => $creneauxData) {
-			foreach ($creneauxData as $creneaux => $heures) {
+
+		foreach ( $hours as $staId => $creneauxData ) {
+
+			foreach ( $creneauxData as $creneaux => $heures ) {
 				$heures = preg_replace('/,/', '.', $heures);
 				$agf = new Agefoddsessionstagiaireheures($db);
 				$result = $agf->fetch_by_session($id, $staId, $creneaux);
@@ -292,7 +307,7 @@ if ($action == 'editrealhours') {
 					setEventMessage($agf->error, 'error');
 					break;
 				} elseif ($result) {
-					if ($heures=='') {
+					if ($heures == '') {
 						$res = $agf->delete($user);
 					} elseif ($agf->heures !== $heures) {
 						// édition d'heure existante
@@ -346,14 +361,14 @@ if ($action == 'confirm_delete_stag' && $confirm == "yes" && ($user->rights->age
 				't.fk_session_agefodd' => $id,
 				't.fk_session_stagiaire' => $stagerowid
 		));
-		foreach ($agf_certif->lines as $cert) {
+		foreach ( $agf_certif->lines as $cert ) {
 			$cert->delete($user);
 		}
 
 		// s'il y a des heures réelles saisies pour ce stagiaire, on les supprime
 		$heures = new Agefoddsessionstagiaireheures($db);
 		$heures->fetch_all_by_session($agf->id, $stagerowid);
-		foreach ($heures->lines as $creneaux) {
+		foreach ( $heures->lines as $creneaux ) {
 			$creneaux->delete($user);
 		}
 		Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
@@ -429,7 +444,7 @@ if ($action == 'updatetraineestatus') {
 	if ($result < 0) {
 		setEventMessage($agf->error, 'errors');
 	} else {
-		$statusinsession = GETPOST('statusinsession', 'int');
+	    $statusinsession = GETPOST('statusinsession', 'int');
 		$stagiaires = new Agefodd_session_stagiaire($db);
 		$stagiaires->fk_session_agefodd = $agf->id;
 		$result = $stagiaires->update_status_by_soc($user, 1, 0, $statusinsession);
@@ -453,16 +468,18 @@ if ($action == 'updatetraineestatus') {
 								setEventMessages($heures->error, 'errors');
 							}
 
-							$result = $heures->setStatusAccordingTime($user, $agf->id, $trainee->id);
-							if ($result < 0) {
-								setEventMessage($heures->error, 'errors');
-							} elseif ($result <> $statusinsession) {
-								$sta = new Agefodd_stagiaire($db);
-								$res = $sta->fetch($trainee->id);
-								if ($res < 0) {
-									setEventMessage($sta->error, 'errors');
+							if (! empty($conf->global->AGF_SESSION_TRAINEE_STATUS_AUTO) && $agf->datef > dol_now()) {
+								$result = $heures->setStatusAccordingTime($user, $agf->id, $trainee->id);
+								if ($result < 0) {
+									setEventMessage($heures->error, 'errors');
+								} elseif (!empty($result) && $result <> $statusinsession) {
+									$sta = new Agefodd_stagiaire($db);
+									$res = $sta->fetch($trainee->id);
+									if ($res < 0) {
+										setEventMessage($sta->error, 'errors');
+									}
+									setEventMessage($langs->trans('AgfStatusRecalculateWithRealTime', $sta->nom . ' ' . $sta->prenom), 'warnings');
 								}
-								setEventMessage($langs->trans('AgfStatusRecalculateWithRealTime', $sta->nom . ' ' . $sta->prenom), 'warnings');
 							}
 						}
 					}
@@ -481,6 +498,7 @@ if ($action == 'updatetraineestatus') {
 }
 
 if ($action == 'remove_fksocOPCA' && $user->rights->agefodd->modifier) {
+
 	$agf = new Agsession($db);
 	$result = $agf->fetch($id);
 	unset($agf->fk_soc_OPCA);
@@ -516,6 +534,7 @@ if (! empty($id)) {
 	dol_fiche_head($head, 'subscribers', $langs->trans("AgfSessionDetail"), 0, 'group');
 
 	if ($action == 'edit') {
+
 		// Put user on the right action block after reload
 		if (! empty($modstagid) && $action == 'edit') {
 			print '<script type="text/javascript">
@@ -536,6 +555,7 @@ if (! empty($id)) {
 		} elseif ($edithours) {
 			print '<script type="text/javascript">
 					jQuery(document).ready(function () {
+                        console.log($("#editrealhours"));
 						jQuery(function() {
 							$(\'html, body\').animate({scrollTop: $("#editrealhours").offset().top}, 500,\'easeInOutCubic\');
 						});
@@ -583,7 +603,7 @@ if (! empty($id)) {
 
 			print '<tr><td width="20%">' . $langs->trans("AgfOPCAName") . '</td>';
 			print '	<td>';
-			if (DOL_VERSION < 6.0) {
+			if (floatval(DOL_VERSION)< 6.0) {
 				print '<a href="' . dol_buildpath('/societe/soc.php', 1) . '?socid=' . $agf->fk_soc_OPCA . '">' . $agf->soc_OPCA_name . '</a>';
 			} else {
 				print '<a href="' . dol_buildpath('/societe/card.php', 1) . '?socid=' . $agf->fk_soc_OPCA . '">' . $agf->soc_OPCA_name . '</a>';
@@ -624,14 +644,15 @@ if (! empty($id)) {
 		 */
 		if (! empty($conf->global->AGF_USE_REAL_HOURS) && $edithours) {
 			print '<br><form id="editrealhours" name="editrealhours" action="' . $_SERVER['PHP_SELF'] . '?action=editrealhours&id=' . $id . '"  method="POST">' . "\n";
-			print '<input type="hidden" name="action" value="editrealhours">';
+            print '<input type="hidden" name="token" value="'.$newToken.'">';
+            print '<input type="hidden" name="action" value="editrealhours">';
 
 			$calendrier = new Agefodd_sesscalendar($db);
 			$calendrier->fetch_all($agf->id);
 			$blocNumber = count($calendrier->lines);
 			$dureeCalendrier = 0;
-			foreach ($calendrier->lines as $horaire) {
-				if (in_array($horaire->status, $calendrier->statusCountTime)) {
+			foreach ( $calendrier->lines as $horaire ) {
+				if (in_array($horaire->status,$calendrier->statusCountTime)) {
 					$dureeCalendrier += ($horaire->heuref - $horaire->heured) / 3600;
 				}
 			}
@@ -642,7 +663,7 @@ if (! empty($id)) {
 			print '</tr>';
 			print '<tr class="liste_titre"><th></th>';
 			if ($blocNumber > 0) {
-				for ($i = 0; $i < $blocNumber; $i ++) {
+				for($i = 0; $i < $blocNumber; $i ++) {
 					print '<th align="center">' . dol_print_date($calendrier->lines[$i]->date_session, '%d/%m/%Y') . '<br>' . dol_print_date($calendrier->lines[$i]->heured, 'hour');
 					print ' - ' . dol_print_date($calendrier->lines[$i]->heuref, 'hour');
 					print (!empty($calendrier->lines[$i]->calendrier_type_label) ? "<br>" . $calendrier->lines[$i]->calendrier_type_label : "");
@@ -657,14 +678,14 @@ if (! empty($id)) {
 			$stagiaires->fetch_stagiaire_per_session($agf->id);
 			$nbstag = count($stagiaires->lines);
 
-			for ($i = 0; $i < $nbstag; $i ++) {
+			for($i = 0; $i < $nbstag; $i ++) {
 				print '<tr><td>' . strtoupper($stagiaires->lines[$i]->nom) . ' ' . ucfirst($stagiaires->lines[$i]->prenom);
 				print '<br>' . $stagiaires->LibStatut($stagiaires->lines[$i]->status_in_session, 4);
 				print '<br><a class="button fillin" href="#">Remplir</a>&nbsp;<a class="button fillout" href="#">Vider</a>';
 				print '</td>';
 				$agfssh = new Agefoddsessionstagiaireheures($db);
 				if ($blocNumber > 0) {
-					for ($j = 0; $j < $blocNumber; $j ++) {
+					for($j = 0; $j < $blocNumber; $j ++) {
 						$defaultvalue = ($calendrier->lines[$j]->heuref - $calendrier->lines[$j]->heured) / 3600;
 						$warning = false;
 						$result = $agfssh->fetch_by_session($id, $stagiaires->lines[$i]->id, $calendrier->lines[$j]->id);
@@ -678,6 +699,7 @@ if (! empty($id)) {
 									$val='';
 									$warning = false;
 								}
+
 							}
 						} else {
 							$val = '';
@@ -692,6 +714,7 @@ if (! empty($id)) {
 						print ($calendrier->lines[$j]->status==Agefodd_sesscalendar::STATUS_DRAFT ? img_info($langs->trans('AgfTimeInfoStatusDraft')) : '');
 						print ($calendrier->lines[$j]->date_session >= dol_now() ? img_info($langs->trans('AgfTimeInfoStatusFuture')) : '');
 						print '</td>';
+
 					}
 				} else {
 					print '<td align="center">' . (($i == 0) ? $langs->trans("AgfNoCalendar") : '') . '</td>';
@@ -753,7 +776,7 @@ if (! empty($id)) {
 		if ($nbstag > 0) {
 			$fk_soc_used = array();
 			$var = false;
-			for ($i = 0; $i < $nbstag; $i ++) {
+			for($i = 0; $i < $nbstag; $i ++) {
 				$var = ! $var;
 				$lineClass = '';
 
@@ -799,7 +822,7 @@ if (! empty($id)) {
 						print $formAgefodd->select_stagiaire_session_status('stagiaire_session_status', $stagiaires->lines[$i]->status_in_session, $agf);
 					} else {
 						print $stagiaires->LibStatut($stagiaires->lines[$i]->status_in_session, 4);
-						print '<input type="hidden" name="stagiaire_session_status" value="' . dol_htmlentities($stagiaires->lines[$i]->status_in_session, ENT_QUOTES) . '">';
+						print '<input type="hidden" name="stagiaire_session_status" value="' . dol_htmlentities($stagiaires->lines[$i]->status_in_session,ENT_QUOTES) . '">';
 					}
 					print '		</td>';
 					print '</tr>';
@@ -810,7 +833,7 @@ if (! empty($id)) {
 					print  $langs->trans('AgfSessionTraineeComment');
 					print '		</td>';
 					print '		<td class="col-input">';
-					print '<input type="text" class="flat" id="comment" name="comment" value="' . dol_htmlentities($stagiaires->lines[$i]->comment, ENT_QUOTES) . '" />';
+                    print '<input type="text" class="flat" id="comment" name="comment" value="' . dol_htmlentities($stagiaires->lines[$i]->comment,ENT_QUOTES) . '" />';
 					print '		</td>';
 					print '</tr>';
 
@@ -885,9 +908,11 @@ if (! empty($id)) {
 						print '	<td>';
 						$htmlname_thirdparty='fksocOPCA';
 						print $form->select_company($agf_opca->fk_soc_OPCA, $htmlname_thirdparty, '(s.client IN (1,2))', 'SelectThirdParty', 1, 0);
-						$events[]=array('showempty' => 1, 'method' => 'getContacts', 'url' => dol_buildpath('/core/ajax/contacts.php', 1), 'htmlname' => 'fksocpeopleOPCA', 'params' => array('add-customer-contact' => 'disabled'));
+						$events[]=array('showempty' => 1, 'method' => 'getContacts', 'url' => dol_buildpath('/core/ajax/contacts.php',1), 'htmlname' => 'fksocpeopleOPCA', 'params' => array('add-customer-contact' => 'disabled'));
 						//Select contact regarding comapny
-						if (count($events)) {
+						if (count($events))
+						{
+
 							print '<script type="text/javascript">
 
 								jQuery(document).ready(function() {
@@ -948,7 +973,7 @@ if (! empty($id)) {
 
 						print '<tr><td>' . $langs->trans("AgfOPCAContact") . '</td>';
 						print '	<td>';
-						$form->select_contacts(($agf_opca->fk_soc_OPCA > 0 ? $agf_opca->fk_soc_OPCA : -1), $agf_opca->fk_socpeople_OPCA, 'fksocpeopleOPCA', ((DOL_VERSION < 8.0)?1:3), '', '', 0, 'minwidth100imp');
+						$form->select_contacts(($agf_opca->fk_soc_OPCA > 0 ? $agf_opca->fk_soc_OPCA : -1), $agf_opca->fk_socpeople_OPCA, 'fksocpeopleOPCA', ((floatval(DOL_VERSION)< 8.0)?1:3), '', '', 0, 'minwidth100imp');
 						print '</td></tr>';
 
 						print '<tr><td width="20%">' . $langs->trans("AgfOPCANumClient") . '</td>';
@@ -1007,7 +1032,7 @@ if (! empty($id)) {
 
 							print '<tr><td>' . $langs->trans("AgfOPCAName") . '</td>';
 							print '	<td>';
-							if (DOL_VERSION < 6.0) {
+							if (floatval(DOL_VERSION)< 6.0) {
 								print '<a href="' . dol_buildpath('/societe/soc.php', 1) . '?socid=' . $agf_opca->fk_soc_OPCA . '">' . $agf_opca->soc_OPCA_name . '</a>';
 							} else {
 								print '<a href="' . dol_buildpath('/societe/card.php', 1) . '?socid=' . $agf_opca->fk_soc_OPCA . '">' . $agf_opca->soc_OPCA_name . '</a>';
@@ -1040,9 +1065,9 @@ if (! empty($id)) {
 							if (! empty($stagiaires->lines[$i]->hour_foad)) {
 								print '<br>' . $langs->trans('AgfHourFOAD') . ' : ' . $stagiaires->lines[$i]->hour_foad . ' ' . $langs->trans('Hour') . '(s)';
 							}
-							if (!empty($stagiaires->lines[$i]->comment)) {
-								print '<br>' . $langs->trans('AgfSessionTraineeComment') . ' : ' . $stagiaires->lines[$i]->comment;
-							}
+                            if (!empty($stagiaires->lines[$i]->comment)) {
+                                print '<br>' . $langs->trans('AgfSessionTraineeComment') . ' : ' . $stagiaires->lines[$i]->comment;
+                            }
 						}
 					}
 					print '</td>';
@@ -1106,7 +1131,7 @@ if (! empty($id)) {
 
 					print '</td>';
 					if (! empty($conf->global->AGF_USE_REAL_HOURS)) {
-						require_once '../class/agefodd_session_stagiaire_heures.class.php';
+						require_once ('../class/agefodd_session_stagiaire_heures.class.php');
 						$agfssh = new Agefoddsessionstagiaireheures($db);
 						print '<td class="col-trainee-time nowrap"><span class="classfortooltip" title="' . $langs->trans('AgfTraineeHours') . '" ><i class="fa fa-clock"></i>&nbsp;<strong>' . $agfssh->heures_stagiaire($id, $stagiaires->lines[$i]->id) . '</strong></span></td>';
 					}
@@ -1134,8 +1159,15 @@ if (! empty($id)) {
 		if (! empty($newstag)) {
 			print '<div class="new-trainee-form-container">';
 			$token = $_SESSION['newtoken'];
-			if (function_exists('newToken')) {
+			if(function_exists('newToken')) {
 				$token = newToken();
+			}
+
+			// If session are intra entreprise then send Socid on create trainee
+			if ($agf->type_session == 0 && ! empty($agf->fk_soc)) {
+				$param_socid = '&societe=' . $agf->fk_soc;
+			} else {
+				$param_socid = '';
 			}
 
 			print '<input type="hidden" name="token" value="' . $token . '">' . "\n";
@@ -1153,6 +1185,12 @@ if (! empty($id)) {
 			print '		</td>';
 			print '		<td class="col-input">';
 			print '<i class="fa fa-search" ></i> '.$formAgefodd->select_stagiaire('', 'stagiaire', 's.rowid NOT IN (SELECT fk_stagiaire FROM ' . MAIN_DB_PREFIX . 'agefodd_session_stagiaire WHERE fk_session_agefodd=' . $id . ')', 1);
+
+			if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
+				$tooltip = '<strong>'.$langs->trans('AgfNewParticipant').'</strong><br/>'.$langs->trans('AgfNewParticipantLinkInfo');
+				print '<a class="classfortooltip" href="'.dol_buildpath('agefodd/trainee/card.php', 1).'?action=create' . $param_socid . '&session_id=' . $id . '&url_back=' . urlencode($_SERVER['PHP_SELF'] . '?action=edit&id=' . $id) . '" title="' . $tooltip . '"><span class="fa fa-plus-circle valignmiddle paddingleft" ></span></a>';
+			}
+
 			print '		</td>';
 			print '</tr>';
 
@@ -1235,7 +1273,7 @@ if (! empty($id)) {
 				print '		<td class="col-title">';
 				print '		</td>';
 				print '		<td class="col-input">';
-				print '<button class="button" type="submit" name="stag_add_x" value="1" ><i class="fa fa-plus" ></i> ' . $langs->trans("AgfModAddStagiaire") . '</button>';
+				print '<button class="button" type="submit" name="stag_add_x" value="1" >' . $langs->trans("AgfModAddStagiaire") . '</button>';
 				print '<a class="button" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '" >' . $langs->trans("Cancel") . '</a>';
 
 				print '		</td>';
@@ -1247,12 +1285,7 @@ if (! empty($id)) {
 			print '</table>';
 
 			print '</div>' . "\n";
-			// If session are intra entreprise then send Socid on create trainee
-			if ($agf->type_session == 0 && ! empty($agf->fk_soc)) {
-				$param_socid = '&societe=' . $agf->fk_soc;
-			} else {
-				$param_socid = '';
-			}
+
 		}
 
 
@@ -1264,7 +1297,7 @@ if (! empty($id)) {
 
 			print '<div class="tabsAction">';
 			if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
-				print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '&newstag=1" " title="' . $langs->trans('AgfStagiaireAdd') . '">' . $langs->trans('AgfStagiaireAdd') . '</a>';
+			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '&newstag=1" " title="' . $langs->trans('AgfStagiaireAdd') . '">' . $langs->trans('AgfStagiaireAdd') . '</a>';
 			}
 
 			// If session are intra entreprise then send Socid on create trainee
@@ -1273,33 +1306,34 @@ if (! empty($id)) {
 			} else {
 				$param_socid = '';
 			}
+
 			if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
-				print '<a class="butAction" href="../trainee/card.php?action=create' . $param_socid . '&session_id=' . $id . '&url_back=' . urlencode($_SERVER['PHP_SELF'] . '?action=edit&id=' . $id) . '" title="' . $langs->trans('AgfNewParticipantLinkInfo') . '">' . $langs->trans('AgfNewParticipant') . '</a>';
+			print '<a class="butAction" href="'.dol_buildpath('agefodd/trainee/card.php', 1).'?action=create' . $param_socid . '&session_id=' . $id . '&url_back=' . urlencode($_SERVER['PHP_SELF'] . '?action=edit&id=' . $id) . '" title="' . $langs->trans('AgfNewParticipantLinkInfo') . '">' . $langs->trans('AgfNewParticipant') . '</a>';
 			}
 
 			if ($conf->global->AGF_MANAGE_OPCA) {
 				if ($user->rights->agefodd->creer && ! $agf->type_session > 0) {
 					if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
-						print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit_subrogation&id=' . $id . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
+					print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit_subrogation&id=' . $id . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
 					}
 				} else {
 					if ($agf->type_session)
 						$title = ' / ' . $langs->trans('AgfAvailableForIntraOnly');
 					if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
-						print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . $title . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
-					}
+					print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . $title . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
 				}
+			}
 			}
 
 			if (! empty($conf->global->AGF_USE_REAL_HOURS) && ! empty($agf->nb_stagiaire))
-			if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
+				if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
 				print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '&edithours=true">' . $langs->trans('AgfModifyTraineeHours') . '</a>';
-			}
+				}
 
 			if ((empty($conf->global->AGF_SESSION_TRAINEE_STATUS_AUTO) || $agf->datef <= dol_now()) && $nbstag > 0 && ($user->rights->agefodd->creer || $user->rights->agefodd->modifier)) {
 				print '<br><br>';
 				print '<form name="add" action="' . $_SERVER['PHP_SELF'] . '?id=' . $id. '" method="POST">' . "\n";
-				print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+				print '<input type="hidden" name="token" value="' . $newToken . '">';
 				print '<input type="hidden" name="action" value="updatetraineestatus">' . "\n";
 				$optionStatus='';
 				$cal = new Agefodd_sesscalendar($db);
@@ -1314,8 +1348,9 @@ if (! empty($id)) {
 					}
 				}
 
-				foreach ($stagiaires->labelstatut_short as $statuskey => $statuslabelshort) {
-					if ($dateToTest >= dol_now() && in_array($statuskey, $stagiaires->statusAvalaibleForFuture)) {
+				foreach ($stagiaires->labelstatut_short as $statuskey => $statuslabelshort)
+				{
+					if($dateToTest >= dol_now() && in_array($statuskey, $stagiaires->statusAvalaibleForFuture)) {
 						$optionStatus.= '<option value="'.$statuskey.'">'. $statuslabelshort.'</option>';
 					} elseif ($dateToTest <= dol_now() && in_array($statuskey, $stagiaires->statusAvalaibleForPast)) {
 						$optionStatus.= '<option value="'.$statuskey.'">'. $statuslabelshort;
@@ -1354,7 +1389,7 @@ if (! empty($id)) {
 			print '<br>';
 			print '<div class="tabsAction">';
 			if (!$newstag=1) {
-				print '<a class="butAction" href="../trainee/card.php?action=create' . $param_socid . '&session_id=' . $id . '&url_back=' . urlencode($_SERVER['PHP_SELF'] . '?action=edit&id=' . $id) . '" title="' . $langs->trans('AgfNewParticipantLinkInfo') . '">' . $langs->trans('AgfNewParticipant') . '</a>';
+				print '<a class="butAction" href="'.dol_buildpath('agefodd/trainee/card.php', 1).'?action=create' . $param_socid . '&session_id=' . $id . '&url_back=' . urlencode($_SERVER['PHP_SELF'] . '?action=edit&id=' . $id) . '" title="' . $langs->trans('AgfNewParticipantLinkInfo') . '">' . $langs->trans('AgfNewParticipant') . '</a>';
 			}
 			print '</div>';
 		}
@@ -1375,14 +1410,12 @@ if (! empty($id)) {
 		if (! $agf->type_session > 0) {
 			//Intra entreprise
 			if ($action == "edit_subrogation" && $agf->type_session == 0 && ! empty($conf->global->AGF_MANAGE_OPCA)) {
-				dol_agefodd_banner_tab($agf, 'id');
-				print '</div>';
 
 				print_barre_liste($langs->trans("AgfGestSubrocation"), "", "", "", "", "", '', 0);
 				print '<div class="tabBar">';
 
 				print '<form name="add" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-				print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+				print '<input type="hidden" name="token" value="' . $newToken . '">';
 				print '<input type="hidden" name="action" value="update_subrogation">';
 				print '<input type="hidden" name="id" value="' . $agf->id . '">';
 				print '<table class="border" width="100%">';
@@ -1396,9 +1429,10 @@ if (! empty($id)) {
 				print '	<td>';
 				$htmlname_thirdparty='fksocOPCA';
 				print $form->select_company($agf->fk_soc_OPCA, $htmlname_thirdparty, '(s.client IN (1,2,3))', 'SelectThirdParty', 1, 0);
-				$events[]=array('method' => 'getContacts', 'url' => dol_buildpath('/core/ajax/contacts.php', 1), 'htmlname' => 'fksocpeopleOPCA', 'params' => array('add-customer-contact' => 'disabled'));
+				$events[]=array('method' => 'getContacts', 'url' => dol_buildpath('/core/ajax/contacts.php',1), 'htmlname' => 'fksocpeopleOPCA', 'params' => array('add-customer-contact' => 'disabled'));
 				//Select contact regarding comapny
-				if (count($events)) {
+				if (count($events))
+				{
 					print '<script type="text/javascript">
 								jQuery(document).ready(function() {
 									$("#'.$htmlname_thirdparty.'").change(function() {
@@ -1458,7 +1492,7 @@ if (! empty($id)) {
 
 				print '<tr><td width="20%">' . $langs->trans("AgfOPCAContact") . '</td>';
 				print '	<td>';
-				$form->select_contacts(($agf->fk_soc_OPCA > 0 ? $agf->fk_soc_OPCA : -1), $agf->fk_socpeople_OPCA, 'fksocpeopleOPCA', ((DOL_VERSION < 8.0)?1:3), '', '', 0, 'minwidth100imp');
+				$form->select_contacts(($agf->fk_soc_OPCA > 0 ? $agf->fk_soc_OPCA : -1), $agf->fk_socpeople_OPCA, 'fksocpeopleOPCA', ((floatval(DOL_VERSION)< 8.0)?1:3), '', '', 0, 'minwidth100imp');
 				print '</td></tr>';
 
 				print '<tr><td width="20%">' . $langs->trans("AgfOPCANumClient") . '</td>';
@@ -1500,7 +1534,7 @@ if (! empty($id)) {
 
 				print '<tr><td width="20%">' . $langs->trans("AgfOPCAName") . '</td>';
 				print '	<td>';
-				if (DOL_VERSION < 6.0) {
+				if (floatval(DOL_VERSION)< 6.0) {
 					print '<a href="' . dol_buildpath('/societe/soc.php', 1) . '?socid=' . $agf->fk_soc_OPCA . '">' . $agf->soc_OPCA_name . '</a>';
 				} else {
 					print '<a href="' . dol_buildpath('/societe/card.php', 1) . '?socid=' . $agf->fk_soc_OPCA . '">' . $agf->soc_OPCA_name . '</a>';
@@ -1549,27 +1583,27 @@ print $hookmanager->resPrint;
 print '<div class="tabsAction">';
 
 if ($action != 'create' && $action != 'edit' && $action != "edit_subrogation" && (! empty($agf->id))) {
-	$parameters = array();
-	$reshook = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $agf, $action); // Note that $action and $object may have been modified by hook
-	if (empty($reshook)) {
-		if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
-			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
-		} else {
-			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
-		}
+    $parameters = array();
+    $reshook = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $agf, $action); // Note that $action and $object may have been modified by hook
+    if (empty($reshook)) {
+        if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
+            print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
+        } else {
+            print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
+        }
 
-		if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && !$agf->type_session > 0 && !empty($conf->global->AGF_MANAGE_OPCA)) {
-			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit_subrogation&id=' . $id . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
-		} else {
-			if ($agf->type_session)
-				$title = ' / ' . $langs->trans('AgfAvailableForIntraOnly');
-			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . $title . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
-		}
+        if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && !$agf->type_session > 0 && !empty($conf->global->AGF_MANAGE_OPCA)) {
+            print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit_subrogation&id=' . $id . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
+        } else {
+            if ($agf->type_session)
+                $title = ' / ' . $langs->trans('AgfAvailableForIntraOnly');
+            print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . $title . '">' . $langs->trans('AgfModifySubrogation') . '</a>';
+        }
 
-		if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && (!empty($conf->global->AGF_USE_REAL_HOURS) && !empty($agf->nb_stagiaire))) {
-			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '&edithours=true">' . $langs->trans('AgfModifyTraineeHours') . '</a>';
-		}
-	}
+        if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && (!empty($conf->global->AGF_USE_REAL_HOURS) && !empty($agf->nb_stagiaire))) {
+            print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '&edithours=true">' . $langs->trans('AgfModifyTraineeHours') . '</a>';
+        }
+    }
 }
 
 print '</div>';

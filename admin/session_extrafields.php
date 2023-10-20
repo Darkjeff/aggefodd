@@ -20,9 +20,9 @@
  * \ingroup agefodd
  * \brief Page to setup extra fields of session
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 
 require_once '../lib/agefodd.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
@@ -44,7 +44,7 @@ $tmptype2label = ExtraFields::$type2label;
 $type2label = array(
 	''
 );
-foreach ($tmptype2label as $key => $val)
+foreach ( $tmptype2label as $key => $val )
 	$type2label [$key] = $langs->trans($val);
 
 $action = GETPOST('action', 'alpha');
@@ -96,8 +96,8 @@ if (file_exists(DOL_DOCUMENT_ROOT.'/core/tpl/admin_extrafields_view.tpl.php')) {
 	print '<td width="80">&nbsp;</td>';
 	print "</tr>\n";
 
-	$var = true;
-	foreach ($extrafields->attribute_type as $key => $value) {
+	$var = True;
+	foreach ( $extrafields->attribute_type as $key => $value ) {
 		$var = ! $var;
 		print "<tr " . $bc [$var] . ">";
 		print "<td>" . $extrafields->attribute_label [$key] . "</td>\n";

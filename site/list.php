@@ -115,8 +115,6 @@ if ($arch == 2) {
 	print '<a href="' . $_SERVER ['PHP_SELF'] . '?arch=2">' . $langs->trans("AgfAfficherPlaceArchives") . '</a>' . "\n";
 }
 
-print '<a href="' . $_SERVER ['PHP_SELF'] . '?arch=' . $arch . '">' . $txt . '</a>' . "\n";
-
 
 print '<form method="get" action="' . $_SERVER ['PHP_SELF'] . '" name="searchFormList" id="searchFormList">' . "\n";
 if (! empty($sortfield)) {
@@ -189,7 +187,8 @@ if ($result > 0) {
 		$var = ! $var;
 		($agf->lines [$i]->archive == 1) ? $style = ' style="color:gray;"' : $style = '';
 		print "<tr $bc[$var]>";
-		print '<td><span style="background-color:' . $bgcolor . ';"><a href="card.php?id=' . $agf->lines [$i]->id . '"' . $style . '>' . $agf->lines [$i]->id . '</a></span></td>' . "\n";
+		$bgcolor = '';
+		print '<td><span style="background-color:' . $bgcolor . ';"><a href="card.php?id=' .$agf->lines [$i]->id . '"' . $style . '>' .$agf->lines [$i]->id . '</a></span></td>' . "\n";
 		print '<td' . $style . '>' . $agf->lines [$i]->ref_interne . '</td>' . "\n";
 		print '<td>';
 		if (!empty($agf->lines [$i]->socid)) print $soc->getNomUrl(1);

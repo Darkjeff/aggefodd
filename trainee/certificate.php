@@ -40,6 +40,8 @@ require_once (DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php');
 if (! $user->rights->agefodd->lire)
 	accessforbidden();
 
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 $id = GETPOST('id', 'int');
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
@@ -184,7 +186,7 @@ if ($id) {
 
 				if ($certifid == $line->id && (! empty($certif_edit_x))) {
 					print '<form name="obj_update_' . $line->id . '" action="' . $_SERVER ['PHP_SELF'] . '?id=' . $id . '"  method="POST">' . "\n";
-					print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
+					print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
 					print '<input type="hidden" name="certifid" value="' . $line->id . '">' . "\n";
 					print '<input type="hidden" name="action" value="edit">' . "\n";
 					print '<tr ' . $style . '>';

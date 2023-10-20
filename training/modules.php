@@ -18,17 +18,17 @@
 
 // Load environment
 // Load environment
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agefodd_formation_catalogue.class.php';
-require_once '../core/modules/agefodd/modules_agefodd.php';
-require_once '../class/html.formagefodd.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once '../class/agefodd_formation_catalogue_modules.class.php';
+require_once ('../class/agefodd_formation_catalogue.class.php');
+require_once ('../core/modules/agefodd/modules_agefodd.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once ('../class/agefodd_formation_catalogue_modules.class.php');
 
 $action = GETPOST('action', 'alpha');
 $id = GETPOST('id', 'int');
@@ -131,7 +131,7 @@ print '<div class="underbanner clearboth"></div><br>';
 
 print_fiche_titre($langs->trans("AgfTrainingModule"));
 if (is_array($object_modules->lines) && count($object_modules->lines) > 0) {
-	foreach ($object_modules->lines as $line_chapter) {
+	foreach ( $object_modules->lines as $line_chapter ) {
 		print '<table class="border" width="100%">';
 
 		if ($user->rights->agefodd->agefodd_formation_catalogue->creer) {

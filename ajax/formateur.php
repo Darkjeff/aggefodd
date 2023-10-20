@@ -30,12 +30,27 @@ if (! $res)
 
 $htmlname = GETPOST('htmlname', 'alpha');
 $outjson = (GETPOST('outjson', 'int') ? GETPOST('outjson', 'int') : 0);
-$filter = (GETPOST('filter', 'alpha'));
+//$filter = (GETPOST('filter', 'alpha'));
+$filters = GETPOST('filters', 'array');
+if (is_array($filters) && !empty($filters))
+{
+    $strfilter = "";
+    if (array_key_exists("excludeContributors", $filters) && array_key_exists("sessid", $filters["excludeContributors"]) && !empty($filters["excludeContributors"]["sessid"]))
+    {
+        $strfilter = 's.rowid NOT IN (SELECT fk_agefodd_formateur FROM ' . MAIN_DB_PREFIX . 'agefodd_session_formateur WHERE fk_session=' . $db->escape($filters["excludeContributors"]["sessid"]) . ')';
+        if (array_key_exists("training", $filters["excludeContributors"]) && !empty($filters["excludeContributors"]["training"]))
+        {
+            $strfilter .= ' AND s.rowid IN (SELECT fk_trainer FROM ' . MAIN_DB_PREFIX . 'agefodd_formateur_training WHERE fk_training=' . $db->escape($filters["excludeContributors"]["training"]) . ')';
+        }
+
+        $filter = $strfilter;
+    }
+}
 
 $action = GETPOST('action', 'alpha');
 $id = GETPOST('id', 'int');
-if(!empty($filter))
-	$filter = 'AND '.str_replace('TOREPLACE', 'FROM', $filter);
+//if(!empty($filter))
+//	$filter = 'AND '.str_replace('TOREPLACE', 'FROM', $filter);
 
 
 
@@ -106,9 +121,12 @@ else
 	$searchkey = (($idtrainer && GETPOST($idtrainer,'alpha')) ? GETPOST($idtrainer,'alpha') :  (GETPOST($htmlname, 'alpha') ? GETPOST($htmlname, 'alpha') : ''));
 	
 	$form = new FormAgefodd($db);
-	
-	$arrayresult = $form->select_formateur_liste("", $htmlname,  "(u.lastname LIKE '%$searchkey%' OR u.firstname LIKE '%$searchkey%' OR sp.lastname LIKE '%$searchkey%' OR sp.firstname LIKE '%$searchkey%') ".$filter, 0, 0, array(),1);
-	
+
+    $addSQL = "(u.lastname LIKE '%$searchkey%' OR u.firstname LIKE '%$searchkey%' OR sp.lastname LIKE '%$searchkey%' OR sp.firstname LIKE '%$searchkey%') ";
+    if (!array_key_exists("addSQL", $filters)) $filters["addSQL"] = $addSQL;
+    else $filters["addSQL"].= $addSQL;
+
+	$arrayresult = $form->select_formateur_liste("", $htmlname,  $filters, 0, 0, array(),1);
 	$db->close();
 
 	if ($outjson)

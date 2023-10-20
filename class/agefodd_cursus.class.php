@@ -193,13 +193,13 @@ class Agefodd_cursus extends CommonObject {
 
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_cursus as t";
 		$sql .= " WHERE t.rowid = " . $id;
-		$sql .= " AND t.entity IN (" . getEntity('agefodd'/*'agsession'*/) . ")";
+		$sql .= " AND t.entity IN (" . getEntity('agefodd_base'/*'agsession'*/) . ")";
 
 		dol_syslog(get_class($this) . "::fetch", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
 		    $num = $this->db->num_rows($resql);
-		    
+
 			if ($num) {
 				$obj = $this->db->fetch_object($resql);
 
@@ -216,7 +216,7 @@ class Agefodd_cursus extends CommonObject {
 				$this->note_private = $obj->note_private;
 				$this->note_public = $obj->note_public;
 				$this->tms = $this->db->jdate($obj->tms);
-				
+
 				require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
 				$extrafields = new ExtraFields($this->db);
 				$extralabels = $extrafields->fetch_name_optionals_label($this->table_element, true);
@@ -260,12 +260,12 @@ class Agefodd_cursus extends CommonObject {
 			$error ++;
 			$this->errors[] = $langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("AgfRefInterne"));
 		}
-		
+
 		if (empty($this->intitule)) {
 			$error ++;
 			$this->errors[] = $langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("AgfIntitule"));
 		}
-		
+
 		if (! $error) {
 			// Check parameters
 			// Put here code to add a control on parameters values
@@ -282,7 +282,7 @@ class Agefodd_cursus extends CommonObject {
 			$sql .= " note_public=" . (isset($this->note_public) ? "'" . $this->db->escape($this->note_public) . "'" : "null");
 
 			$sql .= " WHERE rowid=" . $this->id;
-			
+
 			$this->db->begin();
 
 			dol_syslog(get_class($this) . "::update", LOG_DEBUG);
@@ -511,7 +511,7 @@ class Agefodd_cursus extends CommonObject {
 		$sql .= " t.note_public,";
 		$sql .= " t.tms";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_cursus as t";
-		$sql .= " WHERE t.entity IN (" . getEntity('agefodd'/*agcursus*/) . ")";
+		$sql .= " WHERE t.entity IN (" . getEntity('agefodd_base'/*agcursus*/) . ")";
 		if ($arch == 0 || $arch == 1) {
 			$sql .= " AND t.archive = " . $arch;
 		}

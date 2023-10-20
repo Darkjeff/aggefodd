@@ -24,14 +24,16 @@
  * \ingroup agefodd
  * \brief card of contact
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agefodd_contact.class.php';
-require_once '../lib/agefodd.lib.php';
+require_once ('../class/agefodd_contact.class.php');
+require_once ('../lib/agefodd.lib.php');
+
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -121,7 +123,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print_fiche_titre($langs->trans("AgfCreateContact"));
 
 	print '<form name="create" action="' . $_SERVER ['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
+	print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
 	print '<input type="hidden" name="action" value="create_confirm">' . "\n";
 
 	print '<div class="warning">' . $langs->trans("AgfContactNewWarning1");
@@ -137,7 +139,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	$nbcontact = $agf_static->fetch_all('ASC', 'rowid', '', 0);
 	$exclude_array = array ();
 	if ($nbcontact > 0) {
-		foreach ($agf_static->lines as $line) {
+		foreach ( $agf_static->lines as $line ) {
 			$exclude_array [] = $line->fk_socpeople;
 		}
 	}
@@ -240,3 +242,4 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 print '</div>';
 
 llxFooter('$Date: 2010-03-30 20:58:28 +0200 (mar. 30 mars 2010) $ - $Revision: 54 $');
+?>

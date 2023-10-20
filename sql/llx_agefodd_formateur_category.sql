@@ -25,5 +25,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_formateur_category (
   fk_user_author integer NOT NULL default 0,
   datec datetime NOT NULL,
   fk_user_mod integer NOT NULL default 0,
-  tms timestamp NOT NULL
+  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

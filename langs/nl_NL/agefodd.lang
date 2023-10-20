@@ -593,7 +593,6 @@ AgfCalendarFromTemplate=van model
 AgfPDFTextColor=Tekst Kleur Brief Body
 AgfPDFHeadColor=Header Kleur van de pagina's
 AgfPDFFootColor=Footer Kleur van de pagina's
-AgfSettings=Parameters van het moduul Agefodd
 AgfFichePresenceEmpty=Template Presentie lijst
 AgfFichePresenceTrainee=Presentie lijst per deelnemer
 AgfFichePresenceTraineeLandscape=Presentielijst (landschap)

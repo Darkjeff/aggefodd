@@ -5,9 +5,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
@@ -16,7 +16,7 @@ require_once '../lib/agefodd.lib.php';
 
 
 $id = GETPOST('id', 'none');
-$with_calendar = GETPOST('with_calendar', 'alpha');
+$with_calendar = GETPOST('with_calendar','alpha');
 if (empty($with_calendar)) {
 	$with_calendar = 'nocalendar';
 }
@@ -45,6 +45,9 @@ if (! empty($id)) {
 
 	print '<div id="inclusion"></div>';
 	_printAjaxActionCommList($id);
+
+
+
 }
 /**
  *  load la liste des evenements agenda en ajax
@@ -52,8 +55,7 @@ if (! empty($id)) {
  *
  * @param $id id de la session
  */
-function _printAjaxActionCommList($id)
-{
+function _printAjaxActionCommList($id) {
 
 	global $hookmanager;
 	$TParamURL = $_REQUEST;
@@ -75,7 +77,9 @@ function _printAjaxActionCommList($id)
 				// On remplace les liens de la pagination pour rester sur la card session événements en cas de changement de page
 				form_contacts.find('table.table-fiche-title a').each(function() {
 					$(this).attr('href', $(this).attr('href').replace("<?php print dol_buildpath('/comm/action/list.php', 1); ?>", "<?php print dol_buildpath('/agefodd/session/history.php', 1); ?>"));
-					$(this).attr('href', $(this).attr('href') + '&id=' + <?php print $id; $hookmanager->executeHooks('addMoreURLParams', $parameters, $object, $action); ?>);
+					if(!($(this).hasClass('btnTitlePlus'))) { // Il ne faut pas ajouter de id= sur le bouton "+" car sinon en 15 et en develop ça fait apparaître une card de l'action comm qui a le même id que la session
+						$(this).attr('href', $(this).attr('href') + '&id=' + <?php print $id; $hookmanager->executeHooks('addMoreURLParams', $parameters, $object, $action); ?>);
+					}
 				});
 
 				// On remplace les liens de tri pour rester sur la card session événements en cas de tri sur une colonne
@@ -116,6 +120,7 @@ function _printAjaxActionCommList($id)
 	</script>
 
 	<?php
+
 }
 
 llxFooter();

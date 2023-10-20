@@ -59,6 +59,7 @@ if (empty($sortfield)) {
 
 if (empty($page) || $page == -1) { $page = 0; }
 
+$option = '';
 
 $offset = $limit * $page;
 $pageprev = $page - 1;
@@ -144,9 +145,15 @@ $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element, true);
 
 $search_array_options=$extrafields->getOptionalsFromPost($extralabels,'','search_');
-
+if(floatval(DOL_VERSION) >= 17) {
+	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
+	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
+	$extrafields->attribute_list = $extrafields->attributes[$agf->table_element]['list'];
+	$extrafields->attribute_pos = $extrafields->attributes[$agf->table_element]['pos'];
+	$extrafields->attribute_computed = $extrafields->attributes[$agf->table_element]['computed'];
+}
 // Extra fields
-if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
+if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
 {
    foreach($extrafields->attribute_label as $key => $val)
    {
@@ -216,10 +223,12 @@ foreach ($search_array_options as $key => $val)
 }
 
 $nbtotalofrecords = 0;
+$TAttributeLabelKeys = array();
+if(!empty($extrafields->attribute_label)) $TAttributeLabelKeys = array_keys($extrafields->attribute_label);
 if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
-	$nbtotalofrecords = $agf->fetch_all($sortorder, $sortfield, 0, 0, $arch, $filter, array_keys($extrafields->attribute_label));
+	$nbtotalofrecords = $agf->fetch_all($sortorder, $sortfield, 0, 0, $arch, $filter, $TAttributeLabelKeys);
 }
-$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $arch, $filter, array_keys($extrafields->attribute_label));
+$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $arch, $filter, $TAttributeLabelKeys);
 
 
 $i = 0;
@@ -372,7 +381,7 @@ if (! empty($arrayfields['a.dated']['checked']))		print_liste_field_titre($langs
 if (! empty($arrayfields['AgfNbreAction']['checked']))		print_liste_field_titre($langs->trans("AgfNbreAction"), $_SERVER ['PHP_SELF'], "", "", $option, '', $sortfield, $sortorder);
 if (! empty($arrayfields['c.fk_product']['checked'])) print_liste_field_titre($langs->trans("AgfProductServiceLinked"), $_SERVER ['PHP_SELF'], 'c.fk_product', '', $option, '', $sortfield, $sortorder);
 // Extra fields
-if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
+if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
 {
 	foreach($extrafields->attribute_label as $key => $val)
 	{
@@ -451,7 +460,7 @@ if ($resql > 0) {
 			else print '<td>&nbsp;</td>';
 		}
 		// Extra fields
-		if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
+		if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
 		{
 			foreach($extrafields->attribute_label as $key => $val)
 			{
@@ -462,7 +471,7 @@ if ($resql > 0) {
 					if ($align) print ' align="'.$align.'"';
 					print '>';
 					$tmpkey='options_'.$key;
-					print $extrafields->showOutputField($key, $line->array_options[$tmpkey], '');
+					print $extrafields->showOutputField($key, $line->array_options[$tmpkey], '', 'agefodd_formation_catalogue');
 					print '</td>';
 					if (! $i) $totalarray['nbfield']++;
 					if (! empty($val['isameasure']))

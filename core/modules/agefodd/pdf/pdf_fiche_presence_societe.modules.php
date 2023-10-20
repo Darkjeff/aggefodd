@@ -35,11 +35,8 @@ dol_include_once('/core/lib/pdf.lib.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
 dol_include_once('/core/lib/company.lib.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
-/**
- * Put here description of your class
- */
-class pdf_fiche_presence_societe extends pdf_fiche_presence
-{
+
+class pdf_fiche_presence_societe extends pdf_fiche_presence {
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -155,7 +152,9 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 		if (file_exists($dir)) {
 			$this->pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
 			$this->pdf->ref_object = $agf;
-
+			// le parent utilise $this->agf->status dans des fonctions (printPersonLine)
+			// je préfère valoriser cette variable pour compatibilité
+			$this->agf = $agf;
 			if (class_exists('TCPDF')) {
 				$this->pdf->setPrintHeader(false);
 				$this->pdf->setPrintFooter(false);
@@ -185,7 +184,7 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 			$result = $agf_soc->fetch($socid);
 
 			if ($result) {
-				$this->_pagebody($this->pdf, $this->pdf->ref_object, $this->outputlangs);
+				$this->_pagebody($this->pdf->ref_object , $this->outputlangs);
 			}
 
 			$this->pdf->Close();
@@ -195,14 +194,15 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager)) {
+			if (! is_object($hookmanager))
+			{
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$this->pdf->ref_object,'outputlangs'=>$this->outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
 
 
 			return 1; // Pas d'erreur
@@ -227,7 +227,8 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 		$nbsta_index=1;
 
 		// Set path to the background PDF File
-		if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
+		if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
+		{
 			$pagecount = $this->pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 			$tplidx = $this->pdf->importPage(1);
 		}
@@ -250,9 +251,9 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 			return -1;
 		}
 		if (is_array($agf_date->lines) && count($agf_date->lines)>$this->nbtimeslots) {
-			for ($i = 0; $i < count($agf_date->lines); $i ++) {
+			for($i = 0; $i < count($agf_date->lines); $i ++) {
 				$tmp_array[]=$agf_date->lines[$i];
-				if (count($tmp_array)>=$this->nbtimeslots || $i==count($agf_date->lines)-1) {
+				if(count($tmp_array)>=$this->nbtimeslots || $i==count($agf_date->lines)-1) {
 					$session_hours[]=$tmp_array;
 					$tmp_array=array();
 				}
@@ -289,18 +290,22 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 		$nbform = $this->formateurs->fetch_formateur_per_session($this->pdf->ref_object->id);
 
 		//Pour chaque société ayant un participant à afficher, on crée une série de feuilles de présence
-		foreach ($socstagiaires as $socstagiaires_id => $agfsta) {
+		foreach($socstagiaires as $socstagiaires_id => $agfsta) {
+
 			$this->stagiaires->lines = $agfsta->lines;
 
-			if (!empty($conf->global->AGF_FICHEPRES_SHOW_OPCO_NUMBERS)) {
+			if (!empty($conf->global->AGF_FICHEPRES_SHOW_OPCO_NUMBERS))
+			{
 				$this->TOpco = array();
-				if (!empty($this->stagiaires->lines)) {
-					foreach ($this->stagiaires->lines as $line) {
+				if (!empty($this->stagiaires->lines))
+				{
+					foreach ($this->stagiaires->lines as $line)
+					{
 						//OPCO du participant
 						$agf_opca = new Agefodd_opca($this->db);
 						$id_opca = $agf_opca->getOpcaForTraineeInSession($line->socid, $this->pdf->ref_object->id, $line->stagerowid);
-						if ($id_opca)  $res = $agf_opca->fetch($id_opca);
-						if ($res && !array_key_exists($agf_opca->num_OPCA_file, $this->TOpco)) $this->TOpco[$agf_opca->num_OPCA_file] = $agf_opca;
+						if($id_opca)  $res = $agf_opca->fetch($id_opca);
+						if($res && !array_key_exists($agf_opca->num_OPCA_file, $this->TOpco)) $this->TOpco[$agf_opca->num_OPCA_file] = $agf_opca;
 					}
 				}
 			}
@@ -323,7 +328,8 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 				 */
 				$this->h_ligne = 10;
 
-				if (!empty($this->formateurs->lines)) {
+				if (!empty($this->formateurs->lines))
+				{
 					$this->printPersonsBlock('formateurs', $this->formateurs->lines, $dates_array);
 				}
 
@@ -341,10 +347,12 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence
 				}
 				$this->pdf->SetFont(pdf_getPDFFont($this->outputlangs), '', 9);
 
-				if (!empty($this->stagiaires->lines)) {
+				if (!empty($this->stagiaires->lines))
+				{
 					$this->printPersonsBlock('stagiaires', $this->stagiaires->lines, $dates_array);
 				}
 			}
 		}
 	}
+
 }

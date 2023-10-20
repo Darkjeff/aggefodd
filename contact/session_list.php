@@ -238,7 +238,7 @@ $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as so ON so.rowid = s.fk_soc";
 $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_formation_catalogue as c ON c.rowid = s.fk_formation_catalogue";
 $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_session_status_type as sst ON sst.rowid = s.status";
 
-$sql .= " WHERE s.entity IN (" . getEntity('agefodd') . ")";
+$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ")";
 $sql .= " AND trainee.fk_socpeople = " . $contact->id;
 if ($search_ref)                                                $sql .= natural_search('s.ref', $search_ref);
 if ($search_company_name)                                       $sql .= natural_search('so.nom', $search_company_name);

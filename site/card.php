@@ -24,9 +24,9 @@
  * \ingroup agefodd
  * \brief card of location
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
@@ -99,6 +99,7 @@ if ($action == 'arch_confirm_delete' && $user->rights->agefodd->agefodd_place->c
  * Action update (Location)
  */
 if ($action == 'update' && $user->rights->agefodd->agefodd_place->creer) {
+
 	$error = 0;
 
 	if (! $_POST["cancel"] && ! $_POST["importadress"]) {
@@ -113,7 +114,7 @@ if ($action == 'update' && $user->rights->agefodd->agefodd_place->creer) {
 
 		$label = GETPOST('ref_interne', 'alpha');
 		if (empty($label)) {
-			setEventMessage($langs->trans('ErrorFieldRequired', $langs->transnoentities('AgfSessPlaceCode')), 'errors');
+		    setEventMessage($langs->trans('ErrorFieldRequired', $langs->transnoentities('AgfSessPlaceCode')), 'errors');
 			$error ++;
 		}
 
@@ -153,10 +154,11 @@ if ($action == 'update' && $user->rights->agefodd->agefodd_place->creer) {
 				$action = 'edit';
 			}
 		} else {
-			Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
-			exit();
+		    Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		    exit();
 		}
 	} elseif (! $_POST["cancel"] && $_POST["importadress"]) {
+
 		$agf = new Agefodd_place($db);
 
 		$result = $agf->fetch($id);
@@ -179,6 +181,7 @@ if ($action == 'update' && $user->rights->agefodd->agefodd_place->creer) {
  */
 
 if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_place->creer) {
+
 	$error = 0;
 
 	if (! $_POST["cancel"]) {
@@ -195,6 +198,7 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_place->creer)
 		}
 
 		if (empty($error)) {
+
 			$agf->ref_interne = $label;
 			$agf->fk_societe = $societe;
 			$agf->fk_socpeople = GETPOST('contact', 'int');
@@ -252,8 +256,8 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_place->creer)
 			exit();
 		}
 	} else {
-		Header("Location: list.php");
-		exit();
+	    Header("Location: list.php");
+	    exit();
 	}
 }
 
@@ -270,6 +274,7 @@ $formAgefodd = new FormAgefodd($db);
  * Action create
  */
 if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
+
 	if ($conf->use_javascript_ajax) {
 		print "\n" . '<script type="text/javascript">
 		$(document).ready(function () {
@@ -403,6 +408,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 
 			// Card in edit mode
 			if ($action == 'edit') {
+
 				$formcompany = new FormCompany($db);
 
 				print '<form name="update" action="' . $_SERVER['PHP_SELF'] . '" method="post">' . "\n";
@@ -428,7 +434,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 								'add-customer-contact' => 'disabled'
 						)
 				);
-				print '<td>' . $form->select_thirdparty_list($agf->socid, 'societe', '((s.client IN (1,2,3)) OR (s.fournisseur=1))', 'SelectThirdParty', 1, 0, $events) . '</td></tr>';
+				print '<td>' . $form->select_thirdparty_list($agf->socid, 'societe', '((s.client IN (1,2,3)) OR (s.fournisseur=1))', 'SelectThirdParty', 1, 0,$events) . '</td></tr>';
 
 				print '<tr><td>' . $langs->trans("Contact") . '</td>';
 				print '<td>';
@@ -498,8 +504,8 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 			} else {
 				// Display View mode
 
-				dol_agefodd_banner_tab($agf, 'id');
-				print '<div class="underbanner clearboth"></div>';
+			    dol_agefodd_banner_tab($agf, 'id');
+			    print '<div class="underbanner clearboth"></div>';
 
 				/*
 				 * Confirm delete
@@ -517,6 +523,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 						$value = 0;
 
 					print $form->formconfirm($_SERVER['PHP_SELF'] . "?arch=" . $value . "&id=" . $id, $langs->trans("AgfFormationArchiveChange"), $langs->trans("AgfConfirmArchiveChange"), "arch_confirm_delete", '', '', 1);
+
 				}
 
 				print '<table class="border" width="100%">';
@@ -548,7 +555,8 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 				$img = picto_from_langcode($agf->country_code);
 				if (method_exists($agf->thirdparty, 'isInEEC') && $agf->thirdparty->isInEEC())
 					print $form->textwithpicto(($img ? $img . ' ' : '') . $agf->country, $langs->trans("CountryIsInEEC"), 1, 0);
-				else print ($img ? $img . ' ' : '') . $agf->country;
+				else
+					print ($img ? $img . ' ' : '') . $agf->country;
 				print '</td></tr>';
 
 				print '</td></tr>';
@@ -615,6 +623,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->agefodd_place->creer) {
+
 		$urlToken = '';
 		if (function_exists('newToken')) $urlToken = "&token=".newToken();
 

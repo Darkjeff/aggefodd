@@ -22,14 +22,14 @@
  * \ingroup agefodd
  * \brief link of contact into agefodd (trainer or trainnee)
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agsession.class.php';
-require_once '../lib/agefodd.lib.php';
+require_once ('../class/agsession.class.php');
+require_once ('../lib/agefodd.lib.php');
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/contact.lib.php';
 
@@ -71,7 +71,8 @@ if (empty($conf->global->SOCIETE_DISABLE_CONTACTS)) {
 	$morehtmlref .= $langs->trans('ThirdParty') . ' : ';
 	if ($objsoc->id > 0)
 		$morehtmlref .= $objsoc->getNomUrl(1);
-	else $morehtmlref .= $langs->trans("ContactNotLinkedToCompany");
+	else
+		$morehtmlref .= $langs->trans("ContactNotLinkedToCompany");
 }
 $morehtmlref .= '</div>';
 
@@ -92,11 +93,12 @@ if ($nb_trainer < 0) {
 	setEventMessage('From hook completeTabsHead agefodd trainer :' . $trainer->error, 'errors');
 } elseif ($nb_trainer>=0) {
 	print '<tr><td class="titlefield">' . $langs->trans("AgfTeacher") . '</td><td>';
-	if (!empty($trainer->lines)) {
-		foreach ($trainer->lines as $line) {
-			print $line->getNomUrl('name', 'session');
+	if(!empty($trainer->lines)){
+		foreach ( $trainer->lines as $line ) {
+			print $line->getNomUrl('name','session');
 		}
-	} else {
+	}
+	else{
 		print '<em>'.$langs->trans("ThisContactIsNotInSessionAsTeacher").'</em>';
 	}
 	print '</td></tr>';
@@ -111,11 +113,12 @@ if ($nb_trainee < 0) {
 	setEventMessage('From hook completeTabsHead agefodd trainee:' . $trainee->error, 'errors');
 } elseif ($nb_trainee>=0) {
 	print '<tr><td class="titlefield">' . $langs->trans("AgfStagiaireDetail") . '</td><td>';
-	if (!empty($trainee->lines)) {
+	if(!empty($trainee->lines)) {
 		foreach ($trainee->lines as $line) {
 			print $line->getNomUrl('name', 'session');
 		}
-	} else {
+	}
+	else{
 		print '<em>'.$langs->trans("ThisContactIsNotInSessionAsTrainee").'</em>';
 	}
 	print '</td></tr>';

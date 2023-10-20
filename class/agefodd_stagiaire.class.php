@@ -227,7 +227,7 @@ class Agefodd_stagiaire extends CommonObject {
         $sql .= " s.rowid as id";
         $sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_stagiaire as s";
         $sql .= " WHERE s.fk_socpeople = " . intval($id);
-        $sql .= " AND s.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
+        $sql .= " AND s.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
 
         dol_syslog(get_class($this) . "::fetch", LOG_DEBUG);
         $resql = $this->db->query($sql);
@@ -267,7 +267,7 @@ class Agefodd_stagiaire extends CommonObject {
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_civility as civ";
 		$sql .= " ON s.civilite = civ.code";
 		$sql .= " WHERE s.rowid = " . $id;
-		$sql .= " AND s.entity IN (" . getEntity('agefodd') . ")";
+		$sql .= " AND s.entity IN (" . getEntity('agefodd_base') . ")";
 
 		dol_syslog(get_class($this) . "::fetch", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -356,12 +356,26 @@ class Agefodd_stagiaire extends CommonObject {
 		global $langs;
 
 		require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
+		dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
+		$search_training_ref = GETPOST("search_training_ref", 'alpha');
+		$catalogue = new Formation($this->db);
+		$catsql = $catalogue->fetch('',$search_training_ref);
+
 		$extrafields = new ExtraFields($this->db);
 		$extralabels = $extrafields->fetch_name_optionals_label($this->table_element, true);
+		if(floatval(DOL_VERSION) >= 17) {
+			$extrafields->attribute_type = $extrafields->attributes[$this->table_element]['type'];
+			$extrafields->attribute_size = $extrafields->attributes[$this->table_element]['size'];
+			$extrafields->attribute_unique = $extrafields->attributes[$this->table_element]['unique'];
+			$extrafields->attribute_required = $extrafields->attributes[$this->table_element]['required'];
+			$extrafields->attribute_label = $extrafields->attributes[$this->table_element]['label'];
+		}
 		$array_options_keys=array();
-		foreach($extrafields->attribute_type as $name=>$type) {
-			if ($type!='separate') {
-				$array_options_keys[]=$name;
+		if(!empty($extrafields->attribute_type)) {
+			foreach($extrafields->attribute_type as $name => $type) {
+				if($type != 'separate') {
+					$array_options_keys[] = $name;
+				}
 			}
 		}
 		$sql = "SELECT";
@@ -369,6 +383,10 @@ class Agefodd_stagiaire extends CommonObject {
 		$sql .= " civ.code as civilitecode,";
 		$sql .= " s.rowid, s.entity, s.nom, s.prenom, s.civilite, s.fk_soc, s.fonction,";
 		$sql .= " s.tel1, s.tel2, s.mail, s.note, s.fk_socpeople, s.date_birth, s.place_birth, s.disable_auto_mail";
+		if (!empty($search_training_ref)) {
+			$sql .= ", se.ref";
+			$sql .= ", cat.ref";
+		}
 		foreach ($array_options_keys as $key)
 		{
 			$sql.= ',ef.'.$key;
@@ -376,11 +394,22 @@ class Agefodd_stagiaire extends CommonObject {
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_stagiaire as s";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as so";
 		$sql .= " ON s.fk_soc = so.rowid";
+		if (!empty($search_training_ref)) {
+			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_session_stagiaire as ss";
+			$sql .= " ON s.rowid = ss.fk_stagiaire";
+			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_session as se";
+			$sql .= " ON se.rowid = ss.fk_session_agefodd";
+			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_formation_catalogue as cat";
+			$sql .= " ON cat.rowid = se.fk_formation_catalogue";
+		}
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_stagiaire_extrafields as ef";
 		$sql .= " ON s.rowid = ef.fk_object";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_civility as civ";
 		$sql .= " ON s.civilite = civ.code";
-		$sql .= " WHERE s.entity IN (" . getEntity('agefodd') . ")";
+		$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ")";
+		if (!empty($search_training_ref)) {
+			$sql .= " AND cat.ref = '". $this->db->escape($search_training_ref) ."' ";
+		}
 
 		// Manage filter
 		if (! empty($filter)) {
@@ -389,11 +418,11 @@ class Agefodd_stagiaire extends CommonObject {
 					$sql .= ' AND (s.nom LIKE \'%' . $this->db->escape($value) . '%\' OR s.prenom LIKE \'%' . $this->db->escape($value) . '%\')';
 				} elseif ($key == 's.fk_socpeople' || $key == 's.fk_soc') {
 					$sql .= ' AND ' . $key . ' = ' . $this->db->escape($value) . '';
-				} elseif ($key != 's.tel1' && $key != 's.tel2' ) {
-					$sql .= ' AND ' . $key . ' LIKE \'%' . $this->db->escape($value) . '%\'';
 				} elseif (strpos($key,'ef.')!==false){
 					$sql.= $value;
-				} else {
+				} elseif ($key != 's.tel1' && $key != 's.tel2' ) {
+					$sql .= ' AND ' . $key . ' LIKE \'%' . $this->db->escape($value) . '%\'';
+				}  else {
 					$sql .= ' AND ' . $key . ' = \'' . $this->db->escape($value) . '\'';
 				}
 			}
@@ -532,7 +561,7 @@ class Agefodd_stagiaire extends CommonObject {
 		$sql .= " ON s.fk_soc = so.rowid";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_civility as civ";
 		$sql .= " ON s.civilite = civ.code";
-		$sql .= " WHERE s.entity IN (" . getEntity('agefodd') . ")";
+		$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ")";
 
 		dol_syslog(get_class($this) . "::".__METHOD__, LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -690,7 +719,9 @@ class Agefodd_stagiaire extends CommonObject {
 	 * @param int $id Id of agefodd_stagiaire to delete
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function remove($id) {
+	public function remove($id, $notrigger = 0) {
+		global $user, $langs, $conf;
+		$this->id = $id;
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "agefodd_stagiaire";
 		$sql .= " WHERE rowid = " . $id;
 
@@ -701,7 +732,24 @@ class Agefodd_stagiaire extends CommonObject {
 		dol_syslog(get_class($this) . "::remove", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 
-		if ($resql) {
+		if(! $notrigger) {
+			// Call triggers
+			if(is_file(DOL_DOCUMENT_ROOT.'/core/class/interfaces.class.php')) {
+				include_once(DOL_DOCUMENT_ROOT.'/core/class/interfaces.class.php');
+			}
+			else { // For backward compatibility
+				include_once(DOL_DOCUMENT_ROOT.'/interfaces.class.php');
+			}
+			$interface = new Interfaces($this->db);
+			$result = $interface->run_triggers('AGEFODD_STAGIAIRE_DELETE', $this, $user, $langs, $conf);
+			if($result < 0) {
+				$error++;
+				$this->errors = $interface->errors;
+			}
+			// End call triggers
+		}
+
+		if ($resql && $error<=0) {
 
 			$this->id = $id;
 			$result = $this->deleteExtraFields();
@@ -770,7 +818,7 @@ class Agefodd_stagiaire extends CommonObject {
 		$sql .= " s.rowid";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "socpeople as s";
 		$sql .= " WHERE s.fk_soc=" . $socid;
-		$sql .= " AND s.entity IN (" . getEntity('agefodd'/*agsession*/) . ')';
+		$sql .= " AND s.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ')';
 		$sql .= " AND UPPER(s.lastname)='" . strtoupper($this->db->escape($lastname)) . "'";
 		$sql .= " AND UPPER(s.firstname)='" . strtoupper($this->db->escape($firstname)) . "'";
 
@@ -788,6 +836,20 @@ class Agefodd_stagiaire extends CommonObject {
 		dol_syslog(get_class($this) . "::searchByLastNameFirstNameSoc num=" . $num);
 		return $num;
 	}
+    /**
+     *
+     * @param string $label
+     * @param string $type
+     * @return string
+     */
+    public function getNomUrl($label = 'name', $type='card') {
+        $link = dol_buildpath('/agefodd/trainee/'.$type.'.php', 1);
+        if ($label == 'name') {
+            return '<a href="' . $link . '?id=' . $this->id . '">' . $this->nom . ' ' . $this->prenom . '</a>';
+        } else {
+            return '<a href="' . $link . '?id=' . $this->id . '">' . $this->$label . '</a>';
+        }
+    }
 }
 class AgfTraineeLine {
 	public $id;

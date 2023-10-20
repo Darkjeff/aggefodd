@@ -22,16 +22,16 @@
  * \brief		report part
  * (Agefodd).
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agsession.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once '../class/html.formagefodd.class.php';
-require_once '../class/report_bpf.class.php';
+require_once ('../class/agsession.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../class/report_bpf.class.php');
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
@@ -44,7 +44,7 @@ $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 
 $search_date_start= dol_mktime(0, 0, 0, GETPOST('search_date_startmonth', 'int'), GETPOST('search_date_startday', 'int'), GETPOST('search_date_startyear', 'int'));
-$search_date_end= dol_mktime(0, 0, 0, GETPOST('search_date_endmonth', 'int'), GETPOST('search_date_endday', 'int'), GETPOST('search_date_endyear', 'int'));
+$search_date_end= dol_mktime(23, 59, 59, GETPOST('search_date_endmonth', 'int'), GETPOST('search_date_endday', 'int'), GETPOST('search_date_endyear', 'int'));
 
 $modelexport = GETPOST('modelexport', 'alpha');
 $lang_id = GETPOST('lang_id', 'none');
@@ -54,7 +54,7 @@ $langs->load('bills');
 $langs->load("exports");
 
 
-llxHeader('', $langs->trans('AgfMenuReportBPF'), '', '', '', '');
+llxHeader('', $langs->trans('AgfMenuReportBPF'), '', '', '', '', $extrajs, $extracss);
 $upload_dir = $conf->agefodd->dir_output . '/report/bpf';
 
 
@@ -77,7 +77,9 @@ if (! empty($search_date_end)) {
  * Actions
  */
 if ($action == 'builddoc') {
+
 	if (count($filter) > 0 && !empty($filter['search_date_start']) && !empty($filter['search_date_end'])) {
+
 		$outputlangs = $langs;
 		$newlang = $lang_id;
 		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
@@ -94,7 +96,6 @@ if ($action == 'builddoc') {
 		// $report_by_cust->file = $upload_dir . 'reportbycust-' . dol_print_date(dol_now(), 'dayhourlog') . '.xlsx';
 		$file_sub_title = $report_bpf->getSubTitlFileName($filter);
 		$report_bpf->file = $upload_dir . '/reportbpf-' . $file_sub_title . '.xlsx';
-
 		$result = $report_bpf->write_file($filter);
 		if ($result < 0) {
 			setEventMessage($report_bpf->error, 'errors');
@@ -105,20 +106,22 @@ if ($action == 'builddoc') {
 		}
 		if (count($report_bpf->warnings) > 0) {
 			setEventMessage($langs->trans("AgfReportBPFDataInconsistency"), 'errors');
-			setEventMessages(null, $report_bpf->warnings, 'warnings');
+			setEventMessages(null,$report_bpf->warnings, 'warnings');
 		}
 	} else {
 		setEventMessage($langs->trans("AgfRptSelectAtLeastOneCriteria"), 'errors');
 	}
 } elseif ($action == 'remove_file') {
+
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 	$langs->load("other");
-	$file = $conf->agefodd->dir_output . '/' . GETPOST('file', 'none');
+	$file = $upload_dir . '/' . GETPOST('file', 'none');
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
-	else setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
+	else
+		setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
 	$action = '';
 }
 
@@ -128,7 +131,7 @@ print load_fiche_titre($langs->trans("AgfMenuReportBPF"));
 
 print "<br>\n";
 
-print ' <a href="'.dol_buildpath('/agefodd/report/report_bpf_help.php', 1).'">'.$langs->trans('AgfMenuReportBPFHelp').'</a>';
+print ' <a href="'.dol_buildpath('/agefodd/report/report_bpf_help.php',1).'">'.$langs->trans('AgfMenuReportBPFHelp').'</a>';
 
 
 print "<br>\n";
@@ -140,22 +143,22 @@ print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" name="search_fo
 print '<table class="border" width="100%">';
 
 if (empty($search_date_start)) {
-	$search_date_start = dol_get_first_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'), '%Y'));
+	$search_date_start = dol_get_first_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'),'%Y'));
 }
 if (empty($search_date_end)) {
-	$search_date_end= dol_get_last_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'), '%Y'));
+	$search_date_end= dol_get_last_day(dol_print_date(dol_time_plus_duree(dol_now(), -1, 'y'),'%Y'));
 }
 
 print '<tr>';
 print '<td>' . $langs->trans('From').'</td>';
 print '<td>';
-print $form->select_date($search_date_start, 'search_date_start', 0, 0, 0, '', 1, 1);
+print $form->select_date($search_date_start,'search_date_start',0,0,0,'',1,1);
 print '</td>';
 print '</tr>';
 print '<tr>';
 print '<td>' . $langs->trans('to').'</td>';
 print '<td>';
-print $form->select_date($search_date_end, 'search_date_end', 0, 0, 0, '', 1, 1);
+print $form->select_date($search_date_end,'search_date_end',0,0,0,'',1,1);
 print '</td>';
 print '</tr>';
 
@@ -165,10 +168,10 @@ print '</table>' . "\n";
 $liste = array (
 		'excel2007' => 'Excel 2007'
 );
-print $formfile->showdocuments('agefodd', 'report/bpf', $upload_dir, $_SERVER["PHP_SELF"], $liste, 1, (! empty($modelexport) ? $modelexport : 'excel2007'), 1, 0, 0, 150, 1);
+print $formfile->showdocuments('export', '', $upload_dir, $_SERVER["PHP_SELF"], $liste, 1, (! empty($modelexport) ? $modelexport : 'excel2007'), 1, 0, 0, 150, 1);
 
 // TODO : Hack to update link on document form because merge export is always link to export ...
-/*echo '<script type="text/javascript">
+echo '<script type="text/javascript">
 		jQuery(document).ready(function () {
                     	jQuery(function() {
                         	$("a[data-ajax|=\'false\'][href*=\'export\']")
@@ -191,9 +194,10 @@ print $formfile->showdocuments('agefodd', 'report/bpf', $upload_dir, $_SERVER["P
 								   });
                         	});
                     });
-		</script>';*/
+		</script>';
 
 print '</form>' . "\n";
 
 llxFooter();
 $db->close();
+

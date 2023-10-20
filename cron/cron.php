@@ -299,7 +299,14 @@ class cron_agefodd
 											$to = $conf->global->AGF_CRON_FORCE_EMAIL_TO;
 										}
 
-										$cMailFile = new CMailFile($sendTopic, $to, $from, $sendContent, array(), array(), array(), $addr_cc, "",  0, 1, $errors_to, '', '', '', getExternalAccessSendEmailContext(), $replyto);
+                                        if (!empty($conf->global->MAIN_MAIL_ADD_INLINE_IMAGES_IF_DATA)) {
+                                            $upload_dir_tmp = DOL_DATA_ROOT.'/mail/img';
+                                            $cMailFile = new CMailFile($sendTopic, $to, $from, $sendContent, array(), array(), array(), $addr_cc, "",  0, 1, $errors_to, '', '', '', getExternalAccessSendEmailContext(), $replyto, $upload_dir_tmp);
+                                        }
+                                        else
+                                        {
+                                            $cMailFile = new CMailFile($sendTopic, $to, $from, $sendContent, array(), array(), array(), $addr_cc, "",  0, 1, $errors_to, '', '', '', getExternalAccessSendEmailContext(), $replyto);
+                                        }
 
 										if($cMailFile->sendfile()){
 											$sended++;
@@ -349,6 +356,222 @@ class cron_agefodd
 		$this->output = $message;
 
 		return $errors;
+	}
+
+	/**
+	 * Exécuté tous les mois pour l'envoi de mails aux participants ayant terminés une formation dans les "$nbmonth" mois
+	 *
+	 * @param int $userID de l'emetteur
+	 * @param int $nbmonth nombre de mois
+	 * @param int $mailModelId id du model de mail
+	 * @return int
+	 */
+	public function completionMailTrainee($userID, $nbmonth, $mailModelId)
+	{
+		global $langs, $user;
+
+		$dateAgo = strtotime('-' . $nbmonth . ' months');
+
+		$countMailsToSend = 0;
+		$countMailsSent = 0;
+		$countMailsSkip = 0;
+		$countMailsError = 0;
+
+		//Récupère la liste des stagiaires qui ont participé à une session de formation $nbmonth mois avant aujourd'hui
+		$sql = /** @lang MySQL */ 'select s.rowid, ss.fk_session_agefodd from ' . MAIN_DB_PREFIX . 'agefodd_stagiaire as s '
+			. ' inner join ' . MAIN_DB_PREFIX . 'agefodd_session_stagiaire as ss on s.rowid = ss.fk_stagiaire '
+			. ' inner join ' . MAIN_DB_PREFIX . 'agefodd_session as ages on ages.rowid = ss.fk_session_agefodd '
+			. ' where ages.datef <= \'' .$this->db->idate($dateAgo) . '\' '
+			. ' AND ages.send_survey_status IN (1)'
+			. ' ORDER BY ss.fk_session_agefodd ASC '
+		;
+
+		$resTrainee = $this->db->query($sql);
+		if ($resTrainee === false) {
+			$this->output = $this->db->lasterror();
+			return 1;
+		}
+
+		//Envois le modèle de mail $mailModelId modifiable à ces stagiaires avec $userID en émetteur
+
+		//Pour chaque stagiaire concerné
+		while ($objTrainee = $this->db->fetch_object($resTrainee)) {
+			$countMailsToSend++;
+			$trainee = new Agefodd_stagiaire($this->db);
+			$agsession = new Agsession($this->db);
+			if (($trainee->fetch($objTrainee->rowid) > 0) && ($agsession->fetch($objTrainee->fk_session_agefodd) > 0)) {
+
+				if($agsession->send_survey_status ==  Agsession::SURVEY_STATUS_DO_NOT_SEND){
+					// Normalement il n'y a pas besoin de faire ça, mais bon, qui me garantit que le statut ne va pas passer à ne pas envoyer pendant le traitement.
+					$countMailsSkip++;
+					continue;
+				}
+
+				$res = $this->sendMail($trainee, $mailModelId, $userID, $agsession);
+				if ($res > 0) {
+					$countMailsSent++;
+					if($agsession->send_survey_status != Agsession::SURVEY_STATUS_SENT){
+						// La logique voudrait que je ne mette le statut à jour qu'une fois tous les mails d'une session envoyés,
+						// mais actuellement aucun suivi d'envoi au cas par cas n'existe. Je ne peux donc pas connaître les stagiaires qui ont déjà reçu un questionnaire.
+						// Par conséquent, il est plus sécurisé de mettre à jour le statut directement à la première occurrence pour éviter en cas de bug d'envoyer en boucle aux premiers de la liste
+						// à chaque lancement du cron
+						$agsession->setSendSurveyStatus(Agsession::SURVEY_STATUS_SENT);
+					}
+				}
+				else {
+					$countMailsError++;
+					$this->output .= '<br/><a href="' . dol_buildpath('/agefodd/trainee/card.php', 2) . '?id=' . $trainee->id . '">' . $trainee->ref . '</a> ' . $langs->trans('AgfCantSendMail');
+				}
+			}
+		}
+
+		$this->output =
+			'Nb mail To send : ' . $countMailsToSend .'<br/>'
+			. 'Nb mail sent : ' . $countMailsSent .'<br/>'
+			. 'Nb mail skip : ' . $countMailsSkip .'<br/>'
+			. 'Nb mail error : ' . $countMailsError .'<br/>'
+			. $this->output;
+
+		if($countMailsError>0){
+			$this->error = 'Nb mail error : ' . $countMailsError;
+			return 1;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * @param Agefodd_stagiaire $trainee
+	 * @param int $fk_model
+	 * @param int $userID
+	 * @param Agsession $agsession
+	 * @return int
+	 */
+	public function sendMail(Agefodd_stagiaire &$trainee, $fk_model, $userID, Agsession $agsession)
+	{
+		global $langs, $conf;
+		require_once (DOL_DOCUMENT_ROOT .'/core/class/CMailFile.class.php');
+		dol_include_once('agefodd/lib/agf_externalaccess.lib.php');
+
+		$langs->load('mails');
+		$message = '';
+		$sended = 0;
+		$errors = 0;
+		$invalidEmailAdress = 0;
+		$disabledMContact = 0;
+
+		// PREPARE EMAIL
+		$user = new User($this->db);
+		$resUser = $user->fetch($userID);
+		if ($resUser > 0) {
+			$from = getExternalAccessSendEmailFrom($user->email);
+		}
+
+		$replyto = $user->email;
+		$errors_to = !empty($conf->global->MAIN_MAIL_ERRORS_TO) ? $conf->global->MAIN_MAIL_ERRORS_TO : '';
+
+		if(empty($fk_model) && !empty($conf->global->AGF_SENDAGENDATOTRAINEE_DEFAULT_MAILMODEL)) {
+			$fk_model = $conf->global->AGF_SENDAGENDATOTRAINEE_DEFAULT_MAILMODEL;
+		}
+
+		$mailTpl = agf_getMailTemplate($fk_model);
+		if ($mailTpl < 1) {
+			$this->output = $langs->trans('TemplateNotExist');
+			return -1;
+		}
+
+		if (! isset($arrayoffamiliestoexclude)) $arrayoffamiliestoexclude=null;
+
+		// Make substitution in email content
+		$substitutionarray = getCommonSubstitutionArray($langs, 0, $arrayoffamiliestoexclude, $agsession);
+
+		complete_substitutions_array($substitutionarray, $langs, $agsession);
+
+		$thisSubstitutionarray = $substitutionarray;
+
+		$thisSubstitutionarray['agfsendall_nom'] = $trainee->nom;
+		$thisSubstitutionarray['agfsendall_prenom'] = $trainee->prenom;
+		$thisSubstitutionarray['agfsendall_civilite'] = $trainee->civilite;
+		$thisSubstitutionarray['agfsendall_socname'] = $trainee->socname;
+		$thisSubstitutionarray['agfsendall_email'] = $trainee->email;
+
+		// Add ICS link replacement to mails
+		$downloadIcsLink = dol_buildpath('public/agenda/agendaexport.php', 2).'?format=ical&type=event';
+		$thisSubstitutionarray['AGENDAICS'] = $downloadIcsLink.'&amp;agftraineeid='.$trainee->id;
+		$thisSubstitutionarray['AGENDAICS'].= '&exportkey='.md5($conf->global->MAIN_AGENDA_XCAL_EXPORTKEY.'agftraineeid'.$trainee->id);
+
+		// Tableau des substitutions
+		if (!empty($agsession->intitule_custo)) {
+			$thisSubstitutionarray['__FORMINTITULE__'] = $agsession->intitule_custo;
+		} else {
+			$thisSubstitutionarray['__FORMINTITULE__'] = $agsession->formintitule;
+		}
+
+		$date_conv = $agsession->libSessionDate('daytext');
+		$thisSubstitutionarray['__FORMDATESESSION__'] = $date_conv;
+
+		//Send mail
+		$sendTopic =make_substitutions($mailTpl->topic, $thisSubstitutionarray);
+		$sendContent =make_substitutions($mailTpl->content, $thisSubstitutionarray);
+
+		$to = $trainee->mail;
+		if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+			// is not a valid email address
+			$invalidEmailAdress ++;
+			//continue;
+		}
+
+        if (!empty($conf->global->MAIN_MAIL_ADD_INLINE_IMAGES_IF_DATA)) {
+            $upload_dir_tmp = DOL_DATA_ROOT.'/mail/img';
+            $cMailFile = new CMailFile($sendTopic, $to, $from, $sendContent, array(), array(), array(), "", "",  0, 1, $errors_to, '', '', '', getExternalAccessSendEmailContext(), $replyto, $upload_dir_tmp);
+        }
+        else {
+            $cMailFile = new CMailFile($sendTopic, $to, $from, $sendContent, array(), array(), array(), "", "",  0, 1, $errors_to, '', '', '', getExternalAccessSendEmailContext(), $replyto);
+        }
+
+		if($cMailFile->sendfile()){
+			$sended++;
+
+			$actionmsg = $langs->trans('MailSentBy').' '.$from.' '.$langs->trans('To').' '.$to.".\n";
+			if($sendContent) {
+				$actionmsg .= $langs->trans('MailTopic').': '.$sendTopic."\n";
+				$actionmsg .= $langs->trans('TextUsedInTheMessageBody').":\n";
+				$actionmsg .= $sendContent;
+			}
+
+			//Creation de l'évènement agenda
+			include_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+			$actioncomm = new ActionComm($this->db);
+			$actioncomm->type_code = 'AC_EMAIL';
+			$actioncomm->label = $langs->trans('CronTaskCompletionMailTrainee').' ('.$agsession->id.')';
+			$actioncomm->note = $actionmsg;
+			$actioncomm->datep = dol_now();
+			$actioncomm->datef = dol_now();
+			$actioncomm->durationp = 0;
+			$actioncomm->punctual = 1;
+			$actioncomm->percentage = -1; // Not applicable
+			if(intval(DOL_VERSION) < 13) $actioncomm->contactid = $agsession->sendtoid;
+			else $actioncomm->contact_id = $agsession->sendtoid;
+			$actioncomm->socid = $agsession->socid;
+			$actioncomm->author = $user;
+			$actioncomm->userdone = $user; // User doing action
+			$actioncomm->fk_element = $agsession->id;
+			$actioncomm->elementtype = $agsession->element;
+			$actioncomm->userownerid = $user->id;
+
+			$ret = method_exists($actioncomm, 'create') ? $actioncomm->create($user) : $actioncomm->add($user);
+		}
+		else{
+			$message.=  $cMailFile->error .' : '.$to;
+			$errors++;
+		}
+
+		if (empty($errors)) {
+			return 1;
+		} else {
+			return -1;
+		}
+
 	}
 
 }

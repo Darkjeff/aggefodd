@@ -27,8 +27,7 @@ include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
 /**
  * Class to manage the box
  */
-class box_agefodd_board extends ModeleBoxes
-{
+class box_agefodd_board extends ModeleBoxes {
 	var $boxcode = "agefodd_board";
 	var $boximg = "agefodd@agefodd";
 	var $boxlabel;
@@ -43,8 +42,7 @@ class box_agefodd_board extends ModeleBoxes
 	/**
 	 * Constructor
 	 */
-	function __construct()
-	{
+	function __construct() {
 		global $langs,$user;
 		$langs->load("boxes");
 
@@ -59,11 +57,11 @@ class box_agefodd_board extends ModeleBoxes
 	 * @param int $max of records to load
 	 * @return void
 	 */
-	function loadBox()
-	{
+	function loadBox() {
 		global $conf, $user, $langs, $db;
 
-		$this->max = $max;
+		if(!empty($max)) $this->max = $max;
+		else $this->max = 0;
 
 		dol_include_once('/agefodd/class/agefodd_index.class.php');
 
@@ -78,10 +76,11 @@ class box_agefodd_board extends ModeleBoxes
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
+
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
 					//'logo' => img_object($langs->trans("AgfRunningSession"), "generic",'',false,1),
-					'text' => img_object($langs->trans("AgfRunningSession"), "generic").$langs->trans("AgfRunningSession")
+					'text' => img_object($langs->trans("AgfRunningSession"), "generic").' '.$langs->trans("AgfRunningSession")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left"',
@@ -98,7 +97,7 @@ class box_agefodd_board extends ModeleBoxes
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfAlertDay"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertDay")
+					'text' => img_object($langs->trans("AgfAlertDay"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertDay")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="red"',
@@ -108,14 +107,14 @@ class box_agefodd_board extends ModeleBoxes
 			$key ++;
 		}
 
-		$result = $agf->fetch_tache_in_between(0, 3);
+		$result = $agf->fetch_tache_in_between(0,3);
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfYDaysBeforeAlert"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfYDaysBeforeAlert")
+					'text' => img_object($langs->trans("AgfYDaysBeforeAlert"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfYDaysBeforeAlert")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="orange"',
@@ -125,14 +124,14 @@ class box_agefodd_board extends ModeleBoxes
 			$key ++;
 		}
 
-		$result = $agf->fetch_tache_in_between(3, 8);
+		$result = $agf->fetch_tache_in_between(3,8);
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfXDaysBeforeAlert"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfXDaysBeforeAlert")
+					'text' => img_object($langs->trans("AgfXDaysBeforeAlert"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfXDaysBeforeAlert")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="ffe27d"',
@@ -142,14 +141,14 @@ class box_agefodd_board extends ModeleBoxes
 			$key ++;
 		}
 
-		$result = $agf->fetch_tache_in_between(8, 0);
+		$result = $agf->fetch_tache_in_between(8,0);
 		if ($result < 0) {
 			setEventMessage($agf->error, 'errors');
 		} else {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfZDaysBeforeAlert"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfZDaysBeforeAlert")
+					'text' => img_object($langs->trans("AgfZDaysBeforeAlert"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfZDaysBeforeAlert")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="#d5baa8"',
@@ -166,7 +165,7 @@ class box_agefodd_board extends ModeleBoxes
 		} else {
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfAlertLevel3Short"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertLevel3Short")
+					'text' => img_object($langs->trans("AgfAlertLevel3Short"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertLevel3Short")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left"',
@@ -185,8 +184,7 @@ class box_agefodd_board extends ModeleBoxes
 	 * @param integer $nooutput nooutput
 	 * @return string
 	 */
-	function showBox($head = null, $contents = null, $nooutput = 0)
-	{
+	function showBox($head = null, $contents = null, $nooutput = 0) {
 		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

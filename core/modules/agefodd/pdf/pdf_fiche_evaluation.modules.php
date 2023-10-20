@@ -29,15 +29,10 @@ dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
 dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_contact.class.php');
-require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-/**
- * Put here description of your class
- */
-
-class pdf_fiche_evaluation extends ModelePDFAgefodd
-{
+class pdf_fiche_evaluation extends ModelePDFAgefodd {
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -52,8 +47,7 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 	 * \brief Constructor
 	 * \param db Database handler
 	 */
-	function __construct($db)
-	{
+	function __construct($db) {
 		global $conf, $langs, $mysoc;
 
 		$this->db = $db;
@@ -99,8 +93,7 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 	 * \file			Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $socid, $courrier)
-	{
+	function write_file($agf, $outputlangs, $file, $socid, $courrier) {
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -146,7 +139,8 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 			$pdf->SetAutoPageBreak(1, 0);
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
+			{
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $pdf->importPage(1);
 			}
@@ -227,12 +221,12 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 					$dir = $conf->societe->multidir_output[$staticsoc->entity] . '/' . $staticsoc->id . '/logos/';
 					if (! empty($staticsoc->logo)) {
 						$logo_client = $dir . $staticsoc->logo;
-						if (file_exists($logo_client) && is_readable($logo_client)) {
+						if (file_exists($logo_client) && is_readable($logo_client)){
 							$hlogo = pdf_getHeightForLogo($logo_client);
 							$wlogo = pdf_getWidthForLogo($logo_client);
 							$X =  ($this->page_largeur / 2) - ($wlogo / 2) ;
 							$Y = $this->marge_haute;
-							$pdf->Image($logo_client, $X, $Y, $wlogo, $hlogo, '', '', '', true);
+							$pdf->Image($logo_client,$X ,$Y, $wlogo, $hlogo,'','','',true);
 						}
 					}
 				}
@@ -329,14 +323,15 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 				$this->str = $outputlangs->transnoentities('AgfPDFFicheEval1') . " ";
 				if ($agf->dated == $agf->datef)
 					$this->str .= dol_print_date($agf->dated);
-				else $this->str .= ' ' . dol_print_date($agf->dated) . ' au ' . dol_print_date($agf->datef);
+				else
+					$this->str .= ' ' . dol_print_date($agf->dated) . ' au ' . dol_print_date($agf->datef);
 				$pdf->Cell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C');
 				$posY += 4;
 
 				$formateurs = new Agefodd_session_formateur($this->db);
 				$nbform = $formateurs->fetch_formateur_per_session($agf->id);
 				$form_str = "";
-				for ($i = 0; $i < $nbform; $i ++) {
+				for($i = 0; $i < $nbform; $i ++) {
 					// Infos formateurs
 					$forma_str .= strtoupper($formateurs->lines[$i]->lastname) . ' ' . ucfirst($formateurs->lines[$i]->firstname);
 					if ($i < ($nbform - 1))
@@ -370,19 +365,24 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 				$agf_sessioncal = new SessionCatalogue($this->db); // formation clone
 				$ret = $agf_sessioncal->fetchSessionCatalogue($id); // par default ça fetch le clone
 
-				if (empty($ret)) { // pas de clone
-					$agf_session = new Agsession($this->db);
-					$retSession = $agf_session->fetch($id);
+				$agf_session = new Agsession($this->db);
+				$retSession = $agf_session->fetch($id);
 
-					if ($retSession > 0 ) {
+				if (empty($ret)) // pas de clone
+				{
+					if ($retSession > 0 ){
+
 						$agf_op = new Formation($this->db);
 						$agf_op->fetch($agf_session->fk_formation_catalogue);
 						$agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
-					} else {
+
+					}else{
 						$agf_op = new Formation($this->db); // prevent error on foreach
-						setEventMessage('errorloadSession', 'errors');
+						setEventMessage('errorloadSession','errors');
 					}
-				} else {
+
+
+				}else{
 					$agf_op = new SessionCatalogue($this->db);
 					$agf_op->fetch($ret);
 					$agf_op->fetch_objpeda_per_session_catalogue($ret);
@@ -550,14 +550,15 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager)) {
+			if (! is_object($hookmanager))
+			{
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
 
 
 			return 1; // Pas d'erreur
@@ -576,8 +577,7 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
-	{
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -597,8 +597,7 @@ class pdf_fiche_evaluation extends ModelePDFAgefodd
 	 * \param outputlang Object lang for output
 	 * \remarks Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs)
-	{
+	function _pagefoot(&$pdf, $object, $outputlangs) {
 		global $conf, $langs, $mysoc;
 
 		$pdf->SetTextColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);

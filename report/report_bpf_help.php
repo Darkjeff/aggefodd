@@ -22,13 +22,13 @@
  * \brief		report part
  * (Agefodd).
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../lib/agefodd.lib.php';
+require_once ('../lib/agefodd.lib.php');
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -46,8 +46,8 @@ print load_fiche_titre($langs->trans("AgfMenuReportBPFHelp"));
 print "<br>\n";
 
 print $langs->trans("AgfBPFIntro");
-print ' <a href="'.dol_buildpath('/agefodd/report/docBPF/cerfa_10443-16.pdf', 1).'">CERFA 10443 * 16</a>';
-print ' <a href="'.dol_buildpath('/agefodd/report/docBPF/notice_cerfa_10443-16.pdf', 1).'">(Notice 10443 * 16)</a>';
+print ' <a href="'.dol_buildpath('/agefodd/report/docBPF/cerfa_10443-16.pdf',1).'">CERFA 10443 * 16</a>';
+print ' <a href="'.dol_buildpath('/agefodd/report/docBPF/notice_cerfa_10443-16.pdf',1).'">(Notice 10443 * 16)</a>';
 print "<br>\n";
 print "<br>\n";
 
@@ -57,17 +57,17 @@ print '<hr>';
 print "<br>\n";
 print img_picto('', 'puce').' '.$langs->trans("AgfBPFHelpconfig");
 print "<br>\n";
-print '1 - <a href="'.dol_buildpath('/agefodd/admin/admin_catbpf.php', 1).'">'.$langs->trans('AgefoddSetupDesc').'</a>';
+print '1 - <a href="'.dol_buildpath('/agefodd/admin/admin_catbpf.php',1).'">'.$langs->trans('AgefoddSetupDesc').'</a>';
 print "<br>\n";
-print '2 - <a href="'.dol_buildpath('/agefodd/admin/admin_catcost.php', 1).'">'.$langs->trans('AgefoddSetupDesc').'</a>';
+print '2 - <a href="'.dol_buildpath('/agefodd/admin/admin_catcost.php',1).'">'.$langs->trans('AgefoddSetupDesc').'</a>';
 print "<br>\n";
-print '3 - <a href="'.dol_buildpath('/admin/dict.php', 1).'">'.$langs->trans('AgfTraineeType').'</a>';
+print '3 - <a href="'.dol_buildpath('/admin/dict.php',1).'">'.$langs->trans('AgfTraineeType').'</a>';
 print "<br>\n";
-print '4 - <a href="'.dol_buildpath('/admin/dict.php', 1).'">'.$langs->trans('AgfTrainerTypeDict').'</a>';
+print '4 - <a href="'.dol_buildpath('/admin/dict.php',1).'">'.$langs->trans('AgfTrainerTypeDict').'</a>';
 print "<br>\n";
-print '4 - <a href="'.dol_buildpath('/admin/dict.php', 1).'">'.$langs->trans('AgfTrainingCategTbl').'</a>';
+print '4 - <a href="'.dol_buildpath('/admin/dict.php',1).'">'.$langs->trans('AgfTrainingCategTbl').'</a>';
 print "<br>\n";
-print '4 - <a href="'.dol_buildpath('/admin/dict.php', 1).'">'.$langs->trans('AgfTrainingCategTblBPF').'</a>';
+print '4 - <a href="'.dol_buildpath('/admin/dict.php',1).'">'.$langs->trans('AgfTrainingCategTblBPF').'</a>';
 print "<br>\n";
 print '6 - Tous les participants sont renseignés sur les sessions (sinon les sessions sans participant ne seront pas comptabilisées)';
 print "<br>\n";
@@ -91,58 +91,58 @@ print "<br>\n";
 print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperC");
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC1", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC1",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCa", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCa",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCb", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCb",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCc", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCc",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCd", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCd",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCe", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCe",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCf", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCf",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCg", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCg",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategFAF').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFCh", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFCh",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategOPCA').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC3", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategFAF').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC3",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC4", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC4",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC5", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC5",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC6", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC6",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC7", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC7",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC8", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC8",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC9", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategAdmnistration').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC9",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategParticulier').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC10", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategParticulier').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC10",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategParticulier').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->transnoentities("AgfBPFC11", '<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>', '<strong>'.$langs->transnoentities('AgfTypeEmployee').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFC11",'<strong>'.$langs->transnoentities('AgfReportBPFCategProdPeda').'</strong>');
 print "<br>\n";
 print "<br>\n";
 
@@ -153,17 +153,17 @@ print "<br>\n";
 print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperD");
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->trans("AgfBPFD1", '<strong>'.$langs->transnoentities('AgfCategOverheadCost').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFD1",'<strong>'.$langs->transnoentities('AgfCategOverheadCost').'</strong>');
 print "<br>\n";
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->trans("AgfBPFD2", '<strong>'.$langs->transnoentities('AgfReportBPFCategFeePresta').'</strong>', '<strong>'.$langs->transnoentities('AgfReportBPFCategPresta').'</strong>');
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFD2",'<strong>'.$langs->transnoentities('AgfReportBPFCategFeePresta').'</strong>','<strong>'.$langs->transnoentities('AgfReportBPFCategPresta').'</strong>');
 print "<br>\n";
 print "<br>\n";
 
 print load_fiche_titre($langs->trans("AgfReportBPFChaperE"), '', 'object_action')."<br>\n";
 print '<hr>';
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperE", $langs->transnoentities('AgfTrainerTypeDict'), $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'));
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperE",$langs->transnoentities('AgfTrainerTypeDict'), $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'));
 print "<br>\n";
 print "<br>\n";
 
@@ -200,12 +200,16 @@ print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperF2", $lang
 if (!empty($conf->global->AGF_USE_REAL_HOURS)) {
 	print $langs->trans("AgfBPFExplanationChaperFRealTime");
 }
+
+/*
 print "<br>\n";
 print "<br>\n";
 print img_picto('', 'puce').' '.$langs->trans("AgfBPFF2a", $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'));
 print "<br>\n";
 print "<br>\n";
 print img_picto('', 'puce').' '.$langs->trans("AgfBPFF2b", $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'));
+*/
+
 print "<br>\n";
 print "<br>\n";
 
@@ -213,7 +217,7 @@ print "<br>\n";
 print load_fiche_titre($langs->trans("AgfReportBPFChaperF3"), '', 'object_action')."<br>\n";
 print '<hr>';
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperF3", $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'), $langs->transnoentities('AgfTrainingCategTblBPF'));
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperF3", $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'),$langs->transnoentities('AgfTrainingCategTblBPF'));
 if (!empty($conf->global->AGF_USE_REAL_HOURS)) {
 	print $langs->trans("AgfBPFExplanationChaperFRealTime");
 }
@@ -223,7 +227,7 @@ print "<br>\n";
 print load_fiche_titre($langs->trans("AgfReportBPFChaperF4"), '', 'object_action')."<br>\n";
 print '<hr>';
 print "<br>\n";
-print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperF4", $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'), $langs->transnoentities('AgfTrainingCategTbl'));
+print img_picto('', 'puce').' '.$langs->trans("AgfBPFExplanationChaperF4", $langs->transnoentities('TraineeSessionStatusPresent'), $langs->transnoentities('TraineeSessionStatusPartPresent'),$langs->transnoentities('AgfTrainingCategTbl'));
 print "<br>\n";
 print "<br>\n";
 
@@ -236,3 +240,4 @@ print "<br>\n";
 
 llxFooter();
 $db->close();
+

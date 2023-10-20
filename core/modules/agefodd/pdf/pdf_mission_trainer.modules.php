@@ -31,16 +31,12 @@ dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_formateur.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur_calendrier.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
-require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
-require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-/**
- * Put here description of your class
- */
-class pdf_mission_trainer extends ModelePDFAgefodd
-{
+require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+class pdf_mission_trainer extends ModelePDFAgefodd {
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -52,8 +48,7 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 	 * \brief		Constructor
 	 * \param		db		Database handler
 	 */
-	function __construct($db)
-	{
+	function __construct($db) {
 		global $conf, $langs, $mysoc;
 
 		$langs->load("agefodd@agefodd");
@@ -102,8 +97,7 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 	 * @param int $session_trainer_id trainer session id
 	 * @return number 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $session_trainer_id)
-	{
+	function write_file($agf, $outputlangs, $file, $session_trainer_id) {
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -177,7 +171,8 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 			$pdf->SetAutoPageBreak(1, 0);
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
+			{
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $pdf->importPage(1);
 			}
@@ -349,7 +344,7 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 			$posY = $pdf->GetY() + 3;
 
 			if ($conf->global->AGF_DOL_TRAINER_AGENDA) {
-				foreach ($agf_session_trainer_calendar->lines as $line) {
+				foreach ( $agf_session_trainer_calendar->lines as $line ) {
 					$pdf->SetXY($posX + 10, $posY);
 					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
 					$this->str = dol_print_date($line->date_session, 'daytext') . ' ' . $outputlangs->transnoentities('AgfPDFConvocation4') . ' ' . dol_print_date($line->heured, 'hour') . ' ' . $outputlangs->transnoentities('AgfPDFConvocation5') . ' ' . dol_print_date($line->heuref, 'hour');
@@ -357,7 +352,7 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 					$posY = $pdf->GetY() + 2;
 				}
 			} else {
-				foreach ($agf_calendrier->lines as $line) {
+				foreach ( $agf_calendrier->lines as $line ) {
 					$pdf->SetXY($posX + 10, $posY);
 					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
 					$this->str = dol_print_date($line->date_session, 'daytext') . ' ' . $outputlangs->transnoentities('AgfPDFConvocation4') . ' ' . dol_print_date($line->heured, 'hour') . ' ' . $outputlangs->transnoentities('AgfPDFConvocation5') . ' ' . dol_print_date($line->heuref, 'hour');
@@ -415,7 +410,8 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 					$this->str .= '- '.$contact_place->email;
 				}
 
-				$pdf->writeHTMLCell(0, 4, $posX + 10, $posY, $outputlangs->convToOutputCharset($this->str), 0, 1);
+				$pdf->writeHTMLCell(0, 4,$posX + 10, $posY, $outputlangs->convToOutputCharset($this->str), 0, 1);
+
 			}
 
 			$posY = $pdf->GetY() + 8;
@@ -444,7 +440,7 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 
 			$pdf->SetXY($posX, $posY);
 			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-			$this->str = $outputlangs->transnoentities('AgfTrainerMissionLetterPDF14').' '.$mysoc->name. ', '.$outputlangs->transnoentities('AgfPDFConv19'). ' '.dol_print_date(dol_now(), 'daytext', 'tzserver', $outputlangs);
+			$this->str = $outputlangs->transnoentities('AgfTrainerMissionLetterPDF14').' '.$mysoc->name. ', '.$outputlangs->transnoentities('AgfPDFConv19'). ' '.dol_print_date(dol_now(),'daytext','tzserver',$outputlangs);
 			$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
 			//$posY = $pdf->GetY() + 8;
 			// Incrustation image tampon
@@ -475,14 +471,15 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager)) {
+			if (! is_object($hookmanager))
+			{
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
 
 
 
@@ -502,8 +499,7 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs		Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
-	{
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -518,8 +514,7 @@ class pdf_mission_trainer extends ModelePDFAgefodd
 	 * \param		outputlang		Object lang for output
 	 * \remarks	Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs)
-	{
+	function _pagefoot(&$pdf, $object, $outputlangs) {
 		global $conf, $langs, $mysoc;
 
 		$pdf->SetTextColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);

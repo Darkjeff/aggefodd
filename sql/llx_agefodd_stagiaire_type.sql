@@ -28,5 +28,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_stagiaire_type (
   intitule varchar(255) NOT NULL,
   sort smallint NOT NULL default 0,
   active integer NULL default 0,
-  tms timestamp NOT NULL
+  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

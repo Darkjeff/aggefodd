@@ -1,0 +1,1 @@
+ALTER TABLE llx_agefodd_session_trainee_path_img_signature_calendrier DROP FOREIGN KEY llx_agefodd_session_trainee_path_img_signature_calendrier_ibfk_1;

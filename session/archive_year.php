@@ -36,6 +36,8 @@ require_once ('../lib/agefodd.lib.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php');
 require_once (DOL_DOCUMENT_ROOT . "/core/class/html.formother.class.php");
 
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 $hookmanager->initHooks(array('agfarchiveyear'));
 
 // Security check
@@ -95,7 +97,7 @@ print_fiche_titre($langs->trans("AgfSessionArchive"));
 print '<table width="100%" class="border">';
 
 print '<form action="' . $_SERVER ["PHP_SELF"] . '" method="POST">';
-print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '" />';
+print '<input type="hidden" name="token" value="' . $newToken . '" />';
 print '<input type="hidden" name="id" value="' . $object->id . '" />';
 print '<input type="hidden" name="action" value="search_year" />';
 // Year

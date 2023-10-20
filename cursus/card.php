@@ -24,17 +24,17 @@
  * \ingroup agefodd
  * \brief card of cursus
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agefodd_cursus.class.php';
-require_once '../class/agefodd_formation_cursus.class.php';
-require_once '../class/html.formagefodd.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+require_once ('../class/agefodd_cursus.class.php');
+require_once ('../class/agefodd_formation_cursus.class.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -42,6 +42,8 @@ if (! $user->rights->agefodd->lire)
 
 $langs->load('agefodd@agefodd');
 $langs->load('companies');
+
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
@@ -64,7 +66,13 @@ $pagenext = $page + 1;
 $agf = new Agefodd_cursus($db);
 $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element);
-
+if(floatval(DOL_VERSION) >= 17) {
+	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
+	$extrafields->attribute_size = $extrafields->attributes[$agf->table_element]['size'];
+	$extrafields->attribute_unique = $extrafields->attributes[$agf->table_element]['unique'];
+	$extrafields->attribute_required = $extrafields->attributes[$agf->table_element]['required'];
+	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
+}
 /*
  * Actions delete
 */
@@ -157,9 +165,11 @@ if ($action == 'create_confirm' && $user->rights->agefodd->creer) {
 		$result = $agf->create($user);
 
 		if ($result > 0) {
+
 			if ($url_return)
 				Header("Location: " . $url_return);
-			else Header("Location: " . $_SERVER ['PHP_SELF'] . "?action=edit&id=" . $result);
+			else
+				Header("Location: " . $_SERVER ['PHP_SELF'] . "?action=edit&id=" . $result);
 			exit();
 		} else {
 			setEventMessage($agf->error, 'errors');
@@ -212,7 +222,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print_fiche_titre($langs->trans("AgfMenuCursusNew"));
 
 	print '<form name="create" action="' . $_SERVER ['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
+	print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
 	print '<input type="hidden" name="action" value="create_confirm">' . "\n";
 
 	print '<input type="hidden" name="url_return" value="' . $url_return . '">' . "\n";
@@ -256,7 +266,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			// Card in edit mode
 			if ($action == 'edit') {
 				print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '" method="post">' . "\n";
-				print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
+				print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
 				print '<input type="hidden" name="action" value="update">' . "\n";
 				print '<input type="hidden" name="id" value="' . $id . '">' . "\n";
 
@@ -426,7 +436,8 @@ if ($action != 'edit' && $action != 'create') {
 
 		$var = true;
 
-		foreach ($training->lines as $line) {
+		foreach ( $training->lines as $line ) {
+
 			$var = ! $var;
 
 			if ($action == 'delete_training' && $line->id == GETPOST('lineid', 'int')) {
@@ -446,7 +457,7 @@ if ($action != 'edit' && $action != 'create') {
 
 	if ($user->rights->agefodd->modifier) {
 		print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '?id=' . $agf->id . '" method="post">' . "\n";
-		print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
+		print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
 		print '<input type="hidden" name="action" value="addtraining">' . "\n";
 
 		print '<table class="noborder" width="100%">';

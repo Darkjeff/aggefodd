@@ -48,6 +48,15 @@ class Agefodd_session_formateur
 	public $labelstatut_short = array();
 	public $socpeopleid;
 
+	const STATUS_IN_SESSION_PROSPECT = 0;
+	const STATUS_IN_SESSION_VERBAL_AGREEMENT = 1;
+	const STATUS_IN_SESSION_CONFIRMED = 2;
+	const STATUS_IN_SESSION_TOTALLY_PRESENT = 3;
+	const STATUS_IN_SESSION_PARTIALLY_PRESENT = 4;
+	const STATUS_IN_SESSION_NOT_PRESENT = 5;
+	const STATUS_IN_SESSION_CANCELED = 6;
+	const STATUS_IN_SESSION_EXCUSED = 7;
+
 	/**
 	 * Constructor
 	 *

@@ -22,17 +22,17 @@
  * \brief		report part
  * (Agefodd).
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agsession.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once '../class/html.formagefodd.class.php';
-require_once '../class/agefodd_formateur.class.php';
-require_once '../class/report_by_customer.class.php';
+require_once ('../class/agsession.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../class/agefodd_formateur.class.php');
+require_once ('../class/report_by_customer.class.php');
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
@@ -57,7 +57,7 @@ if ($search_parent == - 1)
 	$search_parent = '';
 $search_soc_requester = GETPOST('search_soc_requester', 'none');
 $search_soc = GETPOST("search_soc", 'none');
-$search_session_status=GETPOST('search_session_status', 'array');
+$search_session_status=GETPOST('search_session_status','array');
 $avoidNotLinked = GETPOST('avoidNotLinked', 'none');
 
 $modelexport = GETPOST('modelexport', 'alpha');
@@ -124,37 +124,41 @@ if (! empty($search_session_status) && count($search_session_status)>0) {
  * Actions
  */
 if ($action == 'builddoc') {
+
 	if (count($filter)>0) {
-		$outputlangs = $langs;
-		$newlang = $lang_id;
-		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
+
+
+	$outputlangs = $langs;
+	$newlang = $lang_id;
+	if ($conf->global->MAIN_MULTILANGS && empty($newlang))
 		$newlang = $object->client->default_lang;
-		if (! empty($newlang)) {
-			$outputlangs = new Translate("", $conf);
-			$outputlangs->setDefaultLang($newlang);
-		}
+	if (! empty($newlang)) {
+		$outputlangs = new Translate("", $conf);
+		$outputlangs->setDefaultLang($newlang);
+	}
 
-		$outputlangs->load('agefodd@agefodd');
+	$outputlangs->load('agefodd@agefodd');
 
-		$report_by_cust = new ReportByCustomer($db, $outputlangs);
+	$report_by_cust = new ReportByCustomer($db, $outputlangs);
 
-		if (!empty($avoidNotLinked)) $report_by_cust->avoidNotLinkedInvoices = 1;
+	if(!empty($avoidNotLinked)) $report_by_cust->avoidNotLinkedInvoices = 1;
 
-		$file_sub_title=$report_by_cust->getSubTitlFileName($filter);
-		$report_by_cust->file = $upload_dir . 'reportbycust-' . $file_sub_title . '.xlsx';
+	$file_sub_title=$report_by_cust->getSubTitlFileName($filter);
+	$report_by_cust->file = $upload_dir . '/reportbycust-' . $file_sub_title . '.xlsx';
 
-		$result = $report_by_cust->write_file($filter);
-		if ($result < 0) {
-			setEventMessage($report_by_cust->error, 'errors');
-		} elseif ($result == 0) {
-			setEventMessage($langs->trans("NoData"), 'warnings');
-		} else {
-			setEventMessage($langs->trans("FileSuccessfullyBuilt"));
-		}
+	$result = $report_by_cust->write_file($filter);
+	if ($result < 0) {
+		setEventMessage($report_by_cust->error, 'errors');
+	} elseif ($result == 0) {
+		setEventMessage($langs->trans("NoData"), 'warnings');
+	} else {
+		setEventMessage($langs->trans("FileSuccessfullyBuilt"));
+	}
 	} else {
 		setEventMessage($langs->trans("AgfRptSelectAtLeastOneCriteria"), 'errors');
 	}
 } elseif ($action == 'remove_file') {
+
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 	$langs->load("other");
@@ -162,7 +166,8 @@ if ($action == 'builddoc') {
 	$ret = dol_delete_file($file, 0, 0, 0, '');
 	if ($ret)
 		setEventMessage($langs->trans("FileWasRemoved", GETPOST('urlfile', 'none')));
-	else setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
+	else
+		setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('urlfile', 'none')), 'errors');
 	$action = '';
 }
 
@@ -186,16 +191,16 @@ if (is_array($extralabels) && key_exists('ts_logistique', $extralabels)) {
 print '<tr>';
 print '<td>' . $langs->trans('InvoiceCustomer').'</td>';
 print '<td>';
-print $langs->trans("AgfDateDebut") . ':'.$form->select_date($invoice_dt_st, 'invoice_dt_st', 0, 0, 1, 'search_form', 1, 1, 1);
-print ' ' . $langs->trans("AgfDateFin") . ' ' . $form->select_date($invoice_dt_end, 'invoice_dt_end', 0, 0, 1, 'search_form', 1, 1, 1);
+print $langs->trans("AgfDateDebut") . ':'.$form->select_date($invoice_dt_st, 'invoice_dt_st',0,0,1,'search_form',1,1,1);
+print ' ' . $langs->trans("AgfDateFin") . ' ' . $form->select_date($invoice_dt_end, 'invoice_dt_end',0,0,1,'search_form',1,1,1);
 print '</td>';
 print '</tr>';
 
 print '<tr>';
 print '<td>' . $langs->trans('AgfSessionDetail') . '</td>';
 print '<td>';
-print $langs->trans("AgfDateDebut") . ':'.$form->select_date($session_dt_st, 'session_dt_st', 0, 0, 1, 'search_form', 1, 1, 1);
-print ' ' . $langs->trans("AgfDateFin") . ' ' . $form->select_date($session_dt_end, 'session_dt_end', 0, 0, 1, 'search_form', 1, 1, 1);
+print $langs->trans("AgfDateDebut") . ':'.$form->select_date($session_dt_st, 'session_dt_st',0,0,1,'search_form',1,1,1);
+print ' ' . $langs->trans("AgfDateFin") . ' ' . $form->select_date($session_dt_end, 'session_dt_end',0,0,1,'search_form',1,1,1);
 print '</td>';
 print '</tr>';
 
@@ -208,7 +213,7 @@ print '<tr>';
 print '<td>' . $langs->trans('ParentCompany') . '</td>';
 $extrafields = new ExtraFields($db);
 $extrafields->fetch_name_optionals_label('thirdparty');
-if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison', $extrafields->attributes['societe']['type'])) {
+if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison',$extrafields->attributes['societe']['type'])) {
 	$filter='extra.ts_maison=1';
 } else {
 	$filter='';
@@ -233,7 +238,7 @@ print '</tr>';
 
 print '<tr>';
 print '<td>' . $langs->trans('AgfStatusSession') . '</td>';
-print '<td>' . $formAgefodd->multiselect_session_status('search_session_status', $search_session_status, 't.active=1') . '</td>';
+print '<td>' . $formAgefodd->multiselect_session_status('search_session_status',$search_session_status,'t.active=1') . '</td>';
 print '</tr>';
 
 print '<tr>';
@@ -280,3 +285,4 @@ print '</form>' . "\n";
 
 llxFooter();
 $db->close();
+

@@ -677,6 +677,25 @@ class Agefoddsessionstagiaireheures extends CommonObject
 	}
 
 	/**
+	 * Function used to replace a trainee id with another one.
+	 * This function is meant to be called from replaceTrainee with the appropiate tables
+	 *
+	 * @param DoliDB $db        Database handler
+	 * @param int    $origin_id Old trainee id (the trainee to delete)
+	 * @param int    $dest_id   New trainee id (the trainee that will received element of the other)
+	 * @return bool                          True if success, False if error
+	 */
+	public static function replaceTrainee(DoliDB $db, $origin_id, $dest_id) {
+		$sql = 'UPDATE '.MAIN_DB_PREFIX.'agefodd_session_stagiaire_heures SET fk_stagiaire = '.((int) $dest_id).' WHERE fk_stagiaire = '.((int) $origin_id);
+
+		if(! $db->query($sql)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * According inputed time, set trainee status
 	 *
 	 * @param     $user
@@ -705,11 +724,19 @@ class Agefoddsessionstagiaireheures extends CommonObject
 
 				//Total time must have been done
 				$dureeCalendrier=0;
+				$sessionPast=false; // on cherche un horaire de session dans le passé. S'il n' y en a pas, il faut désactiver le recalcul du statut vu qu'aucune heures n'est saisie dans le future
+				$today = dol_now();
+
 				foreach ($cal->lines as $creneauxCal) {
 					if (in_array($creneauxCal->status, $cal->statusCountTime)) {
 						$dureeCalendrier += ($creneauxCal->heuref - $creneauxCal->heured) / 3600;
 					}
+
+					if ($creneauxCal->date_session < $today)
+						$sessionPast = true;
 				}
+
+				if (! $sessionPast) return 0;
 
 				$stagiaire = new Agefodd_session_stagiaire($this->db);
 				$res = $stagiaire->fetch_by_trainee($sessId, $stagiaireId);
@@ -736,6 +763,12 @@ class Agefoddsessionstagiaireheures extends CommonObject
 							$this->errors[] = $stagiaire->error;
 							$error++;
 						}
+					}
+				}else{
+					$stagiaire->status_in_session = Agefodd_session_stagiaire::STATUS_IN_SESSION_NOT_PRESENT;
+					$res = $stagiaire->update($user);
+					if ($res < 0){
+						setEventMessage($langs->trans('erorrupdateHoursFortrainee'),"errors");
 					}
 				}
 			}

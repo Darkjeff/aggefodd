@@ -27,8 +27,7 @@ include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
 /**
  * Class to manage the box
  */
-class box_agefodd_lastsession extends ModeleBoxes
-{
+class box_agefodd_lastsession extends ModeleBoxes {
 	var $boxcode = "agefodd_lastsession";
 	var $boximg = "agefodd@agefodd";
 	var $boxlabel;
@@ -43,8 +42,7 @@ class box_agefodd_lastsession extends ModeleBoxes
 	/**
 	 * Constructor
 	 */
-	function __construct()
-	{
+	function __construct() {
 		global $langs,$user;
 		$langs->load("boxes");
 
@@ -59,11 +57,11 @@ class box_agefodd_lastsession extends ModeleBoxes
 	 * @param int $max of records to load
 	 * @return void
 	 */
-	function loadBox()
-	{
+	function loadBox() {
 		global $conf, $user, $langs, $db;
 
-		$this->max = $max;
+		if(!empty($max)) $this->max = $max;
+		else $this->max = 0;
 
 		dol_include_once('/agefodd/class/agefodd_index.class.php');
 		include_once DOL_DOCUMENT_ROOT . "/core/lib/date.lib.php";
@@ -80,7 +78,8 @@ class box_agefodd_lastsession extends ModeleBoxes
 			setEventMessage($agf->error, 'errors');
 		} else {
 			$num = count($agf->lines);
-			foreach ($agf->lines as $key=>$line) {
+			foreach($agf->lines as $key=>$line) {
+
 				$this->info_box_contents[$key][0] = array(
 						'td' => 'align="left"',
 						'url' => (dol_buildpath('/agefodd/session/card.php', 1) . '?id='.$line->id.'&mainmenu=agefodd'),
@@ -110,8 +109,7 @@ class box_agefodd_lastsession extends ModeleBoxes
 	 * @param integer $nooutput nooutput
 	 * @return string
 	 */
-	function showBox($head = null, $contents = null, $nooutput = 0)
-	{
+	function showBox($head = null, $contents = null, $nooutput = 0) {
 		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

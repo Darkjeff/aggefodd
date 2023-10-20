@@ -22,8 +22,8 @@
  * \ingroup agefodd
  * \brief agefood module setup page
  */
-$res = @include "../../main.inc.php"; // For root directory
-if (! $res) $res = @include "../../../main.inc.php"; // For "custom" directory
+$res = @include ("../../main.inc.php"); // For root directory
+if (! $res) $res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res) die("Include of main fails");
 
 require_once '../class/agefodd_formation_catalogue.class.php';
@@ -41,124 +41,135 @@ $langs->load("admin");
 $langs->load('agefodd@agefodd');
 $langs->load('agfexternalaccess@agefodd');
 
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 if (! $user->rights->agefodd->admin && ! $user->admin)
-	accessforbidden();
+    accessforbidden();
 
 $action = GETPOST('action', 'alpha');
 
 if ($action == 'setvarother') {
-	if (empty($conf->use_javascript_ajax)) {
-		// Active l'accés externe pour agefodd
-		$activAccesexterne = GETPOST('AGF_EACCESS_ACTIVATE', 'none');
-		$res = dolibarr_set_const($db, 'AGF_EACCESS_ACTIVATE', $activAccesexterne, 'chaine', 0, '', $conf->entity);
-		if ($res < 0) $error++;
 
-		// Active l'accés formateur
-		$activeAccesFormateur = GETPOST('AGF_EA_TRAINER_ENABLED', 'none');
-		$res = dolibarr_set_const($db, 'AGF_EA_TRAINER_ENABLED', $activeAccesFormateur, 'chaine', 0, '', $conf->entity);
-		if ($res < 0) $error++;
+    if (empty($conf->use_javascript_ajax))
+    {
+        // Active l'accés externe pour agefodd
+        $activAccesexterne = GETPOST('AGF_EACCESS_ACTIVATE', 'none');
+        $res = dolibarr_set_const($db, 'AGF_EACCESS_ACTIVATE', $activAccesexterne, 'chaine', 0, '', $conf->entity);
+        if ($res < 0) $error++;
 
-		// Vue éclatée des heures participant sur la liste des sessions
-		$heuresEclatee = GETPOST('AGF_EA_ECLATE_HEURES_PAR_TYPE', 'none');
-		$res = dolibarr_set_const($db, 'AGF_EA_ECLATE_HEURES_PAR_TYPE', $heuresEclatee, 'chaine', 0, '', $conf->entity);
-		if ($res < 0) $error++;
+        // Active l'accés formateur
+        $activeAccesFormateur = GETPOST('AGF_EA_TRAINER_ENABLED', 'none');
+        $res = dolibarr_set_const($db, 'AGF_EA_TRAINER_ENABLED', $activeAccesFormateur, 'chaine', 0, '', $conf->entity);
+        if ($res < 0) $error++;
 
-		// Vue éclatée des heures participant sur la liste des sessions
-		$TrainerInvoices = GETPOST('AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES', 'int');
-		$res = dolibarr_set_const($db, 'AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES', $TrainerInvoices, 'chaine', 0, '', $conf->entity);
-		if ($res < 0) $error++;
+        // Vue éclatée des heures participant sur la liste des sessions
+        $heuresEclatee = GETPOST('AGF_EA_ECLATE_HEURES_PAR_TYPE', 'none');
+        $res = dolibarr_set_const($db, 'AGF_EA_ECLATE_HEURES_PAR_TYPE', $heuresEclatee, 'chaine', 0, '', $conf->entity);
+        if ($res < 0) $error++;
 
-		// Ferme la popin (modal) de visualisation d’un créneau lors de la sauvegarde
-		$closeSessionSlotPopin = GETPOST('AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT', 'none');
-		$res = dolibarr_set_const($db, 'AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT', $closeSessionSlotPopin, 'chaine', 0, '', $conf->entity);
-		if ($res < 0) $error++;
-	}
+        // Vue éclatée des heures participant sur la liste des sessions
+        $TrainerInvoices = GETPOST('AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES', 'int');
+        $res = dolibarr_set_const($db, 'AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES', $TrainerInvoices, 'chaine', 0, '', $conf->entity);
+        if ($res < 0) $error++;
 
-
-	// Utilisation des config de mail par defaut
-	$confSend = GETPOST('AGF_SEND_EMAIL_CONTEXT_STANDARD', 'none');
-	$res = dolibarr_set_const($db, 'AGF_SEND_EMAIL_CONTEXT_STANDARD', $confSend, 'chaine', 0, '', $conf->entity);
-	if ($res < 0) $error++;
+        // Ferme la popin (modal) de visualisation d’un créneau lors de la sauvegarde
+        $closeSessionSlotPopin = GETPOST('AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT', 'none');
+        $res = dolibarr_set_const($db, 'AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT', $closeSessionSlotPopin, 'chaine', 0, '', $conf->entity);
+        if ($res < 0) $error++;
+    }
 
 
-	// Email from
-	$confSend = GETPOST('AGF_EA_SEND_EMAIL_FROM', 'none');
-	$res = dolibarr_set_const($db, 'AGF_EA_SEND_EMAIL_FROM', $confSend, 'chaine', 0, '', $conf->entity);
-	if ($res < 0) $error++;
+    // Utilisation des config de mail par defaut
+    $confSend = GETPOST('AGF_SEND_EMAIL_CONTEXT_STANDARD', 'none');
+    $res = dolibarr_set_const($db, 'AGF_SEND_EMAIL_CONTEXT_STANDARD', $confSend, 'chaine', 0, '', $conf->entity);
+    if ($res < 0) $error++;
+
+
+    // Email from
+    $confSend = GETPOST('AGF_EA_SEND_EMAIL_FROM', 'none');
+    $res = dolibarr_set_const($db, 'AGF_EA_SEND_EMAIL_FROM', $confSend, 'chaine', 0, '', $conf->entity);
+    if ($res < 0) $error++;
 
 
 
-	$confKey = 'AGF_SEND_CREATE_CRENEAU_TO_TRAINEE_MAILMODEL';
+    $confKey = 'AGF_SEND_CREATE_CRENEAU_TO_TRAINEE_MAILMODEL';
 	$mailmodel = GETPOST($confKey, 'alpha');
 	$res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
 	if (! $res > 0)
 		$error ++;
 
-	$confKey = 'AGF_SEND_SAVE_CRENEAU_TO_TRAINEE_MAILMODEL';
+	$confKey = 'AGF_SEND_CERTIFICATE_COMPLETION_TO_TRAINEE_MAILMODEL';
 	$mailmodel = GETPOST($confKey, 'alpha');
 	$res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
 	if (! $res > 0)
 		$error ++;
 
-	$confKey = 'AGF_SEND_TRAINEE_ABSENCE_ALERT_MAILMODEL';
-	$mailmodel = GETPOST($confKey, 'alpha');
-	$res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
-	if (! $res > 0)
-		$error ++;
+    $confKey = 'AGF_SEND_SAVE_CRENEAU_TO_TRAINEE_MAILMODEL';
+    $mailmodel = GETPOST($confKey, 'alpha');
+    $res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
+    if (! $res > 0)
+        $error ++;
 
-	$confKey = 'AGF_NUMBER_OF_HOURS_BEFORE_LOCKING_ABSENCE_REQUESTS';
-	$mailmodel = GETPOST($confKey, 'alpha');
-	$res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
-	if (! $res > 0)
-		$error ++;
+    $confKey = 'AGF_SEND_TRAINEE_ABSENCE_ALERT_MAILMODEL';
+    $mailmodel = GETPOST($confKey, 'alpha');
+    $res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
+    if (! $res > 0)
+        $error ++;
 
-	$confKey = 'AGF_EA_NUMBER_OF_ELEMENTS_IN_LISTS';
-	$nbInList = GETPOST($confKey, 'alpha');
-	$res = dolibarr_set_const($db, $confKey, $nbInList, 'chaine', 0, '', $conf->entity);
-	if (! $res > 0)
-		$error ++;
+    $confKey = 'AGF_NUMBER_OF_HOURS_BEFORE_LOCKING_ABSENCE_REQUESTS';
+    $mailmodel = GETPOST($confKey, 'alpha');
+    $res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
+    if (! $res > 0)
+        $error ++;
 
-	$confKey = 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE';
-	$nbInList = GETPOST($confKey, 'alpha');
-	$res = dolibarr_set_const($db, $confKey, $nbInList, 'chaine', 0, '', $conf->entity);
-	if (! $res > 0)
-		$error ++;
+    $confKey = 'AGF_EA_NUMBER_OF_ELEMENTS_IN_LISTS';
+    $nbInList = GETPOST($confKey, 'alpha');
+    $res = dolibarr_set_const($db, $confKey, $nbInList, 'chaine', 0, '', $conf->entity);
+    if (! $res > 0)
+        $error ++;
 
-	$confKey = 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE_ONE';
-	$nbInList = GETPOST($confKey, 'alpha');
-	$res = dolibarr_set_const($db, $confKey, $nbInList, 'chaine', 0, '', $conf->entity);
-	if (! $res > 0)
-		$error ++;
+    $confKey = 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE';
+    $nbInList = GETPOST($confKey, 'alpha');
+    $res = dolibarr_set_const($db, $confKey, $nbInList, 'chaine', 0, '', $conf->entity);
+    if (! $res > 0)
+        $error ++;
 
-
-	// Vue éclatée des heures participant sur la liste des sessions
-	$heuresEclateeExclues = serialize(GETPOST('AGF_EA_ECLATE_HEURES_EXCLUES', 'none'));
-	$res = dolibarr_set_const($db, 'AGF_EA_ECLATE_HEURES_EXCLUES', $heuresEclateeExclues, 'chaine', 0, '', $conf->entity);
-	if ($res < 0) $error++;
-
-
-	// Configuration de la liste des stagiaires d'une session
-	$champsStagiaires = serialize(GETPOST('AGF_EA_TRAINEE_FIELDS', 'none'));
-	$res = dolibarr_set_const($db, 'AGF_EA_TRAINEE_FIELDS', $champsStagiaires, 'chaine', 0, '', $conf->entity);
-	if ($res < 0) $error++;
+    $confKey = 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE_ONE';
+    $nbInList = GETPOST($confKey, 'alpha');
+    $res = dolibarr_set_const($db, $confKey, $nbInList, 'chaine', 0, '', $conf->entity);
+    if (! $res > 0)
+        $error ++;
 
 
-	// Vue éclatée des heures participant sur la liste des sessions
-	$ServiceForHours = GETPOST('AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES', 'int');
-	$res = dolibarr_set_const($db, 'AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES', $ServiceForHours, 'chaine', 0, '', $conf->entity);
-	if ($res < 0) $error++;
+    // Vue éclatée des heures participant sur la liste des sessions
+    $heuresEclateeExclues = serialize(GETPOST('AGF_EA_ECLATE_HEURES_EXCLUES', 'none'));
+    $res = dolibarr_set_const($db, 'AGF_EA_ECLATE_HEURES_EXCLUES', $heuresEclateeExclues, 'chaine', 0, '', $conf->entity);
+    if ($res < 0) $error++;
 
 
-	// Vue éclatée des heures participant sur la liste des sessions
+    // Configuration de la liste des stagiaires d'une session
+    $champsStagiaires = serialize(GETPOST('AGF_EA_TRAINEE_FIELDS', 'none'));
+    $res = dolibarr_set_const($db, 'AGF_EA_TRAINEE_FIELDS', $champsStagiaires, 'chaine', 0, '', $conf->entity);
+    if ($res < 0) $error++;
+
+
+    // Vue éclatée des heures participant sur la liste des sessions
+    $ServiceForHours = GETPOST('AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES', 'int');
+    $res = dolibarr_set_const($db, 'AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES', $ServiceForHours, 'chaine', 0, '', $conf->entity);
+    if ($res < 0) $error++;
+
+
+    // Vue éclatée des heures participant sur la liste des sessions
 	$ServiceForMisc = GETPOST('AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES', 'int');
-	$res = dolibarr_set_const($db, 'AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES', $ServiceForMisc, 'chaine', 0, '', $conf->entity);
-	if ($res < 0) $error++;
+    $res = dolibarr_set_const($db, 'AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES', $ServiceForMisc, 'chaine', 0, '', $conf->entity);
+    if ($res < 0) $error++;
 
-	if (! $error) {
-		setEventMessage($langs->trans("SetupSaved"), 'mesgs');
-	} else {
-		setEventMessage($langs->trans("Error") . " " . $msg, 'errors');
-	}
+    if (! $error) {
+        setEventMessage($langs->trans("SetupSaved"), 'mesgs');
+    } else {
+        setEventMessage($langs->trans("Error") . " " . $msg, 'errors');
+    }
+
 }
 
 if (empty($conf->externalaccess->enabled)) accessforbidden($langs->trans('AgfErrorEANotActivated'));
@@ -184,15 +195,15 @@ $head = agefodd_admin_prepare_head();
 dol_fiche_head($head, 'external', $langs->trans("Module103000Name"), -1, "agefodd@agefodd");
 
 if ($conf->use_javascript_ajax) {
-	print ' <script type="text/javascript">';
-	print 'window.fnHideExternalOptions=function() { $( ".externaloption" ).hide();};' . "\n";
-	print 'window.fnDisplayExternalOptions=function() { $( ".externaloption" ).show();};' . "\n";
-	print ' </script>';
+    print ' <script type="text/javascript">';
+    print 'window.fnHideExternalOptions=function() { $( ".externaloption" ).hide();};' . "\n";
+    print 'window.fnDisplayExternalOptions=function() { $( ".externaloption" ).show();};' . "\n";
+    print ' </script>';
 }
 
 
 print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" enctype="multipart/form-data" >';
-print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+print '<input type="hidden" name="token" value="' . $newToken . '">';
 print '<input type="hidden" name="action" value="setvarother">';
 
 print '<table class="noborder" width="100%">';
@@ -203,100 +214,101 @@ print '<th colspan="3" class="left"><i class="fa fa-power-off" aria-hidden="true
 print '</tr>';
 
 // configuration external access
-if (!empty($conf->externalaccess->enabled)) {
-	// Active l'accés externe pour agefodd
-	print '<tr class="oddeven"><td>' . $langs->trans("AgfActivateExternalAccessForAgefodd") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
-		$input_array = array (
-			'alert' => array (
-				'set' => array (
-					'content' => $langs->trans('AgfConfirmChangeState'),
-					'title' => $langs->trans('AgfConfirmChangeState'),
-					'method' => 'fnDisplayExternalOptions',
-					'yesButton' => $langs->trans('Yes'),
-					'noButton' => $langs->trans('No')
-				),
-				'del' => array (
-					'content' => $langs->trans('AgfConfirmChangeState'),
-					'title' => $langs->trans('AgfConfirmChangeState'),
-					'method' => 'fnHideExternalOptions',
-					'yesButton' => $langs->trans('Yes'),
-					'noButton' => $langs->trans('No')
-				)
-			)
-		);
+if(!empty($conf->externalaccess->enabled))
+{
+    // Active l'accés externe pour agefodd
+    print '<tr class="oddeven"><td>' . $langs->trans("AgfActivateExternalAccessForAgefodd") . '</td>';
+    print '<td align="left">';
+    if ($conf->use_javascript_ajax) {
+        $input_array = array (
+            'alert' => array (
+                'set' => array (
+                    'content' => $langs->trans('AgfConfirmChangeState'),
+                    'title' => $langs->trans('AgfConfirmChangeState'),
+                    'method' => 'fnDisplayExternalOptions',
+                    'yesButton' => $langs->trans('Yes'),
+                    'noButton' => $langs->trans('No')
+                ),
+                'del' => array (
+                    'content' => $langs->trans('AgfConfirmChangeState'),
+                    'title' => $langs->trans('AgfConfirmChangeState'),
+                    'method' => 'fnHideExternalOptions',
+                    'yesButton' => $langs->trans('Yes'),
+                    'noButton' => $langs->trans('No')
+                )
+            )
+        );
 
-		print ajax_constantonoff('AGF_EACCESS_ACTIVATE', $input_array);
-	} else {
-		$arrval = array (
-			'0' => $langs->trans("No"),
-			'1' => $langs->trans("Yes")
-		);
-		print $form->selectarray("AGF_EACCESS_ACTIVATE", $arrval, $conf->global->AGF_EACCESS_ACTIVATE);
-	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+        print ajax_constantonoff('AGF_EACCESS_ACTIVATE', $input_array);
+    } else {
+        $arrval = array (
+            '0' => $langs->trans("No"),
+            '1' => $langs->trans("Yes")
+        );
+        print $form->selectarray("AGF_EACCESS_ACTIVATE", $arrval, $conf->global->AGF_EACCESS_ACTIVATE);
+    }
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
-	print '</table>';
+    print '</table>';
 
 
-	print '<table class="noborder externaloption" width="100%">';
+    print '<table class="noborder externaloption" width="100%">';
 
 	print '<tr class="liste_titre" >';
 	print '<th colspan="3" class="left"><i class="fa fa-cog" aria-hidden="true"></i> ' . $langs->trans("Options")." ".$langs->trans('AgfExternalAccess') . '</th>';
 	print '</tr>';
 
-	// Active l'accés formateur
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfActivateAccessForTrainers") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
-		print ajax_constantonoff('AGF_EA_TRAINER_ENABLED');
-	} else {
-		$arrval = array (
-			'0' => $langs->trans("No"),
-			'1' => $langs->trans("Yes")
-		);
-		print $form->selectarray("AGF_EA_TRAINER_ENABLED", $arrval, $conf->global->AGF_EA_TRAINER_ENABLED);
-	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    // Active l'accés formateur
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfActivateAccessForTrainers") . '</td>';
+    print '<td align="left">';
+    if ($conf->use_javascript_ajax) {
+        print ajax_constantonoff('AGF_EA_TRAINER_ENABLED');
+    } else {
+        $arrval = array (
+            '0' => $langs->trans("No"),
+            '1' => $langs->trans("Yes")
+        );
+        print $form->selectarray("AGF_EA_TRAINER_ENABLED", $arrval, $conf->global->AGF_EA_TRAINER_ENABLED);
+    }
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
 
-	// Vue éclatée des heures participant sur la liste des sessions
-	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfHeuresDeclareesEclateesParType") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
-		print ajax_constantonoff('AGF_EA_ECLATE_HEURES_PAR_TYPE');
-	} else {
-		$arrval = array (
-			'0' => $langs->trans("No"),
-			'1' => $langs->trans("Yes")
-		);
-		print $form->selectarray("AGF_EA_ECLATE_HEURES_PAR_TYPE", $arrval, $conf->global->AGF_EA_ECLATE_HEURES_PAR_TYPE);
-	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    // Vue éclatée des heures participant sur la liste des sessions
+    print '<tr  class="oddeven" ><td>' . $langs->trans("AgfHeuresDeclareesEclateesParType") . '</td>';
+    print '<td align="left">';
+    if ($conf->use_javascript_ajax) {
+        print ajax_constantonoff('AGF_EA_ECLATE_HEURES_PAR_TYPE');
+    } else {
+        $arrval = array (
+            '0' => $langs->trans("No"),
+            '1' => $langs->trans("Yes")
+        );
+        print $form->selectarray("AGF_EA_ECLATE_HEURES_PAR_TYPE", $arrval, $conf->global->AGF_EA_ECLATE_HEURES_PAR_TYPE);
+    }
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
 
-	// Permettre aux formateur de créer des factures fournisseur
-	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfTrainersCanCreateSupplierInvoices") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
-		print ajax_constantonoff('AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES');
-	} else {
-		$arrval = array (
-			'0' => $langs->trans("No"),
-			'1' => $langs->trans("Yes")
-		);
-		print $form->selectarray("AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES", $arrval, $conf->global->AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES);
-	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    // Permettre aux formateur de créer des factures fournisseur
+    print '<tr  class="oddeven" ><td>' . $langs->trans("AgfTrainersCanCreateSupplierInvoices") . '</td>';
+    print '<td align="left">';
+    if ($conf->use_javascript_ajax) {
+        print ajax_constantonoff('AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES');
+    } else {
+        $arrval = array (
+            '0' => $langs->trans("No"),
+            '1' => $langs->trans("Yes")
+        );
+        print $form->selectarray("AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES", $arrval, $conf->global->AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES);
+    }
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
 	// Permettre aux formateur de créer des factures fournisseur par session
 	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfTrainersCanCreateSupplierInvoicesForASession") . '</td>';
@@ -314,68 +326,69 @@ if (!empty($conf->externalaccess->enabled)) {
 	print '<td></td>';
 	print '</tr>';
 
-	// Service utilisé pour la facturation horaire dans les factures formateur
+    // Service utilisé pour la facturation horaire dans les factures formateur
 	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfServiceForHoursInTrainersInvoices") . '</td>';
 	print '<td align="left">';
-	print $form->select_produits($conf->global->AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES, "AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES", 1, 0);
-	print '</td>';
-	print '<td></td>';
+	print $form->select_produits($conf->global->AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES,"AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES", 1, 0);
+    print '</td>';
+    print '<td></td>';
 	print '</tr>';
 
 	// Service utilisé pour la facturation diverse dans les factures formateur
 	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfServiceForMiscInTrainersInvoices") . '</td>';
 	print '<td align="left">';
-	print $form->select_produits($conf->global->AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES, "AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES", 1, 0);
+	print $form->select_produits($conf->global->AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES,"AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES", 1, 0);
 	print '</td>';
 	print '<td></td>';
 	print '</tr>';
 
-	// status à exclure des heures éclatées
-	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfHeuresDeclareesEclateesStatusExclus") . '</td>';
-	print '<td align="left">';
-	//AGF_EA_ECLATE_HEURES_EXCLUES
-	$arrval = Agefodd_sesscalendar::getListStatus();
-	print $form->multiselectarray('AGF_EA_ECLATE_HEURES_EXCLUES', $arrval, unserialize($conf->global->AGF_EA_ECLATE_HEURES_EXCLUES));
+    // status à exclure des heures éclatées
+    print '<tr  class="oddeven" ><td>' . $langs->trans("AgfHeuresDeclareesEclateesStatusExclus") . '</td>';
+    print '<td align="left">';
+    //AGF_EA_ECLATE_HEURES_EXCLUES
+    $arrval = Agefodd_sesscalendar::getListStatus();
+    print $form->multiselectarray('AGF_EA_ECLATE_HEURES_EXCLUES', $arrval, unserialize($conf->global->AGF_EA_ECLATE_HEURES_EXCLUES));
 
-	// Petit hack parce qu'évidemment le multiselectarray ne prend pas en compte le valeur 0 => STATUS_DRAFT
-	// sauf en à partir de la V 9
-	if (intval(DOL_VERSION) < 9 && is_array(unserialize($conf->global->AGF_EA_ECLATE_HEURES_EXCLUES)) && in_array(0, unserialize($conf->global->AGF_EA_ECLATE_HEURES_EXCLUES))) {
-		?>
-		<script>
+    // Petit hack parce qu'évidemment le multiselectarray ne prend pas en compte le valeur 0 => STATUS_DRAFT
+    // sauf en à partir de la V 9
+    if (intval(DOL_VERSION) < 9 && is_array(unserialize($conf->global->AGF_EA_ECLATE_HEURES_EXCLUES)) && in_array(0, unserialize($conf->global->AGF_EA_ECLATE_HEURES_EXCLUES)))
+    {
+        ?>
+        <script>
 		$(document).ready(function(){
 			$('#AGF_EA_ECLATE_HEURES_EXCLUES > option[value=0]').attr('selected', true);
 			var first = $('#AGF_EA_ECLATE_HEURES_EXCLUES').next().find('ul li').first();
 			$('<li class="select2-selection__choice" title="Prévisionnel"><span class="select2-selection__choice__remove" role="presentation">×</span>Prévisionnel</li>').insertBefore(first);
 		});
-		</script>
-		<?php
-	}
+        </script>
+        <?php
+    }
 
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
 
-	// Active l'accés stagiaire
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfActivateAccessForTrainees") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
-		print ajax_constantonoff('AGF_EA_TRAINEE_ENABLED');
-	} else {
-		$arrval = array (
-			'0' => $langs->trans("No"),
-			'1' => $langs->trans("Yes")
-		);
-		print $form->selectarray("AGF_EA_TRAINEE_ENABLED", $arrval, $conf->global->AGF_EA_TRAINEE_ENABLED);
-	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    // Active l'accés stagiaire
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfActivateAccessForTrainees") . '</td>';
+    print '<td align="left">';
+    if ($conf->use_javascript_ajax) {
+        print ajax_constantonoff('AGF_EA_TRAINEE_ENABLED');
+    } else {
+        $arrval = array (
+            '0' => $langs->trans("No"),
+            '1' => $langs->trans("Yes")
+        );
+        print $form->selectarray("AGF_EA_TRAINEE_ENABLED", $arrval, $conf->global->AGF_EA_TRAINEE_ENABLED);
+    }
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
 	// Ajoute une option permettant d’ajouter le nom des stagiaires dans la liste des session sur le portail
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfEAAddTrainneNameInSessionSelectList") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfEAAddTrainneNameInSessionSelectList") . '</td>';
+    print '<td align="left">';
+    if ($conf->use_javascript_ajax) {
 		print ajax_constantonoff('AGF_EA_ADD_TRAINEE_NAME_IN_SESSION_LIST');
 	} else {
 		$arrval = array (
@@ -384,14 +397,14 @@ if (!empty($conf->externalaccess->enabled)) {
 		);
 		print $form->selectarray("AGF_EA_ADD_TRAINEE_NAME_IN_SESSION_LIST", $arrval, $conf->global->AGF_EA_ADD_TRAINEE_NAME_IN_SESSION_LIST);
 	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
-	// Option pour fermer la pop-in de modification de créneau de session sur le portail lors de la sauvegarde
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfEACloseModalAfterUpdateSessionSlot") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
+    // Option pour fermer la pop-in de modification de créneau de session sur le portail lors de la sauvegarde
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfEACloseModalAfterUpdateSessionSlot") . '</td>';
+    print '<td align="left">';
+    if ($conf->use_javascript_ajax) {
 		print ajax_constantonoff('AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT');
 	} else {
 		$arrval = array (
@@ -400,13 +413,13 @@ if (!empty($conf->externalaccess->enabled)) {
 		);
 		print $form->selectarray("AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT", $arrval, $conf->global->AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT);
 	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
 	// Option de configuration du nombre d'éléments afficher sur les listes du portail
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfEANumberOfElementsInLists") . '</td>';
-	print '<td align="left">';
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfEANumberOfElementsInLists") . '</td>';
+    print '<td align="left">';
 
 	$arrval = array (
 		'10' 	=> 10,
@@ -416,33 +429,33 @@ if (!empty($conf->externalaccess->enabled)) {
 	);
 	print $form->selectarray("AGF_EA_NUMBER_OF_ELEMENTS_IN_LISTS", $arrval, $conf->global->AGF_EA_NUMBER_OF_ELEMENTS_IN_LISTS);
 
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
-	// Option de configuration du type de créneau par défaut si il contient plusieurs participants
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfSessionCardTimeDefaultType") . '</td>';
-	print '<td align="left">';
+    // Option de configuration du type de créneau par défaut si il contient plusieurs participants
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfSessionCardTimeDefaultType") . '</td>';
+    print '<td align="left">';
 
-	print $formAgefodd->select_calendrier_type($conf->global->AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE, 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE', true, '', '');
+    print $formAgefodd->select_calendrier_type($conf->global->AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE, 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE', true, '', '');
 
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
-	// Option de configuration du type de créneau par défaut si il contient un participant
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfSessionCardTimeDefaultTypeOne") . '</td>';
-	print '<td align="left">';
+    // Option de configuration du type de créneau par défaut si il contient un participant
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfSessionCardTimeDefaultTypeOne") . '</td>';
+    print '<td align="left">';
 
-	print $formAgefodd->select_calendrier_type($conf->global->AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE_ONE, 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE_ONE', true, '', '');
+    print $formAgefodd->select_calendrier_type($conf->global->AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE_ONE, 'AGF_SESSION_CARD_TIMESLOT_DEFAULT_TYPE_ONE', true, '', '');
 
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
 
-	// Option de configuration du type de créneau par défaut si il contient un participant
-	print '<tr  class="oddeven"><td>' . $langs->trans("AgfSelectTraineeFieldsToDisplay") . '</td>';
-	print '<td align="left">';
+    // Option de configuration du type de créneau par défaut si il contient un participant
+    print '<tr  class="oddeven"><td>' . $langs->trans("AgfSelectTraineeFieldsToDisplay") . '</td>';
+    print '<td align="left">';
 
 	print '<link rel="stylesheet" href="../includes/multiselect/css/ui.multiselect.css" />';
 	print '<script type="text/javascript" src="../includes/jquery/js/jquery.min.js"></script>';
@@ -453,8 +466,10 @@ if (!empty($conf->externalaccess->enabled)) {
 
 	$config = unserialize($conf->global->AGF_EA_TRAINEE_FIELDS);
 
-	if (!empty($config)) {
-		foreach ($config as $field) {
+	if (!empty($config))
+	{
+		foreach ($config as $field)
+		{
 			$trad = $TTraineeFields[$field];
 			unset($TTraineeFields[$field]);
 			$TTraineeFields[$field] = $trad;
@@ -470,9 +485,11 @@ if (!empty($conf->externalaccess->enabled)) {
     			$('.ui-multiselect').next().remove();
 			});
     		</script>";
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
+    print '</td>';
+    print '<td></td>';
+    print '</tr>';
+
+
 }
 
 print '</table>';
@@ -483,11 +500,14 @@ print '<table class="noborder externaloption" width="100%">';
 $formMail = new FormMail($db);
 $models = $formMail->fetchAllEMailTemplate('agf_trainee', $user, $langs);
 $modelmail_array= array();
-if ($models>0) {
-	foreach ($formMail->lines_model as $line) {
-		if (preg_match('/\((.*)\)/', $line->label, $reg)) {
+if($models>0)
+{
+	foreach($formMail->lines_model as $line)
+    {
+		if (preg_match('/\((.*)\)/', $line->label, $reg)){
 			$modelmail_array[$line->id]=$langs->trans($reg[1]);		// langs->trans when label is __(xxx)__
-		} else {
+		}
+		else{
 			$modelmail_array[$line->id]=$line->label;
 		}
 		if ($line->lang) $modelmail_array[$line->id].=' ('.$line->lang.')';
@@ -513,20 +533,20 @@ print '</tr>';*/
 print '<tr  class="oddeven"><td>' . $langs->trans("AgfEAUseUserEmailSmptConf") . '</td>';
 print '<td align="left">';
 if ($conf->use_javascript_ajax) {
-	print ajax_constantonoff('AGF_SEND_EMAIL_CONTEXT_STANDARD');
+    print ajax_constantonoff('AGF_SEND_EMAIL_CONTEXT_STANDARD');
 } else {
-	$arrval = array (
-		'0' => $langs->trans("No"),
-		'1' => $langs->trans("Yes")
-	);
-	print $form->selectarray("AGF_SEND_EMAIL_CONTEXT_STANDARD", $arrval, $conf->global->AGF_SEND_EMAIL_CONTEXT_STANDARD);
+    $arrval = array (
+        '0' => $langs->trans("No"),
+        '1' => $langs->trans("Yes")
+    );
+    print $form->selectarray("AGF_SEND_EMAIL_CONTEXT_STANDARD", $arrval, $conf->global->AGF_SEND_EMAIL_CONTEXT_STANDARD);
 }
 print '</td>';
 print '<td></td>';
 print '</tr>';
 
 
-print '<tr  class="oddeven"><td>' . $langs->trans("AgfEASendEmailFrom").' '. img_help(1, $langs->trans('AgfEASendEmailFromHelp')) . '</td>';
+print '<tr  class="oddeven"><td>' . $langs->trans("AgfEASendEmailFrom").' '. img_help(1,$langs->trans('AgfEASendEmailFromHelp')) . '</td>';
 print '<td align="left">';
 print '<input type="email" name="AGF_EA_SEND_EMAIL_FROM" value="'.$conf->global->AGF_EA_SEND_EMAIL_FROM.'"  >';
 print '</td>';
@@ -547,6 +567,15 @@ print '</td>';
 print '<td></td>';
 print '</tr>';
 
+print '<tr  class="oddeven"><td>' . $langs->trans("AgfMailToSendCertificateCompletion") . '<br/><em><small>(' . $langs->trans('AgfMailToSendTrainee').')</small></em></td>';
+print '<td align="left">';
+
+print $formMail->selectarray('AGF_SEND_CERTIFICATE_COMPLETION_TO_TRAINEE_MAILMODEL', $modelmail_array, $conf->global->AGF_SEND_CERTIFICATE_COMPLETION_TO_TRAINEE_MAILMODEL, 1);
+
+print '</td>';
+print '<td></td>';
+print '</tr>';
+
 print '<tr  class="oddeven" ><td>' . $langs->trans("AgfSendSaveCreneauxToTraineeMailModel") . '<br/><em><small>(' . $langs->trans('AgfMailToSendTrainee').')</small></em></td>';
 print '<td align="left">';
 
@@ -560,13 +589,13 @@ print '</tr>';
 print '<tr  class="oddeven"><td>' . $langs->trans("AgfCheckedCheckboxByDefaultForSendAlertToTrainee") . '</td>';
 print '<td align="left">';
 if ($conf->use_javascript_ajax) {
-	print ajax_constantonoff('AGF_DONT_SEND_EMAIL_TO_TRAINEE_BY_DEFAULT');
+    print ajax_constantonoff('AGF_DONT_SEND_EMAIL_TO_TRAINEE_BY_DEFAULT');
 } else {
-	$arrval = array (
-		'0' => $langs->trans("No"),
-		'1' => $langs->trans("Yes")
-	);
-	print $form->selectarray("AGF_DONT_SEND_EMAIL_TO_TRAINEE_BY_DEFAULT", $arrval, $conf->global->AGF_DONT_SEND_EMAIL_TO_TRAINEE_BY_DEFAULT);
+    $arrval = array (
+        '0' => $langs->trans("No"),
+        '1' => $langs->trans("Yes")
+    );
+    print $form->selectarray("AGF_DONT_SEND_EMAIL_TO_TRAINEE_BY_DEFAULT", $arrval, $conf->global->AGF_DONT_SEND_EMAIL_TO_TRAINEE_BY_DEFAULT);
 }
 print '</td>';
 print '<td></td>';
@@ -576,13 +605,13 @@ print '</tr>';
 print '<tr  class="oddeven"><td>' . $langs->trans("AgfSendCopyOfTraineeEmailToTrainer") . '</td>';
 print '<td align="left">';
 if ($conf->use_javascript_ajax) {
-	print ajax_constantonoff('AGF_SEND_COPY_EMAIL_TO_TRAINER');
+    print ajax_constantonoff('AGF_SEND_COPY_EMAIL_TO_TRAINER');
 } else {
-	$arrval = array (
-		'0' => $langs->trans("No"),
-		'1' => $langs->trans("Yes")
-	);
-	print $form->selectarray("AGF_SEND_COPY_EMAIL_TO_TRAINER", $arrval, $conf->global->AGF_SEND_COPY_EMAIL_TO_TRAINER);
+    $arrval = array (
+        '0' => $langs->trans("No"),
+        '1' => $langs->trans("Yes")
+    );
+    print $form->selectarray("AGF_SEND_COPY_EMAIL_TO_TRAINER", $arrval, $conf->global->AGF_SEND_COPY_EMAIL_TO_TRAINER);
 }
 print '</td>';
 print '<td></td>';
@@ -593,7 +622,7 @@ print '<tr  >';
 print '<th colspan="3" class="left">' . $langs->trans("AgfEATraineeTitle") . '</th>';
 print '</tr>';
 
-print '<tr  class="oddeven"><td>' . $langs->trans("AgfNumberOfHoursBeforeLockingAbsenceRequests"). ' '. img_help(1, $langs->trans('AgfNumberOfHoursBeforeLockingAbsenceRequestsHelp')) . '</td>';
+print '<tr  class="oddeven"><td>' . $langs->trans("AgfNumberOfHoursBeforeLockingAbsenceRequests"). ' '. img_help(1,$langs->trans('AgfNumberOfHoursBeforeLockingAbsenceRequestsHelp')) . '</td>';
 print '<td align="left">';
 
 print '<input type="nSumber" step="1" min="0" name="AGF_NUMBER_OF_HOURS_BEFORE_LOCKING_ABSENCE_REQUESTS" value="'.$conf->global->AGF_NUMBER_OF_HOURS_BEFORE_LOCKING_ABSENCE_REQUESTS.'"  >';
@@ -616,11 +645,12 @@ print '</tr>';
 
 // if (empty($conf->use_javascript_ajax))
 // {
-	print '<tr '.$bc[$var].'><td colspan="3" align="right"><input type="submit" class="button" value="' . $langs->trans("Save") . '"></td></tr>';
+    print '<tr '.$bc[$var].'><td colspan="3" align="right"><input type="submit" class="button" value="' . $langs->trans("Save") . '"></td></tr>';
 // }
 
-if (!empty($conf->use_javascript_ajax) && empty($conf->global->AGF_EACCESS_ACTIVATE)) {
-	print "<script>fnHideExternalOptions()</script>";
+if (!empty($conf->use_javascript_ajax) && empty($conf->global->AGF_EACCESS_ACTIVATE))
+{
+    print "<script>fnHideExternalOptions()</script>";
 }
 print '</table><br>';
 print '</form>';

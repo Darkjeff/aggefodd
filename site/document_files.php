@@ -54,6 +54,10 @@ if (! $user->rights->agefodd->agefodd_place->lire) {
 	accessforbidden();
 }
 
+$hookmanager->initHooks(array(
+	'agefoddplacelinkedfiles'
+));
+
 	// Get parameters
 $sortfield = GETPOST("sortfield", 'alpha');
 $sortorder = GETPOST("sortorder", 'alpha');
@@ -78,11 +82,31 @@ if ($result < 0) {
 	$relativepathwithnofile="place/" . $object->id.'/';
 }
 
+// prefix first file as "rules of procedure"
+if (GETPOSTISSET('reglement') && !empty($_FILES['userfile']))
+{
+	$_FILES['userfile']['name'][0] = 'reglement_'.$_FILES['userfile']['name'][0];
+}
+
 /*
  * Actions
  */
-
-include_once DOL_DOCUMENT_ROOT.'/core/actions_linkedfiles.inc.php';
+$parameters = array(
+	'action'	=> $action,
+	'confirm'	=> $confirm,
+	'id'		=> $id,
+	'ref'		=> $ref
+);
+$reshook = $hookmanager->executeHooks('doActions', $parameters, $object, $action);// Note that $action and $object may have been modified by some hooks
+if ($reshook < 0)
+{
+	setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+}
+if (empty($reshook))
+{
+	$permissiontoadd = !empty($user->rights->agefodd->creer);
+	include_once DOL_DOCUMENT_ROOT.'/core/actions_linkedfiles.inc.php';
+}
 
 
 /*
@@ -118,11 +142,22 @@ if ($object->id) {
 	foreach ( $filearray as $key => $file ) {
 		$totalsize += $file['size'];
 	}
-
+	$conf->global->MAIN_USE_JQUERY_FILEUPLOAD=0;
 	$modulepart = 'agefodd';
 	$permission = ($user->rights->agefodd->agefodd_place->creer);
 	$param = '&id=' . $object->id;
 	include_once DOL_DOCUMENT_ROOT . '/core/tpl/document_actions_post_headers.tpl.php';
+
+
+	// add checkbox to say that the users uploads the rules of procedure for the location
+	$addCB = '';
+	$addCB.= '<label For="reglement">';
+	$addCB.= '<input type="checkbox" name="reglement" id="reglement">';
+	$addCB.= addslashes($langs->trans('AgfFileUploadRulesOfProcedure')).'</label>';
+
+	print '<script type="application/javascript">';
+	print '$(document).ready(function(){$("#formuserfile").append($(\''.$addCB.'\'))});';
+	print '</script>';
 
 
 } else {

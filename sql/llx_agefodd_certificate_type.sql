@@ -29,5 +29,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_certificate_type (
   intitule varchar(80) NOT NULL default '',
   sort smallint NOT NULL default 0,
   active integer NULL,
-  tms timestamp NOT NULL
+  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

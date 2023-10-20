@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_formation_catalogue (
   certif_duration varchar(30) NULL,
   qr_code_info varchar(500) NULL,
   color varchar(32) NULL,
-  tms timestamp NOT NULL,
+  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   import_key varchar(36) DEFAULT NULL,
   accessibility_handicap tinyint DEFAULT 0
 ) ENGINE=InnoDB;

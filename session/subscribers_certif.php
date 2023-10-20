@@ -25,19 +25,19 @@
  * \ingroup agefodd
  * \brief subscribers session certificate pages
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agsession.class.php';
-require_once '../class/agefodd_formation_catalogue.class.php';
-require_once '../class/agefodd_stagiaire_certif.class.php';
-require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-require_once '../class/html.formagefodd.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once '../class/agefodd_session_stagiaire.class.php';
+require_once ('../class/agsession.class.php');
+require_once ('../class/agefodd_formation_catalogue.class.php');
+require_once ('../class/agefodd_stagiaire_certif.class.php');
+require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once ('../class/agefodd_session_stagiaire.class.php');
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -49,6 +49,7 @@ $confirm = GETPOST('confirm', 'alpha');
 $certif_save_x = GETPOST('certif_save_x', 'alpha');
 
 if ($action == 'edit' && $user->rights->agefodd->creer) {
+
 	$certif_sta_id = GETPOST('modstaid', 'int');
 	$certif_session_sta_id = GETPOST('sessionstarowid', 'int');
 	$certif_id = GETPOST('certifid', 'int');
@@ -58,7 +59,7 @@ if ($action == 'edit' && $user->rights->agefodd->creer) {
 	$certif_dt_start = dol_mktime(0, 0, 0, GETPOST('dt_startmonth', 'int'), GETPOST('dt_startday', 'int'), GETPOST('dt_startyear', 'int'));
 	$certif_dt_end = dol_mktime(0, 0, 0, GETPOST('dt_endmonth', 'int'), GETPOST('dt_endday', 'int'), GETPOST('dt_endyear', 'int'));
 	$certif_dt_warning = dol_mktime(0, 0, 0, GETPOST('dt_warningmonth', 'int'), GETPOST('dt_warningday', 'int'), GETPOST('dt_warningyear', 'int'));
-	$mark=GETPOST('mark', 'alpha');
+	$mark=GETPOST('mark','alpha');
 
 	if (! empty($certif_save_x)) {
 		$agf_certif = new Agefodd_stagiaire_certif($db);
@@ -66,6 +67,7 @@ if ($action == 'edit' && $user->rights->agefodd->creer) {
 		if ($result < 0) {
 			setEventMessage($agf_certif->error, 'errors');
 		} else {
+
 			$agf_certif->certif_code = $certif_code;
 			$agf_certif->certif_label = $certif_label;
 			$agf_certif->certif_dt_start = $certif_dt_start;
@@ -80,10 +82,11 @@ if ($action == 'edit' && $user->rights->agefodd->creer) {
 					dol_syslog("agefodd:session:subscribers_certif error=" . $agf_certif->error, LOG_ERR);
 					setEventMessage($agf_certif->error, 'errors');
 				} else {
+
 					$certif_type_array = $agf_certif->get_certif_type();
 
 					if (is_array($certif_type_array) && count($certif_type_array) > 0) {
-						foreach ($certif_type_array as $certif_type_id => $certif_type_label) {
+						foreach ( $certif_type_array as $certif_type_id => $certif_type_label ) {
 							$certif_state = GETPOST('certifstate_' . $certif_type_id, 'none');
 							$result = $agf_certif->set_certif_state($user, $certif_id, $certif_type_id, $certif_state);
 							if ($result < 0) {
@@ -106,10 +109,11 @@ if ($action == 'edit' && $user->rights->agefodd->creer) {
 				if ($resultcertif < 0) {
 					setEventMessage($agf_certif->error, 'errors');
 				} else {
+
 					$certif_type_array = $agf_certif->get_certif_type();
 
 					if (is_array($certif_type_array) && count($certif_type_array) > 0) {
-						foreach ($certif_type_array as $certif_type_id => $certif_type_label) {
+						foreach ( $certif_type_array as $certif_type_id => $certif_type_label ) {
 							// Case state didn't exists yet
 							$certif_state = GETPOST('certifstate_' . $certif_type_id, 'none');
 							$result = $agf_certif->set_certif_state($user, $resultcertif, $certif_type_id, $certif_state);
@@ -192,10 +196,11 @@ if (! empty($id)) {
 	$stagiaires->fetch_stagiaire_per_session($agf->id);
 	$nbstag = count($stagiaires->lines);
 	if ($nbstag > 0) {
-		for ($i = 0; $i < $nbstag; $i ++) {
+		for($i = 0; $i < $nbstag; $i ++) {
 			if ($stagiaires->lines [$i]->id == $_POST ["modstaid"] && $_POST ["certif_remove_x"] && ($action == 'edit'))
 				print '<tr bgcolor="#d5baa8">' . "\n";
-			else print '<tr>' . "\n";
+			else
+				print '<tr>' . "\n";
 
 			print '<td width="3%" align="center">' . ($i + 1) . '</td>' . "\n";
 
@@ -227,6 +232,7 @@ if (! empty($id)) {
 			$agf_certif->fetch(0, $stagiaires->lines [$i]->id, $stagiaires->lines [$i]->sessid, $stagiaires->lines [$i]->stagerowid);
 
 			if ($stagiaires->lines [$i]->id == $_POST ["modstaid"] && ! $_POST ["certif_remove_x"] && ($action == 'edit')) {
+
 				print '<form name="obj_update_' . $i . '" action="' . $_SERVER ['PHP_SELF'] . '?action=edit&id=' . $id . '"  method="POST">' . "\n";
 				print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 				print '<input type="hidden" name="sessionstarowid" value="' . $stagiaires->lines [$i]->stagerowid . '">' . "\n";
@@ -255,7 +261,7 @@ if (! empty($id)) {
 
 				// End date is end of session more the time set in session
 				if (! empty($agf_training->certif_duration)) {
-					require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+					require_once (DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php');
 					$duration_array = explode(':', $agf_training->certif_duration);
 					$year = $duration_array [0];
 					$month = $duration_array [1];
@@ -286,7 +292,7 @@ if (! empty($id)) {
 				print '</td></tr>' . "\n";
 
 				if (is_array($agf_certif->lines_state) && count($agf_certif->lines_state) > 0) {
-					foreach ($agf_certif->lines_state as $line) {
+					foreach ( $agf_certif->lines_state as $line ) {
 						print '<tr><td>' . $langs->trans('AgfCertifType') . ':</td><td>';
 						print $line->certif_type . ':' . $form->selectyesno('certifstate_' . $line->fk_certif_type, $line->certif_state, 1);
 						print '</td></tr>' . "\n";
@@ -328,7 +334,7 @@ if (! empty($id)) {
 					print '</td></tr>' . "\n";
 
 					if (is_array($agf_certif->lines_state) && count($agf_certif->lines_state) > 0) {
-						foreach ($agf_certif->lines_state as $line) {
+						foreach ( $agf_certif->lines_state as $line ) {
 							$var = ! $var;
 							print '<tr ' . $bc [$var] . '><td>' . $langs->trans('AgfCertifType') . ':</td><td>';
 							print $line->certif_type . ':' . yn($line->certif_state, 0, 1);
@@ -373,7 +379,7 @@ if (! empty($id)) {
 					print '</td></tr>' . "\n";
 
 					if (is_array($agf_certif->lines_state) && count($agf_certif->lines_state) > 0) {
-						foreach ($agf_certif->lines_state as $line) {
+						foreach ( $agf_certif->lines_state as $line ) {
 							$var = ! $var;
 							print '<tr ' . $bc [$var] . '><td>' . $langs->trans('AgfCertifType') . ':</td><td>';
 							print $line->certif_type . ':' . yn($line->certif_state, 0, 1);

@@ -20,9 +20,9 @@
  * \ingroup agefodd
  * \brief Page to setup extra fields of training
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
@@ -45,7 +45,7 @@ $tmptype2label = ExtraFields::$type2label;
 $type2label = array(
 	''
 );
-foreach ($tmptype2label as $key => $val)
+foreach ( $tmptype2label as $key => $val )
 	$type2label [$key] = $langs->trans($val);
 
 $action = GETPOST('action', 'alpha');
@@ -99,7 +99,7 @@ if (file_exists(DOL_DOCUMENT_ROOT.'/core/tpl/admin_extrafields_view.tpl.php')) {
 	print '<td width="80">&nbsp;</td>';
 	print "</tr>\n";
 
-	$var = true;
+	$var = True;
 	foreach ($extrafields->attribute_type as $key => $value) {
 		$var = !$var;
 		print "<tr " . $bc [$var] . ">";
@@ -161,7 +161,8 @@ if ($action == 'edit' && ! empty($attrname)) {
 
 		$elementtype_to_send = ($elementtype == 'agefodd_formation_catalogue') ? 'agefodd_session_catalogue' : 'agefodd_formation_catalogue';
 
-		if ($action == 'create' || $action == 'edit') {
+		if ($action == 'create' || $action == 'edit')
+		{
 			?>
 			let form = $('div.fiche > form');
 

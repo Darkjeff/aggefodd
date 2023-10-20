@@ -25,9 +25,9 @@
  * \ingroup agenda
  * \brief Tab of calendar events per user
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
@@ -74,7 +74,7 @@ $canedit = 1;
 
 // $action=GETPOST('action','alpha');
 $action = 'show_peruser'; // We use 'show_week' mode
-						  // $year=GETPOST("year", 'none');
+                          // $year=GETPOST("year", 'none');
 $year = GETPOST("year", "int") ? GETPOST("year", "int") : date("Y");
 $month = GETPOST("month", "int") ? GETPOST("month", "int") : date("m");
 $week = GETPOST("week", "int") ? GETPOST("week", "int") : date("W");
@@ -90,7 +90,7 @@ $filter_type_session = GETPOST('type_session', 'int');
 $filter_location = GETPOST('location', 'int');
 $display_only_trainer_filter = GETPOST('displayonlytrainerfilter', 'int');
 $filter_trainee = GETPOST('traineeid', 'int');
-$filter_session_status=GETPOST('search_session_status', 'array');
+$filter_session_status=GETPOST('search_session_status','array');
 
 if ($type == 'trainer' || $type == 'trainerext') {
 	$canedit = 0;
@@ -105,7 +105,7 @@ if ($type == 'trainerext' && !empty($user->contact_id)) {
 	$agf_trainer = new Agefodd_teacher($db);
 	$result=$agf_trainer->fetch_all('', '', '', '', 0, array('f.fk_socpeople'=>$user->contact_id));
 	if ($result<0) {
-		setEventMessages(null, $agf_trainer->errors, 'errors');
+		setEventMessages(null,$agf_trainer->errors,'errors');
 	} else {
 		if (is_array($agf_trainer->lines)&& count($agf_trainer->lines)>0) {
 			$filter_trainer=$agf_trainer->lines[0]->id;
@@ -140,7 +140,7 @@ if ($filter_trainee == -1) {
 $onlysession = 1;
 $issetOnlySession = GETPOSTISSET('onlysession');
 if (!empty($issetOnlySession)) {
-	$onlysession = GETPOST('onlysession', 'int');
+	$onlysession = GETPOST('onlysession','int');
 	$onlysession = intval($onlysession);
 }
 
@@ -312,10 +312,11 @@ if (!empty($filter_location)) {
 if (! empty($filter_trainee)) {
 	$param .= '&traineeid=' . $filter_trainee;
 }
-if (is_array($filter_session_status) && count($filter_session_status)>0) {
-	foreach ($filter_session_status as $val) {
+if (is_array($filter_session_status) && count($filter_session_status)>0){
+	foreach($filter_session_status as $val) {
 		$param .= '&search_session_status[]=' . $val;
 	}
+
 }
 $param .= "&amp;maxprint=" . $maxprint;
 $param .= "&amp;onlysession=" . $onlysession;
@@ -361,7 +362,7 @@ $param .= '&year=' . $year . '&month=' . $month . ($day ? '&day=' . $day : '');
 // print 'x'.$param;
 
 
-llxHeader('', $langs->trans("Agenda"), $help_url, '', 0, 0, '', '', $param);
+llxHeader('', $langs->trans("Agenda"), $help_url, '',0,0,'','',$param);
 
 $tabactive = '';
 if ($action == 'show_month')
@@ -380,7 +381,7 @@ $paramnoaction = preg_replace('/action=[a-z_]+/', '', $param);
 $head = agf_calendars_prepare_head($paramnoaction);
 
 dol_fiche_head($head, $tabactive, $langs->trans('AgfMenuAgenda'), 0, 'action');
-$formagefodd->agenda_filter($form, $year, $month, $day, $filter_commercial, $filter_customer, $filter_contact, $filter_trainer, $canedit, $filterdatestart, '', $onlysession, $filter_type_session, $display_only_trainer_filter, $filter_location, $action, $filter_session_status, $filter_trainee);
+$formagefodd->agenda_filter($form, $year, $month, $day, $filter_commercial, $filter_customer, $filter_contact, $filter_trainer, $canedit, $filterdatestart, '', $onlysession, $filter_type_session, $display_only_trainer_filter, $filter_location, $action,$filter_session_status,$filter_trainee);
 dol_fiche_end();
 
 $showextcals = $listofextcals;
@@ -443,7 +444,7 @@ if (! empty($filter_trainee)) {
 }
 $sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . 'societe as socsess ON agf.fk_soc = socsess.rowid ';
 
-$sql .= ' WHERE a.entity IN (' . getEntity('agefodd') . ')';
+$sql .= ' WHERE a.entity IN (' . getEntity('agefodd_base') . ')';
 $sql .= ' AND a.elementtype IN (\'agefodd_agsession\', \'agefodd_formateur\' )';
 if ($action == 'show_day') {
 	$sql .= " AND (";
@@ -470,12 +471,7 @@ if ($action == 'show_day') {
 	$sql .= ')';
 }
 
-// Fix indisponibilite formateur
-$sql.= ' AND 1 = CASE ';
-$sql.= ' 		WHEN ca.code = \'AC_AGF_NOTAV\' AND a.fk_element = trainer.rowid  AND a.elementtype = \'agefodd_formateur\' THEN 1  ';
-$sql.= '		WHEN ca.code != \'AC_AGF_NOTAV\' THEN 1 ';
-$sql.= '     ELSE 0 ';
-$sql.= ' END ';
+
 
 if (! empty($filter_commercial)) {
 	$sql .= " AND salesman.fk_user_com=" . $filter_commercial;
@@ -484,6 +480,7 @@ if (! empty($filter_customer)) {
 	$sql .= " AND agf.fk_soc=" . $filter_customer;
 }
 if (! empty($filter_contact)) {
+
 	if ($conf->global->AGF_CONTACT_DOL_SESSION) {
 		$sql .= " AND contact.fk_socpeople=" . $filter_contact;
 	} else {
@@ -491,6 +488,7 @@ if (! empty($filter_contact)) {
 	}
 }
 if (! empty($filter_trainer)) {
+
 	if ($type == 'trainer') {
 		$sql .= " AND trainer.fk_user=" . $filter_trainer;
 	} else {
@@ -511,7 +509,7 @@ if (! empty($filterdatestart)) {
 	$sql .= ' AND a.datep>=\'' . $db->idate($filterdatestart) . '\'';
 }
 if (! empty($filter_session_status)) {
-	$sql .= " AND agf.status IN (" . implode(',', $filter_session_status).")";
+	$sql .= " AND agf.status IN (" . implode(',',$filter_session_status).")";
 }
 if (! empty($filter_trainee)) {
 	$sql .= " AND trainee_session.fk_stagiaire=".$filter_trainee;
@@ -576,7 +574,7 @@ if (! empty($filter_trainee)) {
 }
 $sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . 'societe as socsess ON agf.fk_soc = socsess.rowid ';
 
-$sql .= ' WHERE a.entity IN (' . getEntity('agefodd'/*'session'*/) . ')';
+$sql .= ' WHERE a.entity IN (' . getEntity('agefodd_base') . ')';
 $sql .= ' AND a.elementtype IN (\'agefodd_formateur\' )';
 if ($action == 'show_day') {
 	$sql .= " AND (";
@@ -610,6 +608,7 @@ if (! empty($filter_customer)) {
 	$sql .= " AND agf.fk_soc=" . $filter_customer;
 }
 if (! empty($filter_contact)) {
+
 	if ($conf->global->AGF_CONTACT_DOL_SESSION) {
 		$sql .= " AND contact.fk_socpeople=" . $filter_contact;
 	} else {
@@ -617,6 +616,7 @@ if (! empty($filter_contact)) {
 	}
 }
 if (! empty($filter_trainer)) {
+
 	if ($type == 'trainer') {
 		$sql .= " AND trainer.fk_user=" . $filter_trainer;
 	} else {
@@ -637,7 +637,7 @@ if (! empty($filterdatestart)) {
 	$sql .= ' AND a.datep>=\'' . $db->idate($filterdatestart) . '\'';
 }
 if (! empty($filter_session_status)) {
-	$sql .= " AND agf.status IN (" . implode(',', $filter_session_status).")";
+	$sql .= " AND agf.status IN (" . implode(',',$filter_session_status).")";
 }
 if (! empty($filter_trainee)) {
 	$sql .= " AND trainee_session.fk_stagiaire=".$filter_trainee;
@@ -695,7 +695,7 @@ if ($resql) {
 		$event->trainerid = $obj->trainerid;
 
 		$event->socid = $obj->fk_soc;
-		if (intval(DOL_VERSION) < 13) $event->contactid = $obj->fk_contact;
+		if(intval(DOL_VERSION) < 13) $event->contactid = $obj->fk_contact;
 		else $event->contact_id = $obj->fk_contact;
 		// $event->societe->id=$obj->fk_soc; // deprecated
 		// $event->contact->id=$obj->fk_contact; // deprecated
@@ -703,9 +703,9 @@ if ($resql) {
 		$event->fk_element = $obj->fk_element;
 		$event->elementtype = $obj->elementtype;
 
-		if ($obj->code == 'AC_AGF_NOTAV') {
-			$event->type_color = $obj->color;
-		}
+        if ($obj->code == 'AC_AGF_NOTAV') {
+            $event->type_color = $obj->color;
+        }
 
 
 		// Defined date_start_in_calendar and date_end_in_calendar property
@@ -714,12 +714,14 @@ if ($resql) {
 			$event->date_start_in_calendar = $event->datep;
 			if ($event->datef != '' && $event->datef >= $event->datep)
 				$event->date_end_in_calendar = $event->datef;
-			else $event->date_end_in_calendar = $event->datep;
+			else
+				$event->date_end_in_calendar = $event->datep;
 		} else {
 			$event->date_start_in_calendar = $event->datep;
 			if ($event->datef != '' && $event->datef >= $event->datep)
 				$event->date_end_in_calendar = $event->datef;
-			else $event->date_end_in_calendar = $event->datep;
+			else
+				$event->date_end_in_calendar = $event->datep;
 		}
 		// Define ponctual property
 		if ($event->date_start_in_calendar == $event->date_end_in_calendar) {
@@ -804,12 +806,6 @@ $newparam = preg_replace('/viewweek=[0-9]+&?/i', '', $newparam);
 $newparam = preg_replace('/showbirthday_=/i', 'showbirthday=', $newparam); // Restore correct parameter
 $newparam .= '&viewweek=1';
 
-echo '<form id="move_event" action="" method="POST"><input type="hidden" name="action" value="mupdate">';
-echo '<input type="hidden" name="backtopage" value="' . $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'] . '">';
-echo '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
-echo '<input type="hidden" name="newdate" id="newdate">';
-echo '</form>';
-
 // Line header with list of days
 
 // print "begin_d=".$begin_d." end_d=".$end_d;
@@ -829,7 +825,8 @@ while ( $i < 7 ) {
 	print "<br>";
 	if ($i)
 		print dol_print_date(dol_time_plus_duree($firstdaytoshow, $i, 'd'), 'day');
-	else print dol_print_date($firstdaytoshow, 'day');
+	else
+		print dol_print_date($firstdaytoshow, 'day');
 	echo "</td>\n";
 	$i ++;
 }
@@ -843,7 +840,7 @@ while ( $i < 7 ) {
 		$i ++;
 		continue;
 	}
-	for ($h = $begin_h; $h < $end_h; $h ++) {
+	for($h = $begin_h; $h < $end_h; $h ++) {
 		echo '<td align="center">';
 		print '<small style="font-family: courier">' . sprintf("%02d", $h) . '</small>';
 		print "</td>";
@@ -882,7 +879,7 @@ $todayarray = dol_getdate($now, 'fast');
 $sav = $tmpday;
 $showheader = true;
 $var = false;
-foreach ($agf_trainer->lines as $trainer) {
+foreach ( $agf_trainer->lines as $trainer ) {
 	$var = ! $var;
 	echo "<tr>";
 	echo '<td class="cal_current_month cal_peruserviewname"' . ($var ? ' style="background: #F8F8F8"' : '') . '>' . $trainer->getNomUrl('name') . '</td>';
@@ -890,7 +887,7 @@ foreach ($agf_trainer->lines as $trainer) {
 
 	// Lopp on each day of week
 	$i = 0;
-	for ($iter_day = 0; $iter_day < 8; $iter_day ++) {
+	for($iter_day = 0; $iter_day < 8; $iter_day ++) {
 		if (($i + 1) < $begin_d || ($i + 1) > $end_d) {
 			$i ++;
 			continue;
@@ -925,7 +922,7 @@ echo "</table>\n";
 if (! empty($conf->global->AGENDA_USE_EVENT_TYPE)) {
 	$langs->load("commercial");
 	print '<br>' . $langs->trans("TrainerStatusLabelLegend") . ': <br>';
-	foreach ($colorsbytype as $code => $color) {
+	foreach ( $colorsbytype as $code => $color ) {
 		if ($color) {
 			print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($color ? 'background: #' . $color . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
 			print $langs->trans("Action" . $code) != "Action" . $code ? $langs->trans("Action" . $code) : $labelbytype[$code];
@@ -1055,8 +1052,7 @@ $db->close();
  * @param bool $var false for alternat style on tr/td
  * @return void
  */
-function show_day_events2($username, $day, $month, $year, $monthshown, $style, &$eventarray, $maxprint = 0, $maxnbofchar = 16, $newparam = '', $showinfo = 0, $minheight = 60, $showheader = false, $colorsbytype = array(), $var = false)
-{
+function show_day_events2($username, $day, $month, $year, $monthshown, $style, &$eventarray, $maxprint = 0, $maxnbofchar = 16, $newparam = '', $showinfo = 0, $minheight = 60, $showheader = false, $colorsbytype = array(), $var = false) {
 	global $db;
 	global $user, $conf, $langs, $hookmanager, $action;
 	global $filter, $status, $actioncode; // Filters used into search form
@@ -1078,10 +1074,10 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 	$ymd = sprintf("%04d", $year) . sprintf("%02d", $month) . sprintf("%02d", $day);
 
 	$nextindextouse = is_array($colorindexused) ? count($colorindexused) : 0; // At first run, this is 0, so fist user has 0, next 1, ...
-											  // if ($username->id && $day==1) var_dump($eventarray);
+	                                          // if ($username->id && $day==1) var_dump($eventarray);
 
 	// We are in a particular day for $username, now we scan all events
-	foreach ($eventarray as $daykey => $notused) {
+	foreach ( $eventarray as $daykey => $notused ) {
 		$annee = date('Y', $daykey);
 		$mois = date('m', $daykey);
 		$jour = date('d', $daykey);
@@ -1090,35 +1086,37 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 		// Is it the day we are looking for when calling function ?
 		if ($day == $jour && $month == $mois && $year == $annee) {
 			// Scan all event for this date
-			foreach ($eventarray[$daykey] as $index => $event) {
+			foreach ( $eventarray[$daykey] as $index => $event ) {
 				// $keysofuserassigned=array_keys($event->userassigned);
 
 				if ($username->id != $event->trainerid)
 					continue; // We discard record if event is from another user than user we want to show
-								  // if ($username->id != $event->userownerid) continue; // We discard record if event is from another user than user we want to show
+						          // if ($username->id != $event->userownerid) continue; // We discard record if event is from another user than user we want to show
 
 				// Define $color (Hex string like '0088FF') and $cssclass of event
 				$statusColor = array(
-					0 => 'f8f816',
-					1 => '66ff99',
-					2 => '33ff33',
-					3 => '3366ff',
-					4 => '33ccff',
-					5 => 'cc6600',
-					6 => 'cc0000',
-				);
-				// indispo formateur
-				if ($event->type_code == 'AC_AGF_NOTAV') {
-					$color = str_replace("#", "", $colorsbytype[$event->type_code]);
-				} elseif (isset($event->trainer_status)) {
-					$color = $statusColor[$event->trainer_status];
-				}
+				    0 => 'f8f816',
+                    1 => '66ff99',
+                    2 => '33ff33',
+                    3 => '3366ff',
+                    4 => '33ccff',
+                    5 => 'cc6600',
+                    6 => 'cc0000',
+                );
+                // indispo formateur
+				if($event->type_code == 'AC_AGF_NOTAV')
+                {
+                    $color = str_replace("#", "", $colorsbytype[$event->type_code]);
+                }
+				elseif(isset($event->trainer_status)){
+                    $color = $statusColor[$event->trainer_status];
+                }
 
 					// $cssclass=$cssclass.' '.$cssclass.'_day_'.$ymd;
 
 				// Define all rects with event (cases1 is first half hour, cases2 is second half hour)
 					// var_dump($event);
-				for ($h = $begin_h; $h < $end_h; $h ++) {
+				for($h = $begin_h; $h < $end_h; $h ++) {
 					// if ($username->id == 1 && $day==1) print 'h='.$h;
 					$newcolor = ''; // init
 					if (empty($event->fulldayevent)) {
@@ -1141,7 +1139,8 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 								$tmpb = dol_getdate($event->date_end_in_calendar, true);
 								if ($tmpa['mday'] == $tmpb['mday'] && $tmpa['mon'] == $tmpb['mon'] && $tmpa['year'] == $tmpb['year'])
 									$cases1[$h][$event->id]['string'] .= '-' . dol_print_date($event->date_end_in_calendar, 'hour');
-								else $cases1[$h][$event->id]['string'] .= '-' . dol_print_date($event->date_end_in_calendar, 'dayhour');
+								else
+									$cases1[$h][$event->id]['string'] .= '-' . dol_print_date($event->date_end_in_calendar, 'dayhour');
 							}
 							$cases1[$h][$event->id]['string'] .= ' - ' . $event->label;
 							$cases1[$h][$event->id]['typecode'] = $event->type_code;
@@ -1159,7 +1158,8 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 								$tmpb = dol_getdate($event->date_end_in_calendar, true);
 								if ($tmpa['mday'] == $tmpb['mday'] && $tmpa['mon'] == $tmpb['mon'] && $tmpa['year'] == $tmpb['year'])
 									$cases2[$h][$event->id]['string'] .= '-' . dol_print_date($event->date_end_in_calendar, 'hour');
-								else $cases2[$h][$event->id]['string'] .= '-' . dol_print_date($event->date_end_in_calendar, 'dayhour');
+								else
+									$cases2[$h][$event->id]['string'] .= '-' . dol_print_date($event->date_end_in_calendar, 'dayhour');
 							}
 							$cases2[$h][$event->id]['string'] .= ' - ' . $event->label;
 							$cases2[$h][$event->id]['typecode'] = $event->type_code;
@@ -1186,7 +1186,7 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 		}
 	}
 
-	for ($h = $begin_h; $h < $end_h; $h ++) {
+	for($h = $begin_h; $h < $end_h; $h ++) {
 		$color1 = '';
 		$color2 = '';
 		$style1 = '';
@@ -1203,8 +1203,9 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 			$string1 = '&nbsp;';
 			if (empty($conf->global->AGENDA_NO_TRANSPARENT_ON_NOT_BUSY))
 				$style1 = 'peruser_notbusy';
-			else $style1 = 'peruser_busy';
-			foreach ($cases1[$h] as $id => $ev) {
+			else
+				$style1 = 'peruser_busy';
+			foreach ( $cases1[$h] as $id => $ev ) {
 				if ($ev['busy'])
 					$style1 = 'peruser_busy';
 			}
@@ -1216,8 +1217,9 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 			$string2 = '&nbsp;';
 			if (empty($conf->global->AGENDA_NO_TRANSPARENT_ON_NOT_BUSY))
 				$style2 = 'peruser_notbusy';
-			else $style2 = 'peruser_busy';
-			foreach ($cases2[$h] as $id => $ev) {
+			else
+				$style2 = 'peruser_busy';
+			foreach ( $cases2[$h] as $id => $ev ) {
 				if ($ev['busy'])
 					$style2 = 'peruser_busy';
 			}
@@ -1225,7 +1227,8 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 
 		if ($h == $begin_h)
 			echo '<td class="' . $style . '_peruserleft cal_peruser"' . ($var ? ' style="background: #F8F8F8"' : '') . '>';
-		else echo '<td class="' . $style . ' cal_peruser"' . ($var ? ' style="background: #F8F8F8"' : '') . '>';
+		else
+			echo '<td class="' . $style . ' cal_peruser"' . ($var ? ' style="background: #F8F8F8"' : '') . '>';
 
 		//var_dump($cases1[$h]);
 		// 1 seul evenement
@@ -1236,7 +1239,7 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 				$title1 .= ($title1 ? ' - ' : '') . $output[0]['string'];
 			if ($output[0]['color'])
 				$color1 = $output[0]['color'];
-		} elseif (is_array($cases1[$h]) && count($cases1[$h]) > 1)
+		} else if (is_array($cases1[$h]) && count($cases1[$h]) > 1)
 			$color1 = '222222';
 
 			// 1 seul evenement
@@ -1247,7 +1250,7 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 				$title2 .= ($title2 ? ' - ' : '') . $output[0]['string'];
 			if ($output[0]['color'])
 				$color2 = $output[0]['color'];
-		} elseif (is_array($cases2[$h]) && count($cases2[$h]) > 1)
+		} else if (is_array($cases2[$h]) && count($cases2[$h]) > 1)
 			$color2 = '222222';
 		$ids1 = '';
 		$ids2 = '';

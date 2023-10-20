@@ -219,8 +219,8 @@ if (! empty($id) && ! empty($cursus_id)) {
 
 				print '<tr class="' . $style . '">';
 
-				print '<td><a href="' . dol_buildpath('/agefodd/session/subscribers.php', 1) . '?id=' . $line->rowid . '">' . $line->rowid . '</a></td>';
-				print '<td><a href="' . dol_buildpath('/agefodd/session/subscribers.php', 1) . '?id=' . $line->rowid . '">' . $line->intitule . '</a></td>';
+				print '<td><a href="' . dol_buildpath('/agefodd/session/person.php', 1) . '?id=' . $line->rowid . '">' . $line->rowid . '</a></td>';
+				print '<td><a href="' . dol_buildpath('/agefodd/session/person.php', 1) . '?id=' . $line->rowid . '">' . $line->intitule . '</a></td>';
 				print '<td>' . dol_print_date($line->dated, 'daytext') . '</td>';
 				print '<td>' . dol_print_date($line->datef, 'daytext') . '</td>';
 

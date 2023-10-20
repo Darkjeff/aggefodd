@@ -45,6 +45,8 @@ require_once ('../class/agefodd_place.class.php');
 if (! $user->rights->agefodd->lire)
 	accessforbidden();
 
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 $id = GETPOST('id', 'int');
 $action = GETPOST('action', 'alpha');
 $opsid = GETPOST('opsid', 'int');
@@ -554,7 +556,7 @@ elseif ($action == 'link_confirm' && $confirm == 'yes' && $user->rights->agefodd
 	{
 
 		$invoiceselected = GETPOST('invoiceselected', 'int');
-		if (!empty($invoiceselected))
+		if ($invoiceselected > 0)
 		{
 			$session_invoice = new Agefodd_session_element($db);
 			$session_invoice->fk_soc = $socid;
@@ -841,7 +843,8 @@ foreach ( $agf_formateurs->lines as $line ) {
 						$suplier_invoice = new FactureFournisseur($db);
 						$suplier_invoice->fetch($line_fin->fk_element);
 
-						print '<input type="hidden" name="action" value="invoice_addline">';
+                        print '<input type="hidden" name="token" value="'.$newToken.'">';
+                        print '<input type="hidden" name="action" value="invoice_addline">';
 						print '<input type="hidden" name="id" value="' . $id . '">';
 						print '<input type="hidden" name="idelement" value="' . $line_fin->fk_element . '">';
 						print '<table class="nobordernopadding"><tr>';
@@ -946,7 +949,8 @@ foreach ( $agf_formateurs->lines as $line ) {
 			// Create new supplier invoice
 			if ($action == 'createinvoice_supplier' && $opsid == $line->opsid) {
 
-				print '<input type="hidden" name="action" value="invoice_supplier_trainer_confirm">';
+                print '<input type="hidden" name="token" value="'.$newToken.'">';
+                print '<input type="hidden" name="action" value="invoice_supplier_trainer_confirm">';
 				print '<input type="hidden" name="opsid" value="' . $line->opsid . '">';
 				print '<input type="hidden" name="id" value="' . $id . '">';
 
@@ -1064,7 +1068,8 @@ foreach ( $agf_fin->lines as $line_fin ) {
 				$suplier_invoice = new FactureFournisseur($db);
 				$suplier_invoice->fetch($line_fin->fk_element);
 				$suplier_invoice->fetch_thirdparty();
-				print '<input type="hidden" name="action" value="invoice_addline">';
+                print '<input type="hidden" name="token" value="'.$newToken.'">';
+                print '<input type="hidden" name="action" value="invoice_addline">';
 				print '<input type="hidden" name="id" value="' . $id . '">';
 				print '<input type="hidden" name="idelement" value="' . $line_fin->fk_element . '">';
 				print '<table class="nobordernopadding"><tr>';
@@ -1179,7 +1184,7 @@ if ($user->rights->agefodd->modifier && $action == 'new_invoice_supplier_mission
 	print '</td>';
 
 	print '<td>';
-
+    print '<input type="hidden" name="token" value="'.$newToken.'">';
 	print '<input type="hidden" name="action" value="invoice_supplier_missions_confirm">';
 	print '<input type="hidden" name="type" value="invoice_supplier_missions">';
 	print '<input type="hidden" name="id" value="' . $id . '">';
@@ -1279,7 +1284,8 @@ if (! empty($place->id)) {
 					$suplier_invoice = new FactureFournisseur($db);
 					$suplier_invoice->fetch($line_fin->fk_element);
 					$suplier_invoice->fetch_thirdparty();
-					print '<input type="hidden" name="action" value="invoice_addline">';
+                    print '<input type="hidden" name="token" value="'.$newToken.'">';
+                    print '<input type="hidden" name="action" value="invoice_addline">';
 					print '<input type="hidden" name="id" value="' . $id . '">';
 					print '<input type="hidden" name="idelement" value="' . $line_fin->fk_element . '">';
 					print '<table class="nobordernopadding"><tr>';
@@ -1378,7 +1384,8 @@ if (! empty($place->id)) {
 		// Create new supplier invoice
 		if ($action == 'createinvoice_supplier_place') {
 
-			print '<input type="hidden" name="action" value="invoice_supplier_place_confirm">';
+            print '<input type="hidden" name="token" value="'.$newToken.'">';
+            print '<input type="hidden" name="action" value="invoice_supplier_place_confirm">';
 			print '<input type="hidden" name="placeid" value="' . $place->id . '">';
 			print '<input type="hidden" name="id" value="' . $id . '">';
 			print '<input type="hidden" name="socid" value="' . $place->thirdparty->id . '">';

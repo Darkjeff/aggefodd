@@ -100,6 +100,7 @@ if ($reshook < 0)
  * Actions
 */
 
+$permissiontoadd = $user->rights->agefodd->creer || $user->rights->agefodd->modifier;
 include_once DOL_DOCUMENT_ROOT.'/core/actions_linkedfiles.inc.php';
 
 

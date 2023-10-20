@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_session_adminsitu (
   intitule varchar(500) default NULL,
   delais_alerte integer NOT NULL,
   delais_alerte_end integer NOT NULL,
+  mandatory_file integer NOT NULL DEFAULT 0,
+  file_name text DEFAULT NULL,
   indice integer NOT NULL,
   level_rank integer NOT NULL default '0',
   fk_parent_level integer default '0',
@@ -38,7 +40,7 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_session_adminsitu (
   fk_user_author integer NOT NULL,
   datec datetime NOT NULL,
   fk_user_mod integer NOT NULL,
-  tms timestamp NOT NULL,
+  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   archive smallint NOT NULL DEFAULT 0,
   trigger_name varchar(150) NULL
 ) ENGINE=InnoDB;

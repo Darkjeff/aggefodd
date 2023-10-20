@@ -1,9 +1,286 @@
+
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+# UNRELEASED
+
+
+## Version 7.14 - Released on *29/05/2023*
+
+- FIX : missing user message when no trainee or no compatible status in massgeneration - *12/09/2023* - 7.14.23
+- FIX : fix fatal multicompany BIS - *07/06/2023* - 7.14.22
+- FIX : trainer mode affichage lieu - *31/08/2023* - 7.14.21  
+- FIX : if no multicompany => FATAL - *06/09/2023* - 7.14.20
+- FIX : array_sum() expects parameter 1 to be array, null given - *25/08/2023* - 7.14.19
+- FIX : recherche dans un extrafield de type varchar dans la liste des participants - *21/08/2023* - 7.14.18
+- FIX : tms timestamp fields for mysql - *10/08/2023* - 7.14.17
+- FIX : trainee merge extrafields - *04/08/2023* - 7.14.16
+- FIX : modification date de génération pdf  - *08/08/2023* - 7.14.15  
+- FIX : Const AGF_USE_PREV_CONVENTION_BY_SOC in bad entity - *03/08/2023* - 7.14.14
+- FIX : Wrong entity - *17/07/2023* - 7.14.13
+- FIX : Online sign securekey error - *10/07/2023* - 7.14.12
+- FIX : Error: Bug into hook getNomUrl of module class ActionsAgefodd. Method must not return a string but an int - *03/07/2023* - 7.14.11
+- FIX : ajout des contexts et redirections pour la prise en compte du nombre de session affecté aux differents elements (propal, facture , facfourn, cmd , cmdfourn , tiers)   - *04/07/2023* - 7.14.10  
+- FIX : Retour fusion de stagiaire (historique de société) - *28/06/2023* - 7.14.9
+- FIX : gestion de l'ent agenda sur envoi par mail document lié certificat de réalisation - *28/06/2023* - 7.14.8  
+- FIX : actionComm ajout des fichiers envoyés en fin de message   - *27/06/2023* - 7.14.7
+- FIX : Compatibility mass action attachment  - *20/06/2023* - 7.14.6
+- FIX : Ajout evenement agenda sur envoi mail réalisation  - *22/06/2023* - 7.14.5
+- FIX : MODIFICATION icone disquette  - *14/06/2023* - 7.14.5
+
+- FIX : MODIFICATION icone disquette  - *14/06/2023* - 7.14.4  
+- FIX : trads - *14/06/2023* - 7.14.3
+- FIX : Fix Dolibarr V18 Compatibility - function htmlPrintOnlinePaymentFooter becomes htmlPrintOnlineFooter - *08/06/2023* - 7.14.2
+- FIX : DA023459 Pb de quote postgre  - *01/06/2023* - 7.14.1
+- NEW : Bouton fusionner participant  - *29/05/2023* - 7.14.0
+
+## Version 7.13 - Released on *17/05/2023*
+
+- FIX : Fix sql injection in FormAgefodd::select_formateur - *12/09/2023* - 7.13.7
+- FIX : do not delete used contributors - *01/08/2023* - 7.13.6
+- FIX : use Eldy's conf to call CMailFile - *01/08/2023* - 7.13.5
+- FIX : sql error in module init - *04/06/2023* - 7.13.4
+- FIX : Display program pdf creation date in the PDF - *26/06/2023* - 7.13.3
+- FIX : Display program pdf creation date - *14/06/2023* - 7.13.2
+- FIX : Stats visibility without rights - *07/06/2023* - 7.13.1
+- NEW : Type de modèle d'email pour les signatures en ligne  - *16/05/2023* - 7.13.0
+
+## Version 7.12 - Released on *21/04/2023*
+- FIX : SOCIETE pdf affichage absent si session réalisée sinon vide  - *25/04/2023* - 7.12.1  
+- NEW : Les signatures en ligne sont possibles pour les formateurs *30/03/2023* - 7.12.0
+
+## Version 7.11 - Released on *24/02/2023*
+
+- FIX : DA023766 USER_SIGNATURE éclatée à l'envoi de mail en masse - *07/09/2023* - 7.11.8
+- FIX : Warning Invalid argument onglet session dans commande fournisseur - *14/04/2023* - 7.11.7
+- FIX : delete on null  *29/03/2023* - 7.11.6
+- FIX : Mysql update fail  *09/03/2023* - 7.11.5
+- FIX : Ajout des extrafields sur les mails des sessions de formations dans les documents par stagiaire - *09/03/2023* - 7.11.4
+- NEW : Ajout des extrafields sur les mails des sessions de formations - *03/03/2023* - 7.11.3
+- NEW : Configuration AGF_GET_REF_SESSION_INSTEAD_OF_LABEL_WHEN_CREATE_PROPOSAL_FROM_SESSION rendu visible + troncature manuelle par défaut si conf cachée MAIN_DISABLE_TRUNC activée pour éviter bug base de données - *24/02/2023* - 7.11.1
+- NEW : Ajout conf AGF_GET_REF_SESSION_INSTEAD_OF_LABEL_WHEN_CREATE_PROPOSAL_FROM_SESSION permettant lors de la création d'une propal depuis une session grâce au bouton "Créer la proposition commerciale
+complète avec ajout d'une ligne avec le produit lié à la formation" de renseigner dans le champ référence de la propal la référence de la session au lieu de son libellé - *23/02/2023* - 7.11.0
+
+## Version 7.10 - Released on *30/01/2023*
+- FIX : DA023433 dans la liste des trainee, si on vient depuis une formation, on perd le filtre de la formation quand on change la limite d'éléments par page - *07/06/2023* - 7.10.18
+- FIX : Ajout de la variable de substitution lieu pour les modèles de mail - *21/04/2023* - 7.10.17
+- FIX : crenau en creneau - *17/03/2023* - 7.10.16
+- FIX : Misplace complete head - *08/03/2023* - 7.10.15
+- FIX : Missing trigger stagiaire deletion - *07/03/2023* - 7.10.14
+- FIX : Ajout des pièces jointes dans les évènements agendas - *23/02/2023* - 7.10.13 
+- FIX : Empêche l'ajout automatique d'une PJ sur les template d'email n'ayant pas l'option - *23/02/2023* - 7.10.12 
+- FIX : redirection sur la session au moment de rajouter un stagiaire - *17/02/2023* - 7.10.11
+- FIX : check if conf is enabled to show send sign email button - *17/02/2023* - 7.10.10
+- FIX : Ajout du fk_soc dans le backurl de la création de site - *17/02/2023* - 7.10.9
+- FIX : Affichage de la liste des stagiaires ayant reçu un mail *13/02/2023* - 7.10.8
+- FIX : include main dolistore *31/01/2023* - 7.10.7
+- FIX : Compat V17 *31/01/2023* - 7.10.6
+- FIX : Changement de participants e nstagiaire à l'exeption de l'onglet participant *08/02/2023* - 7.10.5
+- FIX : Creation evenement agenda lors de l'envoi d'email du cron du questionnaire à froid - *06/02/2023* - 7.10.4  
+- NEW : Ajout des extrafields sur les mails des sessions de formations - *20/02/2023* - 7.10.4
+- FIX : Triple saut de page, date format, double signature - *03/02/2023* - 7.10.3  
+- FIX : Ajout des traduction pour les modèle envoi en masse  - *02/02/2023* - 7.10.2  
+- FIX : Prise en charge du template d'email pour l'envoi en masse des documents par participants 'convocations' *31/01/2023* - 7.10.1
+- NEW : Ajout d'un statut d'envoi du questionnaire de session - *27/01/2023* - 7.10.0
+  Si besoin voici un requête à adapter pour passer les sessions à envoyer pour les 6 derniers mois  
+  ```UPDATE llx_agefodd_session SET send_survey_status = 1 WHERE send_survey_status = 2 AND datef > DATE_SUB(now(), INTERVAL 6 MONTH)```
+   
+- NEW : Ajout d'une page public pour la signatures des créneaux - *06/01/2023* - 7.9.0
+- FIX : Ajout condition pour Cron completionMailTrainee *13/01/2023* - 7.8.1
+- NEW : Suppression des signatures au moment de la suppression du créneau - *09/12/2022* - 7.8.0
+
+## Version 7.7 - Released on *02/12/2022*
+
+- NEW : Signature des formateurs depuis le portail client - *30/11/2022* - 7.7.0
+- NEW : API pour signature d'un créneau par un stagiaire ou formateur - *17/11/2022* - 7.6.0
+
+## Version 7.5 - Released on *18/11/2022*
+- FIX : ajout du td manquant sur colonne facturé sur la page de signature_page   - *25/11/2022* - 7.5.2
+- FIX : Ajout du bouton retour sur la fiche de signature   - *25/11/2022* - 7.5.1  
+- NEW : Signature des stagiaires depuis le portail client - *17/11/2022* - 7.5.0
+- NEW : Ajout des signatures dans les feuilles d'émargement - *16/11/2022* - 7.4.0  
+- NEW : Signature d'un créneau par un stagiaire ou un formateur via un canvas avec enregistrement de l'image - *14/11/2022* - 7.3.0
+- NEW : Page de signature des formateurs/participants d'une session - *26/10/2022* - 7.2.0
+
+## Version 7.1 - Released on *21/10/2022*
+
+- FIX : Nom des contraintes sql trop longues - 17/05/2023 - 7.1.2
+- FIX : Ajout de tokens manquant et paramètre manquant dans la fonction showOutputField pour affichage extrafields dans les listes - 10/11/2022 - 7.1.1
+- Table des liens png pour les signatures (ajout conf "Gestion des signatures par créneau des stagiaires et formateurs") - 21/10/2022 - 7.1.0
+- Fusion des onglets participants et formateurs - 21/10/2022 - 7.0.0
+
+## Version 6.34 - Released on *20/10/2022*
+- FIX : Modification section G du BPF - *01/08/2023* - 6.34.27
+- FIX : Modification de  F-2 pour ne selectionner que les prestataires - *31/07/2023* - 6.34.26  
+- FIX : suppression de la ligne c13 dans le pdf - *27/07/2023* - 6.34.25  
+- FIX : suppression dans c10 de catégorie des particuliers - *27/07/2023* - 6.34.24  
+- FIX : C-1 toutes catégories à l'exception de AGF_CAT_BPF_FAF - *27/07/2023)* - 6.34.23  
+   - modification de la recupération des cat_bpf pour supporter le multi via get_conf dans _getAmountFin. 
+   - mise en place dans constcust pour C-1 toutes catégories à l'exception de AGF_CAT_BPF_FAF
+- FIX : DA023702 - Exclusion des sessions pour le compte de dans f1 f3 & f4  - *27/07/2023* - 6.34.22
+- FIX : Indicateur F - 1 : a     - *27/07/2023* - 6.34.21
+  - Les participants de type  :Financement par l'employeur, Financement par l''employeur (contrat pro.) opco contrat pro, Congés individuel de formation (CIF),Compte personnel de formation (CPF)  , Autre dispositifs (plan de formation, périodes de professionnalisation,...)
+  - Suppression de  la prise en compte des stagiaires de type CPF dans cette mention. Compte personnel de formation (CPF) ⇒ il faut comptabiliser ce champ dans la case F-1 : e
+- FIX : ajout de l'entité dans la generation des lien de téléchargement pour external access - *25/07/2023* - 6.34.20  
+- FIX : Ajout du filtre stagiaire present ou partiellement present sur document lié Certificat de réalisation - *05/07/2023* - 6.34.19
+- FIX : déselection du client de session quand on passe la session en inter - *23/05/2023* - 6.34.18
+- FIX : Ajout d'une conf pour selectionner uniquement l'entité courante lors de la génération du rapport bpf - *10/05/2023* - 6.34.17  
+- FIX : ajout socpeople information sur export participants - *19/04/2023* - 6.34.16  
+- FIX : FIX convention generation conf handling - *17/04/2023* - 6.34.15
+- FIX : Fix add commercial mobile phone - *04/04/2023* - 6.34.14
+- FIX : Fix sql BPF DA023034 - *10/03/2023* - 6.34.13
+- FIX : correction les documents financiers trop longs ne s'affichent pas dans la convention + les lignes sont dans le désordre... - *03/03/2023* - 6.34.12
+- FIX : corrections diverses sur les tâches adminitratives - *23/02/2023* - 6.34.11
+- FIX : Affichage du titre mentor seulement si au moins 1 mentor est selectionné dans l'administration du module  - *09/02/2023* - 6.34.10  
+- FIX : passage de la société en paramètre lors de l'action du bouton saveAndStay - *27/01/2023* - 6.34.9  
+- FIX : token on delete img signature in admin  - *06/01/2023* - 6.34.8  
+- FIX : Viewing form to add session linked file must check same right than action - *23/12/2022* - 6.34.7
+- FIX : Cronjob fetch all undefined *29/11/2022* - 6.34.6
+- FIX : AJOUT MESSAGE PERSONNALISÉ SUR SESSION EN INTRA - *25/11/2022* - 6.34.5  
+- FIX : test Array preventing error - *23/11/2022)* - 6.34.4  
+- FIX : Ajout parma dans sessionstats.class.php - *23/11/2022)* - 6.34.3  
+- Recup du FIX 7.1 de kev : Ajout de tokens manquant et paramètre manquant dans la fonction showOutputField pour affichage extrafields dans les listes - 10/11/2022 - 6.34.2
+- FIX : AFGEQUIPMENT MISSING  - *21/10/2022* - 6.34.1  
+- NEW : Les extrafields des formations sont maintenant répercutés sur le formulaire de création d'une session
+	+ retrait du système ajax pour remplissage auto des champs durée, nature action, nb places et produit (maintenant fait via rechargement de page) - *13/10/2022* - 6.34.0
+
+## Version 6.33 - Released on *08/09/2022
+- FIX : fetch all undefined *18/10/2022* - 6.33.6
+- FIX : Changement des prefixes Module formation  par Module formation - participant  - *12/10/2022* - 6.33.5  
+- FIX : Ajout d'un modèle de mail certificat de réalisation Participant et préselection de celui-ci dans envoi de document par mail ( réalisation ) - *12/10/2022* - 6.33.4  
+- FIX : Ajout des tokens manquant dans l'action de suppression des documents dans l'onglet Documents liés - *13/10/2022* - 6.33.4
+- FIX : Ajout du lien de la fiche pedagogique originale ou copiée sur la ligne convention de formation dans la liste par tiers des documents liés - *11/10/2022* - 6.33.3  
+- FIX : changement de traduction de la civilité dans fiche_pedago - *10/10/2022* - 6.33.2  
+- FIX : Ajout Équipement necessaire sur la fiche pédago - *10/10/2022* - 6.33.1   
+- NEW : Ajout d'un modèle de certificat de réalisation utilisable dans l'onglet Documents liés - *30/08/2022* 6.33
+- NEW : Cron exécuté tous les mois pour l'envoi de mails aux participants ayant terminés une formation dans les "X" mois - *25/08/2022* 6.32
+
+## Version 6.31 - Released on *08/08/2022*
+- FIX : DA023101 portail formateur multientité - *16/03/2023* - 6.31.7
+- FIX : DA022760 BPF ne filtrer que sur les dates  - *13/01/2023* - 6.31.4
+- FIX : Ajout du parametre useLocalBrowser dans doleditor sur la page training/card.php - *10/01/2023* - 6.31.5  
+- FIX : Blocage de l'intégration de facture n'existant pas - *23/11/2022* - 6.31.4
+- FIX : le clonage de session en erreur n'affichait pas l'erreur - *05/10/2022* - 6.31.3
+- FIX : Recalcul du cout de mission sur la card session car la champs n'est pas toujours mis à jour comme on voudrait - *26/09/2022* - 6.31.2
+- FIX : Fix test sur le fk_soc d'une session inter - *19/08/2022* - 6.31.1
+- NEW : Ajout du hook pour usernavhistory - *02/08/2022* - 6.31.0
+
+## Version 6.30 - Released on *13/07/2022*
+
+- FIX : Undefined fetch_all() *05/10/2022* - 6.30.15
+- FIX : Gestion des champs Clients et contacts client sur session intra/inter - *19/08/2022* - 6.30.14
+- FIX : pdf_certificate_completion_trainee: ratio d'aspect du logo + couleurs - *12/08/2022* - 6.30.13
+- FIX : Correction du fix précédent concernant pdf_certificate_completion_trainee *12/08/2022* - 6.30.12
+- FIX : action de formation définie par défaut lors de la création d'une nouvelle formation *09/08/2022* - 6.30.11
+- FIX : Remplacement de l'entête de pdf_certificate_completion_trainee *08/08/2022* - 6.30.10
+- FIX : Correctif DA022127 - annexe de la convention de formation : ne tenait pas compte de l'existence d'un PDF du programme pour la session et prenait systématiquement celui de la formation catalogue - *03/08/2022* - 6.30.9
+- FIX : Ajout d'une règle pour le champ type de la formation(intra/inter), dans session permettant d'obliger l'ajout d'un client ou non - *04/08/2022* - 6.30.8
+- FIX : Editor name - *03/08/2022* - 6.30.7
+- FIX : Ajout de la civilité dans les modèles de documents des participants - *27/07/2022* - 6.30.6
+- FIX : Gestion de l'export pour prendre en compte le changement de societé d'un participant d'une session - *27/07/2022* - 6.30.5
+- FIX : Correctif ticket DA022127: mauvaise durée de session sur les pdf générés - *26/07/2022* - 6.30.4
+- FIX : change getEntity parameters on archive_documents_session *15/07/2022* - 6.30.3
+- FIX : Dolistore zip  - *13/07/2022* - 6.30.2
+- FIX : Compatibiilty V16 - Remove doUpgrade2 hook unised and renamed in V16 - rename famlily and update tokens with retrocompatibility - *13/07/2022* - 6.30.1
+- NEW : Added a new page for archiving session documents - *11/07/2022* - 6.30.0
+
+## Version 6.29 - Released on *17/06/2022*
+- FIX : CHERRY-PICK  https://gitlab.atm-consulting.fr/dolistore/store-agefodd/-/merge_requests/943 - *12/05/2023* - 6.29.5  
+- FIX : fix clone on training card - *16/09/2022* - 6.29.4
+- FIX : add missed call addExtrafield on init function module - *11/07/2022* - 6.29.3  
+- FIX : add_referent_users.php does not comply with DoliStore ✌good practices✌ regarding inclusion of main.inc.php - *29/06/2022* - 6.29.2
+- FIX : fix jquery bug on file upload site and trainee - *24/06/2022)* - 6.29.1 
+- NEW: Écran intermédiaire lors de l'action de masse "mail aux participants" - *25/05/2022* - 6.29.0
+
+## Version 6.28 - Released on *19/05/2022*
+
+- FIX : Compatibility token *19/07/2022* - 6.28.4
+- FIX : Compatibility v16  replace MAIN_DB_PREFIX tabname *14/06/2022* - 6.28.3
+- FIX : Add menu link to the check integrity page - *10/06/2022* - 6.28.2
+- FIX : Fix module hook conflicts for global search - *01/06/2022* - 6.28.1
+- NEW : Ajout de barre de progression sur la liste & card des sessions de formation *19/05/2022* 6.28.0
+- NEW : Ajout d'un onglet dans recueil de formation affichants les participants des sessions liées *11/05/2022* - 6.27.0
+- NEW : Ajout de la class TechATM pour l'affichage de la page "A propos" *11/05/2022* 6.26.0
+
+## Version 6.25 - Released on *31/03/2022*
+- FIX : Multicompany shares required a database migration after all + some warnings fixed + add script to share user group- *13/06/2022* - 6.25.16
+- FIX : Fix share conf between entities - *10/06/2022* - 6.25.15
+- FIX : Fix don't calculate traineestatus with realhours in the futur - *07/06/2022* - 6.25.14
+- FIX : Fix trainee status to avoid + fix costBySoc - *16/05/2022* - 6.25.13
+- FIX : Change sql ON clause in fetch_societe_per_session to get sessionTrainee soc instead of current soc - *13/05/2022* - 6.25.12
+- FIX : Multi Module Hook compatibility - *06/05/2022)* - 6.25.11
+- FIX : Mise à jour de traductions & Manuel d'utilisation BPF *26/04/2022* - 6.25.10
+- FIX : Selection des champs de la liste des sessions n'était pas prise en compte *15/04/2022* - 6.25.9
+- FIX : Ajout de boxes manquantes dans les widgets en page d'acceuil *06/04/2022* - 6.25.8
+- FIX : Possibilité de créer des horaires de session 24/24 et non plus de 5h à 23 comme avant (pour les clients qu'on des session nocturnes) - *05/04/2022* - 6.25.7
+- FIX : Session search list fail for boolean extrafields *31/03/2022* - 6.25.6
+- FIX : Mise à jour du fichier agefodd.lang *29/03/2022* - 6.25.5
+- FIX : pdf_conseils, la ligne (Repas, hébergement...) prend un retour à la ligne *29/03/2022* - 6.25.4
+- FIX : Affichage des champs manquant ou dupliqué dans une fiche recueil en edit et création *28/03/2022* 6.25.3
+- FIX : Redirection sur le formulaire de création de participant, bouton "Enregistrer et rester" *27/03/2022* 6.25.2
+- FIX : Sql update file *31/03/2022* - 6.25.1
+- NEW : Ajout d'un nouveau modèle de mail pour les Certificat de réalisation *23/03/2022* - 6.25.0
+
+## Version 6.24 - Released on *11/03/2022*
+
+- FIX : Compatibilité avec le module attachments, il est maintenant possible lors d'un envoi de mail depuis l'onglet "Documents liés", de sélectionner tous les PDF générés sur cet onglet - *04/11/2022* - 6.24.12
+- FIX : DA021667 la valeur 0 est vidée et la valeur théorique est de nouveau affiché, si on met 0 on veut garder la valeur 0 - *06/09/2022* - 6.24.11
+- FIX : Soucis de parenthèse dans la requete SQL - *20/07/2022* - 6.24.10
+- FIX : DA022091 : Conflit de conf "Utiliser le temps de présence réel des stagiaires" && "Les statuts d'inscription des participants sont calculés automatiquement" - *22/06/2022* - 6.24.9
+  Lorsque l’on souhaite passer le candidat du statut « prospect » à « confirmé » ou même « accord verbal », le statut bascule systématiquement en mode non présent.
+- FIX : Modèle PDF "Attestation de fin de formation": pagination si les objectifs pédagogiques ne tiennent pas sur une page - *17/06/2022* - 6.24.8
+- FIX : Si un stagiaire d'une entreprise a un OPCO, les autres stagiaires de la
+  même entreprise seront listés sous cet OPCO dans la liste des documents même
+  s'ils n'ont pas d'OPCO - *03/06/2022* - 6.24.7
+- FIX : Pagination du PDF d'attestation de formation : objectifs
+  pédagogiques sur page suivante si trop longs - *06/05/2022* - 6.24.6
+- FIX : Ajout de deux confs permettant de gérer la création d'une facture depuis une session et affichage de l'onglet planning par participants *27/04/2022* - 6.24.5
+- FIX : selection du status Non présent si pas d'heure - *08/04/2022)* - 6.24.4  
+- FIX : add form  param to selectPropectCustomerType - *07/04/2022)* - 6.24.3  
+- FIX : redirection pour "enregistrer et rester" lors de la création+inscription d'un stagiaire dans une session - *06/04/2022* - 6.24.2
+- FIX : recuperation des propales liees a un tiers pour liaison a la session courante (en V14.0 le champs total n'existe plus) - *22/03/2022* - 6.24.1
+- NEW : Ajout de la prise en compte du module attachments dans les formulaires de mail d'agefodd - *09/03/2022* - 6.24.0
+    - Ajoute la possibilité de joindre les fichiers joints venant de la session, des formateurs de la session, des stagiaires, du lieu de session et formation du recueil   
+- NEW : Ajout de la possibilité de téléverser un pdf de "Réglement intérieur" pour les lieux - *07/03/2022* - 6.23.0
+    - l'onglet "règlement intérieur" des lieux est caché mais peut être affiché grâce à la conf AGF_DISPLAY_REG_INT_TAB
+    - modification de la configuration de fusion des pdf Convocation et conseils pratique pour y ajouter le règlement intérieur du lieux de la session
+    - ajout du règlement intérieur en fichier joint à l'envoi de mail
+    - ajout dans "document liés" d'une ligne de document permettant de télécharger, prévisualiser et envoyer le pdf par mail
+- NEW : Fait marcher les BPF avec la notion de multicompany - *01/03/2022* - 6.22.0
+
+## Version 6.21 - Released on *07/12/2022*
+
+- FIX : fix mauvais chemin de génération des fichiers de rapports - *16/03/2022* - 6.21.2
+- FIX : ne pas afficher le nombre total de participants sur les factures de session - *22/02/2022* - 6.21.1
+- NEW : Mandatory file on administrative tasks -  - *07/012/2022* - 6.21.0
+
+## Version 6.20 - Released on *19/01/2022*
+
+- FIX : déplacement du test d'erreur sur les exécutions de script 
+  quand le rôle update n'était pas présent pour une table, le retour était systématiquement en erreur - *20/01/2022* - 6.20.2
+- FIX  : test Isset fk_parent_level when editing element - *20/01/2022* - 6.20.1
+- FIX : Missing sql file to create llx_c_formation_nature_action on update - *25/01/2022* - 6.20.1
+- NEW : Add good icons for Module - *18/01/2022* - 6.20.0
+- FIX : Backport fix 6.19 : data integrity and remove cascading delete for foreign key llx_agefodd_formation_catalogue_ibfk_1 - *12/01/2020* - 6.19.0
+  Retrait de la suppression en cascade en base pour la table llx_agefodd_session sur suppression d'un item de llx_agefodd_formation_catalogue
+  Il n'est plus possible de supprimer un recueil de formation si des sessions existent pour ce recueil.
 
 ## Version 6.18 - Released on *26/11/2021*
+- FIX : FIX filter on product - *15/06/2023* - 6.18.22
+- FIX : Compat v14 - *16/02/2023* - 6.18.21
+- FIX : SQL query reassigned by mistake instead of concatenation (`=` instead of `.=`) - *07/07/2022* - 6.18.20
+- FIX : various problems with BPF queries (section F) - *08/06/2022* - 6.18.19
+- FIX : clone session fails to clone trainees despite relevant checkbox being checked *22/02/2022* - 6.18.18
+- FIX : missing translation *22/02/2022* - 6.18.17
+- FIX : filter by trainee status only for after training documents *15/02/2022* - 6.18.16
+- FIX : Regression suite refonte formulaire, retour du bouton "nouveau participant" *04/02/2022* - 6.18.15
+- FIX : fix call to Agefodd_session_stagiaire::fetch_stagiaire_per_session - *01/02/2022* - 6.18.14
+- FIX : Missing redirection to session/subscribers.php after add new trainee - *25/01/2020* - 6.18.13
+- FIX : add filter on the presence or the partial presence of a trainee during mass generation   - *25/01/2020* - 6.18.12
+- FIX : Missing convention var for signature - *19/01/2020* - 6.18.11
+- FIX : save nature action fields from the catalog for the save_confirm action on a session - *18/01/2020* - 6.18.10
+- FIX : prevent overlapping of place field with date field if there are no obj peda - *18/01/2020* - 6.18.9
+- FIX : the footer of the convention pdf page which was grayed out grayed out all the following pages V2 - *18/01/2020* - 6.18.8
 - FIX : the footer of the convention pdf page which was grayed out grayed out all the following pages - *12/01/2020* - 6.18.7
 - FIX : accesibility handicap bool to int on postgres - *20/12/2021* - 6.18.6
   ERROR:  column "accessibility_handicap" is of type boolean but expression is of type integer at character 2009
@@ -29,6 +306,7 @@ All notable changes to this project will be documented in this file.
   - sum of hours spent for a session by a participant *22/10/2021* - 6.17.0
 
 # Version 6.16 - Released on *01/10/2021*
+- FIX : remove duplicate display on edit_subrogation - *09/02/2022* - 6.16.2
 - FIX: remove some legacy code – *23/10/2021* - 6.16.1
 - NEW uniformize order lines with propal lines in convention PDF - *20/09/2021* - 6.16.0 (OpenDSI)
 - NEW : Better layout of elements on session card & tab on lib - *20/09/2021* - 6.15.0  
@@ -40,6 +318,9 @@ All notable changes to this project will be documented in this file.
 - NEW : UI modification & edit trainee in view replace img save button by dolibar friendly save button - *20/09/2021* - 6.14.0
 
 # Version 6.12 - Released on *17/09/2021*
+- FIX : error if fk_pays of agefodd place is null, we should not be blocked *20/05/2022* - 6.12.13
+- FIX : Need to set a value to $user->rights->agefodd_agsession->read to work with new test $user->hasRight($modulecodetouseforpermissioncheck, 'read') on /comm/action/card.php - *31/03/2022* - 6.12.12
+- FIX : API return id trainer calendar period after add and same for calendar period - *21/02/2022* - 6.12.11
 - FIX : Refonte graphique des listes de l'onglet planning par participant d'une session;  - *16-11-2021* - 6.12.10 
         Affichage feuilles d'émargement pdf, taille des cases de signature;
         Affichage erroné du statut d'une facture sur l'onglet document par participant d'une session de formation
@@ -118,6 +399,11 @@ All notable changes to this project will be documented in this file.
 ---------------------------------
 
 ## Version 5.2 - Préremplissage d'une convention par société
+- FIX : VAT number make difference for printing when multicompany is used if the entity VAT Number is present or not - *10-02-2022* - 5.2.17
+- FIX : warning on agenda index.php  *2022-02-10* - 5.1.16
+- FIX : Backport fix 6.18.7 : data integrity and remove cascading delete for foreign key llx_agefodd_formation_catalogue_ibfk_1 - *12/01/2020* - 5.2.15 
+  Retrait de la suppression en cascade en base pour la table llx_agefodd_session sur suppression d'un item de llx_agefodd_formation_catalogue
+  Il n'est plus possible de supprimer un recueil de formation si des sessions existent pour ce recueil.
 - FIX : Sql error when we search on session/list_soc.php - *30/11/2021* - 5.2.14
 - FIX : fix getpost for intitule_custo of sessions *2021-11-10* - 5.2.13
 - FIX : Fonction "remove" agsession : suppression des liens de cette session dans la table "agefodd_session_element" - *2021-10-27* - 5.2.12
@@ -158,6 +444,9 @@ All notable changes to this project will be documented in this file.
 
 ## Version 5.0
 
+- BACKPORT : DA022138 - https://gitlab.atm-consulting.fr/dolistore/store-agefodd/-/merge_requests/536 - *07/07/2022* - 5.0.24
+- FIX : show_trainer_mission default modele now autogenerate if tagged as default    - *23/06/2022* - 5.0.23  
+- FIX : add join clause in BPF with real hours ON F1-d - *20/05/2022* - 5.0.22
 - FIX : Postgresql compatibility - *07/09/2021* - 5.0.21
 - FIX : Sorting the "certificat (carte de credit)" drop-down list alphabetically in the linked documents of a session *25/06/2021* 5.0.20
 - FIX : Add conf 'AGF_CERTIF_ALERT_DATE_NB_MONTHS' to change certificate alert date *25/06/2021* 5.0.19
@@ -177,6 +466,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## Version 4.12
+- FIX : fix bpf help screen *2023-03-06* - 4.12.25
 - FIX : training extrafields import handle *2021-12-03* - 4.12.24
 - FIX : green color hidden conf *2021-05-07* - 4.9.12
 - FIX : BPF doublon *2021-05-04* - 4.9.11
@@ -189,6 +479,13 @@ All notable changes to this project will be documented in this file.
 
 ___
 ## OLDER
+
+***** ChangeLog for 4.11 *****
+FIX : Les totaux du rapport commercial ne sont pas en bas des bonnes colonnes *20/09/2022* - 4.11.23
+FIX : La fonction convertBackOfficeMediasLinksToPublicLinks n'existe pas avant Dolibarr 10.0 - *24/06/2022* - 4.11.22
+FIX : La fonction de l'objet form s'appelle selectDate seulement à partir de la 9.0 - *05/05/2022* - 4.11.21
+FIX : Quand on ajoute un nouveau participant et qu'on clique sur "Enregistrer et rester" les champs doivent être vidés - *03/05/2022* - 4.11.20
+FIX : Seules les sessions pour lesquelles toutes les tâches administratives sont terminées doivent être vertes - *03/05/2022* - 4.11.19
 
 ***** ChangeLog for 4.9 *****
 - FIX : Requete trop longue + totaux faux

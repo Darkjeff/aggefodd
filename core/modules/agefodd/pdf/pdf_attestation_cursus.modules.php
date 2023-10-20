@@ -29,15 +29,11 @@ dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_cursus.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_cursus.class.php');
-require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-/**
- * Put here description of your class
- */
-class pdf_attestation_cursus extends ModelePDFAgefodd
-{
+class pdf_attestation_cursus extends ModelePDFAgefodd {
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -52,8 +48,7 @@ class pdf_attestation_cursus extends ModelePDFAgefodd
 	 * \brief		Constructor
 	 * \param		db		Database handler
 	 */
-	function __construct($db)
-	{
+	function __construct($db) {
 		global $conf, $langs, $mysoc;
 
 		$this->db = $db;
@@ -98,8 +93,7 @@ class pdf_attestation_cursus extends ModelePDFAgefodd
 	 * file		Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf_cursus, $outputlangs, $file, $socid)
-	{
+	function write_file($agf_cursus, $outputlangs, $file, $socid) {
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -140,7 +134,8 @@ class pdf_attestation_cursus extends ModelePDFAgefodd
 
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
+			{
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $pdf->importPage(1);
 			}
@@ -243,14 +238,16 @@ class pdf_attestation_cursus extends ModelePDFAgefodd
 
 				$dureetotal = 0;
 				if (count($agf_cursus_stagaire->lines) > 0) {
-					foreach ($agf_cursus_stagaire->lines as $line) {
+
+					foreach ( $agf_cursus_stagaire->lines as $line ) {
+
 						$training_array [] = $line->intitule;
 
 						// Calculate time of session according calendar
 						$calendrier = new Agefodd_sesscalendar($this->db);
 						$calendrier->fetch_all($line->rowid);
 						if (is_array($calendrier->lines) && count($calendrier->lines) > 0) {
-							foreach ($calendrier->lines as $linecal) {
+							foreach ( $calendrier->lines as $linecal ) {
 								$duree += ($linecal->heuref - $linecal->heured);
 							}
 						}
@@ -343,8 +340,7 @@ class pdf_attestation_cursus extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs		Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
-	{
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -359,8 +355,7 @@ class pdf_attestation_cursus extends ModelePDFAgefodd
 	 * \param		outputlang		Object lang for output
 	 * \remarks	Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs)
-	{
+	function _pagefoot(&$pdf, $object, $outputlangs) {
 		global $conf, $langs, $mysoc;
 
 		$this->str = $mysoc->name;

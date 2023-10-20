@@ -22,9 +22,9 @@
  * \ingroup agefodd
  * \brief agefood module setup page
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include("../../main.inc.php"); // For root directory
 if (!$res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include("../../../main.inc.php"); // For "custom" directory
 if (!$res)
 	die("Include of main fails");
 
@@ -36,7 +36,7 @@ require_once '../lib/agefodd.lib.php';
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/lib/images.lib.php";
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
-
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 $langs->load("admin");
 $langs->load('agefodd@agefodd');
 
@@ -144,7 +144,7 @@ if ($action == 'updateMaskSession') {
 }
 
 if ($action == 'setvar') {
-	require_once DOL_DOCUMENT_ROOT . "/core/lib/files.lib.php";
+	require_once(DOL_DOCUMENT_ROOT . "/core/lib/files.lib.php");
 
 	$text_color = GETPOST('AGF_TEXT_COLOR', 'alpha');
 	if (!empty($text_color)) {
@@ -324,7 +324,7 @@ if ($action == 'setvar') {
 				$result = dol_move_uploaded_file($_FILES["imagesup"]["tmp_name"], $conf->agefodd->dir_output . '/images/' . $original_file, 1, 0, $_FILES['imagesup']['error']);
 				if ($result > 0) {
 					dolibarr_set_const($db, "AGF_INFO_TAMPON", $original_file, 'chaine', 0, '', $conf->entity);
-				} elseif (preg_match('/^ErrorFileIsInfectedWithAVirus/', $result)) {
+				} else if (preg_match('/^ErrorFileIsInfectedWithAVirus/', $result)) {
 					$langs->load("errors");
 					$tmparray = explode(':', $result);
 					setEventMessage($langs->trans('ErrorFileIsInfectedWithAVirus', $tmparray[1]), 'errors');
@@ -345,14 +345,16 @@ if ($action == 'setvar') {
 			$original_file = $reg[1];
 
 			if (strpos($original_file, '.pdf') !== false) {
+
 				dol_syslog("Move file " . $_FILES["pdfbackgroundportrait"]["tmp_name"] . " to " . $conf->agefodd->dir_output . '/background/' . $original_file);
 				if (!is_dir($conf->agefodd->dir_output . '/background/')) {
 					dol_mkdir($conf->agefodd->dir_output . '/background/');
 				}
 				$result = dol_move_uploaded_file($_FILES["pdfbackgroundportrait"]["tmp_name"], $conf->agefodd->dir_output . '/background/' . $original_file, 1, 0, $_FILES['pdfbackgroundportrait']['error']);
 				if ($result > 0) {
+
 					dolibarr_set_const($db, "AGF_ADD_PDF_BACKGROUND_P", $original_file, 'chaine', 0, '', $conf->entity);
-				} elseif (preg_match('/^ErrorFileIsInfectedWithAVirus/', $result)) {
+				} else if (preg_match('/^ErrorFileIsInfectedWithAVirus/', $result)) {
 					$langs->load("errors");
 					$tmparray = explode(':', $result);
 					setEventMessage($langs->trans('ErrorFileIsInfectedWithAVirus', $tmparray[1]), 'errors');
@@ -373,6 +375,7 @@ if ($action == 'setvar') {
 			$original_file = $reg[1];
 
 			if (strpos($original_file, '.pdf') !== false) {
+
 				dol_syslog("Move file " . $_FILES["pdfbackgroundlandscape"]["tmp_name"] . " to " . $conf->agefodd->dir_output . '/background/' . $original_file);
 				if (!is_dir($conf->agefodd->dir_output . '/background/')) {
 					dol_mkdir($conf->agefodd->dir_output . '/background/');
@@ -380,7 +383,7 @@ if ($action == 'setvar') {
 				$result = dol_move_uploaded_file($_FILES["pdfbackgroundlandscape"]["tmp_name"], $conf->agefodd->dir_output . '/background/' . $original_file, 1, 0, $_FILES['pdfbackgroundlandscape']['error']);
 				if ($result > 0) {
 					dolibarr_set_const($db, "AGF_ADD_PDF_BACKGROUND_L", $original_file, 'chaine', 0, '', $conf->entity);
-				} elseif (preg_match('/^ErrorFileIsInfectedWithAVirus/', $result)) {
+				} else if (preg_match('/^ErrorFileIsInfectedWithAVirus/', $result)) {
 					$langs->load("errors");
 					$tmparray = explode(':', $result);
 					setEventMessage($langs->trans('ErrorFileIsInfectedWithAVirus', $tmparray[1]), 'errors');
@@ -472,6 +475,7 @@ $dirmodels = array_merge(array(
 ));
 
 foreach ($dirmodels as $reldir) {
+
 	$dir = dol_buildpath("/agefodd/core/modules/agefodd/");
 
 	if (is_dir($dir)) {
@@ -484,7 +488,7 @@ foreach ($dirmodels as $reldir) {
 					$file = $reg[1];
 					$classname = substr($file, 4);
 
-					require_once $dir . $file . ".php";
+					require_once($dir . $file . ".php");
 
 					$module = new $file();
 
@@ -508,7 +512,8 @@ foreach ($dirmodels as $reldir) {
 							print '<div class="error">' . $langs->trans($tmp) . '</div>';
 						} elseif ($tmp == 'NotConfigured')
 							print $langs->trans($tmp);
-						else print $tmp;
+						else
+							print $tmp;
 						print '</td>' . "\n";
 
 						print '<td align="center">';
@@ -609,7 +614,8 @@ if (!empty($conf->global->AGF_MANAGE_CERTIF)) {
 								print '<div class="error">' . $langs->trans($tmp) . '</div>';
 							} elseif ($tmp == 'NotConfigured')
 								print $langs->trans($tmp);
-							else print $tmp;
+							else
+								print $tmp;
 							print '</td>' . "\n";
 
 							print '<td align="center">';
@@ -627,7 +633,8 @@ if (!empty($conf->global->AGF_MANAGE_CERTIF)) {
 							$htmltooltip = '';
 							$htmltooltip .= '' . $langs->trans("Version") . ': <b>' . $module->getVersion() . '</b><br>';
 							$nextval = $module->getNextValue($mysoc, $agf);
-							if ("$nextval" != $langs->trans("AgfNotAvailable")) { // Keep " on nextval
+							if ("$nextval" != $langs->trans("AgfNotAvailable")) // Keep " on nextval
+							{
 								$htmltooltip .= '' . $langs->trans("NextValue") . ': ';
 								if ($nextval) {
 									$htmltooltip .= $nextval . '<br>';
@@ -683,7 +690,7 @@ foreach ($dirmodels as $reldir) {
 					$file = $reg[1];
 					$classname = substr($file, 4);
 
-					require_once $dir . $file . ".php";
+					require_once($dir . $file . ".php");
 
 					$module = new $file();
 
@@ -707,7 +714,8 @@ foreach ($dirmodels as $reldir) {
 							print '<div class="error">' . $langs->trans($tmp) . '</div>';
 						} elseif ($tmp == 'NotConfigured')
 							print $langs->trans($tmp);
-						else print $tmp;
+						else
+							print $tmp;
 						print '</td>' . "\n";
 
 						print '<td align="center">';
@@ -757,7 +765,7 @@ print '</table><br>';
 print load_fiche_titre($langs->trans("AgfAdmVar"));
 
 print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" enctype="multipart/form-data" >';
-print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+print '<input type="hidden" name="token" value="' . $newToken . '">';
 print '<input type="hidden" name="action" value="setvar">';
 
 
@@ -771,6 +779,14 @@ print '<td>' . $langs->trans("Name") . '</td>';
 print '<td width="400px">' . $langs->trans("Valeur") . '</td>';
 print '<td></td>';
 print "</tr>\n";
+
+// ZipDocuments on session
+print '<tr class="oddeven"><td>' . $langs->trans("AGF_SESSION_ARCHIVE_DOCUMENTS") . '</td>';
+print '<td align="right">';
+print ajax_constantonoff('AGF_SESSION_ARCHIVE_DOCUMENTS');
+print '</td>';
+print '<td></td>';
+print '</tr>';
 
 
 // Prefecture d\'enregistrement
@@ -901,11 +917,11 @@ print '<tr class="pair"><td>' . $langs->trans("AgfImageSupp") . ' (png,jpg) (H m
 print '<table width="100%" class="nocellnopadd"><tr class="nocellnopadd"><td valign="middle" class="nocellnopadd">';
 print '<input type="file" class="flat" name="imagesup" size="40">';
 print '</td><td valign="middle" align="right">';
-if ($conf->global->AGF_INFO_TAMPON) {
+if (!empty($conf->global->AGF_INFO_TAMPON)) {
 	if (file_exists($conf->agefodd->dir_output . '/images/' . $conf->global->AGF_INFO_TAMPON)) {
 		print ' &nbsp; ';
 		print '<img src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=agefodd&amp;file=' . urlencode('/images/' . $conf->global->AGF_INFO_TAMPON) . '" alt="AGF_INFO_TAMPON" />';
-		print '<a href="' . $_SERVER["PHP_SELF"] . '?action=removeimagesup">' . img_delete($langs->trans("Delete")) . '</a>';
+		print '<a href="' . $_SERVER["PHP_SELF"] . '?action=removeimagesup&token='.$newToken.'">' . img_delete($langs->trans("Delete")) . '</a>';
 	}
 } else {
 	$nophoto = '/public/theme/common/nophoto.png';
@@ -922,13 +938,13 @@ print '<tr class="impair"><td>' . $langs->trans("AgfPDFBackgroundPortrait") . ' 
 print '<table width="100%" class="nocellnopadd"><tr class="nocellnopadd"><td valign="middle" class="nocellnopadd">';
 print '<input type="file" class="flat" name="pdfbackgroundportrait" size="40">';
 print '</td><td valign="middle" align="right">';
-if ($conf->global->AGF_ADD_PDF_BACKGROUND_P) {
+if (!empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
 	if (file_exists($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
 		$documenturl = DOL_URL_ROOT . '/document.php';
 		if (isset($conf->global->DOL_URL_ROOT_DOCUMENT_PHP))
 			$documenturl = $conf->global->DOL_URL_ROOT_DOCUMENT_PHP;    // To use another wrapper
 		print ' &nbsp;';
-		print '<a class="documentdownload" href="' . $documenturl . '?modulepart=agefodd&amp;file=' . urlencode('/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P) . '"';
+		print '<a class="documentdownload" href="' . $documenturl . '?modulepart=' . 'agefodd' . '&amp;file=' . urlencode('/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P) . '"';
 		print ' target="_blank">';
 		print img_mime($conf->global->AGF_ADD_PDF_BACKGROUND_P, $langs->trans("File") . ': ' . $conf->global->AGF_ADD_PDF_BACKGROUND_P) . ' ' . $conf->global->AGF_ADD_PDF_BACKGROUND_P;
 		print '</a>' . "\n";
@@ -946,7 +962,7 @@ print '<tr class="pair"><td>' . $langs->trans("AgfPDFBackgroundLandscape") . ' (
 print '<table width="100%" class="nocellnopadd"><tr class="nocellnopadd"><td valign="middle" class="nocellnopadd">';
 print '<input type="file" class="flat" name="pdfbackgroundlandscape" size="40">';
 print '</td><td valign="middle" align="right">';
-if ($conf->global->AGF_ADD_PDF_BACKGROUND_L) {
+if (!empty($conf->global->AGF_ADD_PDF_BACKGROUND_L)) {
 	if (file_exists($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_L)) {
 		$documenturl = DOL_URL_ROOT . '/document.php';
 		if (isset($conf->global->DOL_URL_ROOT_DOCUMENT_PHP))
@@ -1014,7 +1030,7 @@ print '</tr>';
 // Default calendar status
 print '<tr class="impair"><td>' . $langs->trans("AgfDefaultCalendarStatus") . '</td>';
 print '<td align="right">';
-print $formAgefodd->select_calendrier_status($conf->global->AGF_DEFAULT_CALENDAR_STATUS, "AGF_DEFAULT_CALENDAR_STATUS");
+print $formAgefodd->select_calendrier_status(!empty($conf->global->AGF_DEFAULT_CALENDAR_STATUS) ? $conf->global->AGF_DEFAULT_CALENDAR_STATUS : '', "AGF_DEFAULT_CALENDAR_STATUS");
 print '</td>';
 print '<td align="center">';
 print '</td>';
@@ -1023,7 +1039,7 @@ print '</tr>';
 // Default Trainer status
 print '<tr class="pair"><td>' . $langs->trans("AgfDefaultTrainerCalendarStatus") . '</td>';
 print '<td align="right">';
-print $formAgefodd->select_calendrier_status($conf->global->AGF_DEFAULT_TRAINER_CALENDAR_STATUS, "AGF_DEFAULT_TRAINER_CALENDAR_STATUS");
+print $formAgefodd->select_calendrier_status(!empty($conf->global->AGF_DEFAULT_TRAINER_CALENDAR_STATUS) ? $conf->global->AGF_DEFAULT_TRAINER_CALENDAR_STATUS : '', "AGF_DEFAULT_TRAINER_CALENDAR_STATUS");
 print '</td>';
 print '<td align="center">';
 print '</td>';
@@ -1033,7 +1049,7 @@ print '</tr>';
 // Default training cat
 print '<tr class="pair"><td>' . $langs->trans("AgfDefaultTrainingCat") . '</td>';
 print '<td align="right">';
-print $formAgefodd->select_training_categ($conf->global->AGF_DEFAULT_TRAINNING_CAT, 'AGF_DEFAULT_TRAINNING_CAT', 't.active=1', 1);
+print $formAgefodd->select_training_categ(!empty($conf->global->AGF_DEFAULT_TRAINNING_CAT) ? $conf->global->AGF_DEFAULT_TRAINNING_CAT : '', 'AGF_DEFAULT_TRAINNING_CAT', 't.active=1', 1);
 print '<td align="center">';
 print '</td>';
 print '</tr>';
@@ -1041,7 +1057,7 @@ print '</tr>';
 // Default training cat BPF
 print '<tr class="pair"><td>' . $langs->trans("AgfDefaultTrainingCatBPF") . '</td>';
 print '<td align="right">';
-print $formAgefodd->select_training_categ_bpf($conf->global->AGF_DEFAULT_TRAINNING_CAT_BPF, 'AGF_DEFAULT_TRAINNING_CAT_BPF', 't.active=1', 1);
+print $formAgefodd->select_training_categ_bpf(!empty($conf->global->AGF_DEFAULT_TRAINNING_CAT_BPF) ? $conf->global->AGF_DEFAULT_TRAINNING_CAT_BPF : '', 'AGF_DEFAULT_TRAINNING_CAT_BPF', 't.active=1', 1);
 print '<td align="center">';
 print '</td>';
 print '</tr>';
@@ -1050,7 +1066,7 @@ print '</tr>';
 // Default Mentor Admin
 print '<tr class="pair"><td>' . $langs->trans("AgfDefaultMentorAdmin") . '</td>';
 print '<td align="right">';
-print $formAgefodd->select_dolusers($conf->global->AGF_DEFAULT_MENTOR_ADMIN, 'AGF_DEFAULT_MENTOR_ADMIN', 't.active=1', 1);
+print $formAgefodd->select_dolusers(!empty($conf->global->AGF_DEFAULT_MENTOR_ADMIN) ? $conf->global->AGF_DEFAULT_MENTOR_ADMIN : '', 'AGF_DEFAULT_MENTOR_ADMIN', 't.active=1', 1);
 print '<td align="center">';
 print '</td>';
 print '</tr>';
@@ -1058,7 +1074,7 @@ print '</tr>';
 // Default Mentor Pedago
 print '<tr class="pair"><td>' . $langs->trans("AgfDefaultMentorPedago") . '</td>';
 print '<td align="right">';
-print $formAgefodd->select_dolusers($conf->global->AGF_DEFAULT_MENTOR_PEDAGO, 'AGF_DEFAULT_MENTOR_PEDAGO', 't.active=1', 1);
+print $formAgefodd->select_dolusers(!empty($conf->global->AGF_DEFAULT_MENTOR_PEDAGO) ? $conf->global->AGF_DEFAULT_MENTOR_PEDAGO : '', 'AGF_DEFAULT_MENTOR_PEDAGO', 't.active=1', 1);
 print '<td align="center">';
 print '</td>';
 print '</tr>';
@@ -1066,7 +1082,7 @@ print '</tr>';
 // Default Mentor Handicap
 print '<tr class="pair"><td>' . $langs->trans("AgfDefaultMentorHandicap") . '</td>';
 print '<td align="right">';
-print $formAgefodd->select_dolusers($conf->global->AGF_DEFAULT_MENTOR_HANDICAP, 'AGF_DEFAULT_MENTOR_HANDICAP', 't.active=1', 1);
+print $formAgefodd->select_dolusers(!empty($conf->global->AGF_DEFAULT_MENTOR_HANDICAP) ? $conf->global->AGF_DEFAULT_MENTOR_HANDICAP : '', 'AGF_DEFAULT_MENTOR_HANDICAP', 't.active=1', 1);
 print '<td align="center">';
 print '</td>';
 print '</tr>';

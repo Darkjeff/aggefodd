@@ -38,6 +38,8 @@ if (! $user->rights->agefodd->admin && ! $user->admin) {
 $langs->load("admin");
 $langs->load('agefodd@agefodd');
 
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 $action = GETPOST('action', 'alpha');
 
 
@@ -89,7 +91,7 @@ dol_fiche_head($head, 'catcost', $langs->trans("Module103000Name"), 0, "agefodd@
 print_titre($langs->trans("AgfAdmVar"));
 
 print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" enctype="multipart/form-data" >';
-print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+print '<input type="hidden" name="token" value="' . $newToken . '">';
 print '<input type="hidden" name="action" value="setvar">';
 
 

@@ -21,9 +21,9 @@
  * \brief about agefood module page
  */
 // Dolibarr environment
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
@@ -44,11 +44,11 @@ $action = GETPOST('action', 'alpha');
 
 /*
  * Actions
-*/
+ */
 
 /*
  * View
-*/
+ */
 $page_name = "About";
 llxHeader('', $langs->trans($page_name));
 
@@ -61,22 +61,17 @@ $head = agefodd_admin_prepare_head();
 dol_fiche_head($head, 'about', $langs->trans("Module103000Name"), 0, "agefodd@agefodd");
 
 // About page goes here
-print 'Version : ' . $conf->global->AGF_LAST_VERION_INSTALL;
-print '<br /><a href="' . dol_buildpath('/agefodd/ChangeLog', 1) . '">Change Log</a>';
+require_once __DIR__ . '/../class/techatm.class.php';
+$techATM = new \agefodd\TechATM($db);
 
-print '<br /><a href="' . dol_buildpath('/agefodd/dev/check_data_integrity.php', 1) . '">Check agefodd data integrity</a>';
+require_once __DIR__ . '/../core/modules/modAgefodd.class.php';
+$moduleDescriptor = new modAgefodd($db);
 
-print '<br /><br /><br /><br />--------------------------------';
-print '<br /><a href="http://wiki.atm-consulting.fr/index.php/Agefodd/Documentation_utilisateur" target="_blanck">Lien Documentation Utilisateur Français</a>';
-print '<br />--------------------------------';
+print $techATM->getAboutPage($moduleDescriptor);
 
-
-$buffer .= file_get_contents(dol_buildpath('/agefodd/README.md', 0));
-print Markdown($buffer);
-
-print '<br />';
-
-print '<a href="' . dol_buildpath('/agefodd/COPYING', 1) . '">License GPL</a>';
+// Page end
+print dol_get_fiche_end();
 
 llxFooter();
 $db->close();
+?>

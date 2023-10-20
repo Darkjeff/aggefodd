@@ -20,9 +20,9 @@
  * \ingroup agefodd
  * \brief Page to setup extra fields of session
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 
 require_once '../lib/agefodd.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
@@ -44,7 +44,7 @@ $tmptype2label = ExtraFields::$type2label;
 $type2label = array(
 	''
 );
-foreach ($tmptype2label as $key => $val)
+foreach ( $tmptype2label as $key => $val )
 	$type2label [$key] = $langs->trans($val);
 
 $action = GETPOST('action', 'alpha');
@@ -79,7 +79,13 @@ print '<br>';
 
 // Load attribute_label
 $extrafields->fetch_name_optionals_label($elementtype);
-
+if(floatval(DOL_VERSION) >= 17) {
+	$extrafields->attribute_type = $extrafields->attributes[$elementtype]['type'];
+	$extrafields->attribute_size = $extrafields->attributes[$elementtype]['size'];
+	$extrafields->attribute_unique = $extrafields->attributes[$elementtype]['unique'];
+	$extrafields->attribute_required = $extrafields->attributes[$elementtype]['required'];
+	$extrafields->attribute_label = $extrafields->attributes[$elementtype]['label'];
+}
 print "<table summary=\"listofattributes\" class=\"noborder\" width=\"100%\">";
 
 print '<tr class="liste_titre">';
@@ -92,8 +98,8 @@ print '<td align="center">' . $langs->trans("Required") . '</td>';
 print '<td width="80">&nbsp;</td>';
 print "</tr>\n";
 
-$var = true;
-foreach ($extrafields->attribute_type as $key => $value) {
+$var = True;
+foreach ( $extrafields->attribute_type as $key => $value ) {
 	$var = ! $var;
 	print "<tr " . $bc [$var] . ">";
 	print "<td>" . $extrafields->attribute_label [$key] . "</td>\n";

@@ -30,9 +30,9 @@ if (! defined('NOREQUIREAJAX'))
 if (! defined('NOLOGIN'))
 	define('NOLOGIN', '1');
 
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
@@ -66,6 +66,7 @@ $sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formation_catalogue as s";
 $sql .= " WHERE s.archive<>1";
 $resql = $db->query($sql);
 if ($resql) {
+
 	while ( $obj = $db->fetch_object($resql) ) {
 		$agf_adminlevel = new Agefodd_training_admlevel($db);
 		$agf_adminlevel->fk_training = $obj->rowid;
@@ -91,6 +92,7 @@ if ($resql) {
 		$sqlsession .= " WHERE s.status<>4 AND fk_formation_catalogue=" . $obj->rowid;
 		$resqlsession = $db->query($sqlsession);
 		if ($resqlsession) {
+
 			while ( $objsession = $db->fetch_object($resqlsession) ) {
 				$agf_level = new Agefodd_sessadm($db);
 				$result = $agf_level->remove_all($objsession->rowid);
@@ -120,3 +122,7 @@ if ($resql) {
 	print 'Erreur sql=' . $sql . '<br>';
 	print $db->lasterror();
 }
+
+
+
+

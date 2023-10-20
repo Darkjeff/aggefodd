@@ -79,7 +79,7 @@ if ($result < 0) {
 /*
  * Actions
  */
-
+$permissiontoadd = !empty($user->rights->agefodd->creer);
 include_once DOL_DOCUMENT_ROOT.'/core/actions_linkedfiles.inc.php';
 
 
@@ -121,6 +121,7 @@ if ($object->id) {
 	$permission = ($user->rights->agefodd->creer);
     $permtoedit = $user->rights->agefodd->creer;
 	$param = '&id=' . $object->id;
+	$conf->global->MAIN_USE_JQUERY_FILEUPLOAD=0;
 	include_once DOL_DOCUMENT_ROOT . '/core/tpl/document_actions_post_headers.tpl.php';
 
 

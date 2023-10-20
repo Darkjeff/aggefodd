@@ -23,9 +23,9 @@
  * \ingroup agefodd
  * \brief list of document
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include("../../main.inc.php"); // For root directory
 if (!$res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include("../../../main.inc.php"); // For "custom" directory
 if (!$res)
 	die("Include of main fails");
 
@@ -47,12 +47,19 @@ $langs->load('propal');
 $langs->load('bills');
 $langs->load('orders');
 
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 // Security check
 if (!$user->rights->agefodd->lire)
 	accessforbidden();
 
+$form = new Form($db);
+$formAgefodd = new FormAgefodd($db);
+$formmail = new FormMail($db);
+
 $hookmanager->initHooks(array(
-	'agefoddsessiondocumenttrainee'
+	'agefoddsessiondocumenttrainee',
+	'formmail'
 ));
 
 $action = GETPOST('action', 'alpha');
@@ -63,580 +70,746 @@ $id_external_model = GETPOST('id_external_model', 'none');
 $addfile = GETPOST('addfile', 'none');
 $removedfile = GETPOST('removedfile', 'none');
 $pre_action = GETPOST('pre_action', 'alpha');
+$cancel = GETPOST('cancel', 'none');
 
-if (GETPOST('modelselected', 'none')) {
-	$action = GETPOST('pre_action', 'none');
-}
-
-
-/*
- * Action create and refresh pdf document
-*/
-if (($action == 'create' || $action == 'refresh') && $user->rights->agefodd->creer) {
-	$cour = GETPOST('cour', 'alpha');
-	$model = GETPOST('model', 'alpha');
-	$idform = GETPOST('idform', 'alpha');
-
-	// Define output language
-	$outputlangs = $langs;
-	$newlang = GETPOST('lang_id', 'alpha');
-	if ($conf->global->MAIN_MULTILANGS && empty($newlang))
-		$newlang = $object->thirdparty->default_lang;
-	if (!empty($newlang)) {
-		$outputlangs = new Translate("", $conf);
-		$outputlangs->setDefaultLang($newlang);
-	}
-
-	$file = $model . '_' . $session_trainee_id . '.pdf';
-
-	//this configuration variable is designed like
-	//standard_model_name:new_model_name&standard_model_name:new_model_name&....
-	if (!empty($conf->global->AGF_PDF_MODEL_OVERRIDE) && ($model != 'convention')) {
-		$modelarray = explode('&', $conf->global->AGF_PDF_MODEL_OVERRIDE);
-		if (is_array($modelarray) && count($modelarray) > 0) {
-			foreach ($modelarray as $modeloveride) {
-				$modeloverridearray = explode(':', $modeloveride);
-				if (is_array($modeloverridearray) && count($modeloverridearray) > 0) {
-					if ($modeloverridearray[0] == $model) {
-						$model = $modeloverridearray[1];
-					}
-				}
-			}
-		}
-	}
-
-	if (!empty($id_external_model) || strpos($model, 'rfltr_agefodd') !== false) {
-		$path_external_model = '/referenceletters/core/modules/referenceletters/pdf/pdf_rfltr_agefodd.modules.php';
-		if (strpos($model, 'rfltr_agefodd') !== false) $id_external_model = (int) strtr($model, array('rfltr_agefodd_' => ''));
-	}
-
-	$result = agf_pdf_create($db, $id, '', $model, $outputlangs, $file, $session_trainee_id, $cour, $path_external_model, $id_external_model);
-}
-
-/*
- * Add file in email form
- */
-if (!empty($addfile)) {
-	require_once DOL_DOCUMENT_ROOT . "/core/lib/files.lib.php";
-
-	// Set tmp user directory TODO Use a dedicated directory for temp mails files
-	$vardir = $conf->user->dir_output . "/" . $user->id;
-	$upload_dir_tmp = $vardir . '/temp';
-
-	$mesg = dol_add_file_process($upload_dir_tmp, 0, 0, 'addedfile', '', null, $formmail->trackid);
-
+// 'modelselected' ne contient PAS un ID de modèle mais juste "Appliquer" (traduit) et est envoyé uniquement si
+// l'utilisateur sélectionne un modèle différent et clique sur "Appliquer".
+$isUserSelectingModel = (bool) GETPOST('modelselected', 'none');
+$selectedMailModel = GETPOST('modelmailselected', 'none');
+if ($isUserSelectingModel) {
 	$action = $pre_action;
 }
 
-/*
- * Remove file in email form
- */
-if (!empty($removedfile)) {
-	require_once DOL_DOCUMENT_ROOT . "/core/lib/files.lib.php";
-
-	// Set tmp user directory
-	$vardir = $conf->user->dir_output . "/" . $user->id;
-	$upload_dir_tmp = $vardir . '/temp';
-
-	// TODO Delete only files that was uploaded from email form
-	$mesg = dol_remove_file_process($removedfile, 0, 1, $formmail->trackid);
-
-	$action = $pre_action;
+if (!empty($id)) {
+	$agf = new Agsession($db);
+	$agf->fetch($id);
 }
 
-if ($action == 'send' && !$_POST ['addfile'] && !$_POST ['removedfile'] && !$_POST ['cancel']) {
-	$langs->load('mails');
+$parameters = array(
+	'pre_action' => $pre_action,
+	'id' => $id,
+	'session_trainee_id' => $session_trainee_id,
+	'confirm' => $confirm,
+	'id_external_model' => $id_external_model,
+	'removedfile' => $removedfile,
+	'addfile' => $addfile
+);
 
-	$send_to = GETPOST('sendto', 'alpha');
-	$receiver = GETPOST('receiver', 'none');
-
-	$action = $pre_action;
-
-	$object = new Agsession($db);
-	$result = $object->fetch($id);
-
-	if ($result > 0) {
-		$result = $object->fetch_thirdparty();
-
-		$sendto = array();
-		if (!empty($send_to)) {
-			// Le destinataire a ete fourni via le champ libre
-			$sendto = array(
-				$send_to
-			);
-		} elseif (is_array($receiver) && count($receiver) > 0) {
-			foreach ($receiver as $id_receiver) {
-				// Initialisation donnees
-
-				if (preg_match("/_third/", $id_receiver)) {
-					$id_receiver = preg_replace('/_third/', '', $id_receiver);
-					$societe = new Societe($db);
-					$societe->fetch($id_receiver);
-					$sendto[$id_receiver . '_third'] = $societe->name . " <" . $societe->email . ">";
-				} elseif (preg_match("/_socp/", $id_receiver)) {
-					$id_receiver = preg_replace('/_socp/', '', $id_receiver);
-					if (!empty($id_receiver)) {
-						$contactstatic = new Contact($db);
-						$contactstatic->fetch($id_receiver);
-						if ($contactstatic->email != '') {
-							$sendto[$id_receiver . '_socp'] = trim($contactstatic->firstname . " " . $contactstatic->lastname) . " <" . $contactstatic->email . ">";
-						}
-					}
-				}
-			}
-		}
-		if (is_array($sendto) && count($sendto) > 0) {
-			$langs->load("commercial");
-
-			$from = GETPOST('fromname', 'none') . ' <' . GETPOST('frommail', 'none') . '>';
-			$replyto = GETPOST('replytoname', 'none') . ' <' . GETPOST('replytomail', 'none') . '>';
-			$message = GETPOST('message', 'none');
-			$sendtocc = GETPOST('sendtocc', 'none');
-			$deliveryreceipt = GETPOST('deliveryreceipt', 'none');
-
-			// Envoi du mail + trigger pour chaque contact
-			$i = 0;
-			//            var_dump($sendto);exit;
-			foreach ($sendto as $send_id => $send_email) {
-				$models = GETPOST('models', 'alpha');
-
-				$subject = GETPOST('subject', 'none');
-
-				//Usefull for trigger actioncomm
-				if (preg_match("/_third/", $send_id)) {
-					$send_id = preg_replace('/_third/', '', $send_id);
-					$societe = new Societe($db);
-					$societe->fetch($send_id);
-					$object->socid = $send_id;
-					$object->sendtoid = 0;
-				} elseif (preg_match("/_socp/", $send_id)) {
-					$send_id = preg_replace('/_socp/', '', $send_id);
-					$contactstatic = new Contact($db);
-					$contactstatic->fetch($send_id);
-					$contactstatic->fetch_thirdparty();
-					$object->socid = $contactstatic->thirdparty->id;
-					$object->sendtoid = $send_id;
-				}
-
-				if ($models == 'attestation_trainee') {
-					if (empty($subject))
-						$langs->transnoentities('AgfAttestation') . ' ' . $object->formintitule;
-					$actiontypecode = 'AC_AGF_ATTES';
-					$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
-					if ($message) {
-						$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
-						$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
-						$actionmsg .= $message;
-					}
-					$actionmsg2 = $langs->trans('ActionATTESTATION_SENTBYMAIL');
-				} elseif ($models == 'convocation_trainee') {
-					if (empty($subject))
-						$langs->transnoentities('AgfPDFConvocation') . ' ' . $object->formintitule;
-					$actiontypecode = 'AC_AGF_CONVO';
-					$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
-					if ($message) {
-						$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
-						$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
-						$actionmsg .= $message;
-					}
-					$actionmsg2 = $langs->trans('ActionCONVOCATION_SENTBYMAIL');
-				} elseif ($models == 'fiche_presence_trainee_trainee') {
-					if (empty($subject))
-						$langs->transnoentities('AgfPDFFichePresence') . ' ' . $object->formintitule;
-					$actiontypecode = 'AC_AGF_PRES';
-					$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
-					if ($message) {
-						$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
-						$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
-						$actionmsg .= $message;
-					}
-					$actionmsg2 = $langs->trans('ActionFICHEPRESENCE_SENTBYMAIL');
-				} elseif ($models == 'attestationendtraining_trainee') {
-					if (empty($subject))
-						$langs->transnoentities('AgfAttestationEndTraining') . ' ' . $object->formintitule;
-					$actiontypecode = 'AC_AGF_ATTES';
-					$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
-					if ($message) {
-						$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
-						$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
-						$actionmsg .= $message;
-					}
-					$actionmsg2 = $langs->trans('ActionATTESTATION_SENTBYMAIL');
-				}
-				// Create form object
-				include_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
-				$formmail = new FormMail($db);
-
-				$attachedfiles = $formmail->get_attached_files();
-				$filepath = $attachedfiles ['paths'];
-				$filename = $attachedfiles ['names'];
-				$mimetype = $attachedfiles ['mimes'];
-
-				// Envoi de la fiche
-				require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
-				$mailfile = new CMailFile($subject, $send_email, $from, $message, $filepath, $mimetype, $filename, $sendtocc, '', $deliveryreceipt, -1);
-				if ($mailfile->error) {
-					setEventMessage($mailfile->error, 'errors');
-				} else {
-					$result = $mailfile->sendfile();
-					if ($result) {
-						setEventMessage($langs->trans('MailSuccessfulySent', $mailfile->getValidAddress($from, 2), $mailfile->getValidAddress($send_email, 2)), 'mesgs');
-
-						$error = 0;
-						$object->actiontypecode = $actiontypecode;
-						$object->actionmsg = $actionmsg;
-						$object->actionmsg2 = $actionmsg2;
-						$object->fk_element = $object->id;
-						$object->elementtype = $object->element;
-
-						/* Appel des triggers */
-						include_once DOL_DOCUMENT_ROOT . "/core/class/interfaces.class.php";
-						$interface = new Interfaces($db);
-						$models = GETPOST('models', 'alpha');
-						if ($models == 'convocation_trainee') {
-							$result = $interface->run_triggers('CONVOCATION_SENTBYMAIL', $object, $user, $langs, $conf);
-						} elseif ($models == 'attestation_trainee' || $models == 'attestationendtraining_trainee') {
-							$result = $interface->run_triggers('ATTESTATION_SENTBYMAIL', $object, $user, $langs, $conf);
-						} elseif ($models == 'fiche_presence_trainee_trainee') {
-							$result = $interface->run_triggers('FICHEPRESENCE_SENTBYMAIL', $object, $user, $langs, $conf);
-						}
-						if ($result < 0) {
-							$error++;
-							$object->errors = $interface->errors;
-						}
-						// Fin appel triggers
-
-						if ($error) {
-							setEventMessage($object->errors, 'errors');
-						} else {
-							$i++;
-							$action = '';
-						}
-					} else {
-						$langs->load("other");
-						if ($mailfile->error) {
-							setEventMessage($langs->transnoentities('ErrorFailedToSendMail', dol_escape_htmltag($from), $send_email), 'errors');
-							dol_syslog($langs->trans('ErrorFailedToSendMail', $from, $send_email) . ' : ' . $mailfile->error);
-						} else {
-							setEventMessage('No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS', 'errors');
-						}
-					}
-				}
-			}
-		} else {
-			$langs->load("other");
-			setEventMessage($langs->trans('ErrorMailRecipientIsEmpty'), 'errors');
-			dol_syslog('Recipient email is empty', LOG_ERR);
-			$action = $pre_action;
-		}
-	}
+$reshook = $hookmanager->executeHooks('doActions', $parameters, $agf, $action); // Note that $action and $object may have been modified by some hooks
+if ($reshook < 0) {
+	setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 }
 
-if ($action == 'sendmassmail' && $user->rights->agefodd->creer) {
-	$langs->load('mails');
+if (empty($reshook))
+{
+	/*
+	 * Action create and refresh pdf document
+	*/
+	if (($action == 'create' || $action == 'refresh') && $user->rights->agefodd->creer) {
+		$cour = GETPOST('cour', 'alpha');
+		$model = GETPOST('model', 'alpha');
+		$idform = GETPOST('idform', 'alpha');
 
-	$models = GETPOST('typemodelsend', 'none');
-
-	$from = $user->getFullName($langs) . ' <' . $user->email . '>';
-
-	$object = new Agsession($db);
-	$result = $object->fetch($id);
-
-	$agf_trainee = new Agefodd_session_stagiaire($db);
-	$result = $agf_trainee->fetch_stagiaire_per_session($id);
-	if ($result < 0) {
-		setEventMessage($agf_trainee->error, 'errors');
-	}
-	// tableau des fichiers envoyés aux stagiaires
-	$TSentFile = array();
-
-	foreach ($agf_trainee->lines as $line) {
-		$agf_trainee = new Agefodd_stagiaire($db);
-		$agf_trainee->fetch($line->id);
-
-		$contact_trainee = new Contact($db);
-		$contact_trainee->fetch($agf_trainee->fk_socpeople);
-
-		$companyid = $contact_trainee->socid;
-		if (!empty($agf_trainee->fk_socpeople)) {
-			$contactid = $agf_trainee->fk_socpeople;
-		} else {
-			$contactid = 0;
+		// Define output language
+		$outputlangs = $langs;
+		$newlang = GETPOST('lang_id', 'alpha');
+		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
+			$newlang = $object->thirdparty->default_lang;
+		if (!empty($newlang)) {
+			$outputlangs = new Translate("", $conf);
+			$outputlangs->setDefaultLang($newlang);
 		}
 
-		//Perapre data for trigeer action comm
-		$object->socid = $companyid;
-		$object->sendtoid = $contactid;
+		$file = $model . '_' . $session_trainee_id . '.pdf';
 
-		$send_email = $agf_trainee->mail;
-
-		$sendmail_check = true;
-
-		if ($models == 'attestation_trainee' || $models == 'attestationendtraining_trainee') {
-			// Do not send attestation if status is not present
-			if ($line->status_in_session != 3 && $line->status_in_session != 4) {
-				$sendmail_check = false;
-				setEventMessage($langs->trans('AgfOnlyPresentTraineeGetAttestation', $line->nom . ' ' . $line->prenom), 'errors');
-			}
-			$subject = $langs->transnoentities('AgfSendAttestation', $object->formintitule);
-			$message = str_replace('\n', "\n", $langs->transnoentities('AgfSendAttestationBody', $object->formintitule));
-
-			$actiontypecode = 'AC_AGF_ATTES';
-			$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
-			if ($message) {
-				$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
-				$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
-				$actionmsg .= $message;
-			}
-			$actionmsg2 = $langs->trans('ActionATTESTATION_SENTBYMAIL');
-
-			if ($models == 'attestation_trainee') {
-				$file = $conf->agefodd->dir_output . '/' . 'attestation_trainee_' . $line->stagerowid . '.pdf';
-			} elseif ($models == 'attestationendtraining_trainee') {
-				$file = $conf->agefodd->dir_output . '/' . 'attestationendtraining_trainee_' . $line->stagerowid . '.pdf';
-			}
-
-			if (!file_exists($file))
-				$sendmail_check = false;
-
-			$TSentFile[$agf_trainee->id] = $file;
-
-			$filepath = array(
-				$file
-			);
-			$filename = array(
-				basename($file)
-			);
-			$mimetype = array(
-				dol_mimetype($file)
-			);
-		} elseif ($models == 'convocation_trainee') {
-			$subject = $langs->transnoentities('AgfSendConvocation', $object->formintitule);
-			$message = str_replace('\n', "\n", $langs->transnoentities('AgfSendConvocationBody', $object->formintitule));
-
-			$actiontypecode = 'AC_AGF_CONVO';
-			$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
-			if ($message) {
-				$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
-				$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
-				$actionmsg .= $message;
-			}
-			$actionmsg2 = $langs->trans('ActionCONVOCATION_SENTBYMAIL');
-
-			$file = $conf->agefodd->dir_output . '/' . 'convocation_trainee_' . $line->stagerowid . '.pdf';
-
-			if (!file_exists($file))
-				$sendmail_check = false;
-
-			$TSentFile[$agf_trainee->id] = $file;
-
-			$filepath = array(
-				$file
-			);
-			$filename = array(
-				basename($file)
-			);
-			$mimetype = array(
-				dol_mimetype($file)
-			);
-		} elseif ($models == 'fiche_presence_trainee_trainee') {
-			$subject = $langs->transnoentities('AgfSendFeuillePresence', $object->formintitule);
-			$message = str_replace('\n', "\n", $langs->transnoentities('AgfSendFeuillePresenceBody', $object->formintitule));
-
-			$actiontypecode = 'AC_AGF_PRES';
-			$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
-			if ($message) {
-				$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
-				$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
-				$actionmsg .= $message;
-			}
-			$actionmsg2 = $langs->trans('ActionFICHEPRESENCE_SENTBYMAIL');
-
-			$file = $conf->agefodd->dir_output . '/' . 'fiche_presence_trainee_trainee_' . $line->stagerowid . '.pdf';
-
-			if (!file_exists($file))
-				$sendmail_check = false;
-
-			$TSentFile[$agf_trainee->id] = $file;
-
-			$filepath = array(
-				$file
-			);
-			$filename = array(
-				basename($file)
-			);
-			$mimetype = array(
-				dol_mimetype($file)
-			);
-		}
-
-		$parameters = array(
-			'contact_trainee' => & $contact_trainee,
-			'subject' => & $subject,
-			'send_email' => & $send_email,
-			'from' => & $from,
-			'message' => & $message,
-			'filepath' => & $filepath,
-			'mimetype' => & $mimetype,
-			'filename' => & $filename,
-			'sendtocc' => & $sendtocc,
-			'sendmail_check' => & $sendmail_check
-		);
-
-		$reshook = $hookmanager->executeHooks('sendMassmail', $parameters, $agf_trainee, $action); // Note that $action and $object may have been modified by some hooks
-		if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
-		if (empty($reshook)) {
-			if ($sendmail_check == true) {
-				// Create form object
-				include_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
-				$formmail = new FormMail($db);
-
-				if (!empty($conf->global->FCKEDITOR_ENABLE_MAIL)) {
-					$message = str_replace("\n", "<br />", $message);
-				}
-
-				$message .= $user->signature;
-
-				// Envoi de la fiche
-				require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
-				$mailfile = new CMailFile($subject, $send_email, $from, $message, $filepath, $mimetype, $filename, $sendtocc, '', 1, -1);
-				if ($mailfile->error) {
-					setEventMessage($mailfile->error, 'errors');
-				} else {
-					$result = $mailfile->sendfile();
-					if ($result) {
-						setEventMessage($langs->trans('MailSuccessfulySent', $mailfile->getValidAddress($from, 2), $mailfile->getValidAddress($send_email, 2)), 'mesgs');
-
-						$error = 0;
-
-						$object->actiontypecode = $actiontypecode;
-						$object->actionmsg = $actionmsg;
-						$object->actionmsg2 = $actionmsg2;
-						$object->fk_element = $object->id;
-						$object->elementtype = $object->element;
-
-						/* Appel des triggers */
-						include_once DOL_DOCUMENT_ROOT . "/core/class/interfaces.class.php";
-						$interface = new Interfaces($db);
-
-						if ($models == 'convocation_trainee') {
-							$result = $interface->run_triggers('CONVOCATION_SENTBYMAIL', $object, $user, $langs, $conf);
-						} elseif ($models == 'attestation_trainee' || $models == 'attestationendtraining_trainee') {
-							$result = $interface->run_triggers('ATTESTATION_SENTBYMAIL', $object, $user, $langs, $conf);
-						} elseif ($models == 'fiche_presence_trainee_trainee') {
-							$result = $interface->run_triggers('FICHEPRESENCE_SENTBYMAIL', $object, $user, $langs, $conf);
-						}
-						if ($result < 0) {
-							$error++;
-							$object->errors = $interface->errors;
-						}
-						// Fin appel triggers
-
-						if ($error) {
-							setEventMessage($object->errors, 'errors');
-						} else {
-							$i++;
-							$action = '';
-						}
-					} else {
-						$langs->load("other");
-						if ($mailfile->error) {
-							setEventMessage($langs->transnoentities('ErrorFailedToSendMail', dol_escape_htmltag($from), $send_email) . ":<br/>" . $mailfile->error, 'errors');
-							dol_syslog($langs->trans('ErrorFailedToSendMail', $from, $send_email) . ' : ' . $mailfile->error);
-						} else {
-							setEventMessage('No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS', 'errors');
+		//this configuration variable is designed like
+		//standard_model_name:new_model_name&standard_model_name:new_model_name&....
+		if (!empty($conf->global->AGF_PDF_MODEL_OVERRIDE) && ($model != 'convention')) {
+			$modelarray = explode('&', $conf->global->AGF_PDF_MODEL_OVERRIDE);
+			if (is_array($modelarray) && count($modelarray) > 0) {
+				foreach ($modelarray as $modeloveride) {
+					$modeloverridearray = explode(':', $modeloveride);
+					if (is_array($modeloverridearray) && count($modeloverridearray) > 0) {
+						if ($modeloverridearray[0] == $model) {
+							$model = $modeloverridearray[1];
 						}
 					}
 				}
+
 			}
 		}
+
+		if (!empty($id_external_model) || strpos($model, 'rfltr_agefodd') !== false) {
+			$path_external_model = '/referenceletters/core/modules/referenceletters/pdf/pdf_rfltr_agefodd.modules.php';
+			if (strpos($model, 'rfltr_agefodd') !== false) $id_external_model = (int)strtr($model, array('rfltr_agefodd_' => ''));
+		}
+
+		$result = agf_pdf_create($db, $id, '', $model, $outputlangs, $file, $session_trainee_id, $cour, $path_external_model, $id_external_model);
 	}
 
-	$agf_session = new Agsession($db);
-	$agf_session->fetch($id);
+	/*
+	 * Add file in email form
+	 */
+	if (!empty($addfile)) {
+		if (isset($_FILES['addedfile']))
+		{
+			require_once(DOL_DOCUMENT_ROOT . "/core/lib/files.lib.php");
 
-	$parameters = array(
-		'TSentFile' => $TSentFile,
-		'from' => $from,
-		'mimetype' => $mimetype,
-		'sendmail_check' => &$sendmail_check
-	);
-	$reshook = $hookmanager->executeHooks('afterSendMassMail', $parameters, $agf_session, $action); // Note that $action and $object may have been modified by some hooks
-	if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
-}
+			// Set tmp user directory TODO Use a dedicated directory for temp mails files
+			$vardir = $conf->user->dir_output . "/" . $user->id;
+			$upload_dir_tmp = $vardir . '/temp';
 
-if ($action == 'confirm_generateall' && $user->rights->agefodd->creer && $confirm == 'yes') {
-	// Define output language
+			$mesg = dol_add_file_process($upload_dir_tmp, 0, 0, 'addedfile', '', null, $formmail->trackid);
+		}
 
-	$typemodel = GETPOST('typemodelgen', 'none');
-	$outputlangs = $langs;
-	$newlang = GETPOST('lang_id', 'alpha');
-	if ($conf->global->MAIN_MULTILANGS && empty($newlang))
-		$newlang = $object->thirdparty->default_lang;
-	if (!empty($newlang)) {
-		$outputlangs = new Translate("", $conf);
-		$outputlangs->setDefaultLang($newlang);
+		$action = $pre_action;
 	}
 
-	$agf_trainee = new Agefodd_session_stagiaire($db);
-	$result = $agf_trainee->fetch_stagiaire_per_session($id);
-	if ($result < 0) {
-		setEventMessage($agf_trainee->error, 'errors');
+	/*
+	 * Remove file in email form
+	 */
+	if (!empty($removedfile)) {
+		require_once(DOL_DOCUMENT_ROOT . "/core/lib/files.lib.php");
+
+		// Set tmp user directory
+		$vardir = $conf->user->dir_output . "/" . $user->id;
+		$upload_dir_tmp = $vardir . '/temp';
+
+		// TODO Delete only files that was uploaded from email form
+		$mesg = dol_remove_file_process($removedfile, 0, 0, $formmail->trackid);
+
+		$action = $pre_action;
 	}
+	if ($action == 'send' && !$_POST['addfile'] && !$_POST['removedfile'] && !$_POST['cancel']) {
+		$langs->load('mails');
 
-	foreach ($agf_trainee->lines as $line) {
-		if ($typemodel == 'attestation_trainee' ||
-			$typemodel == 'attestationendtraining_trainee' ||
-			$typemodel == 'certificate_completion_trainee' ||
-			$typemodel == 'convocation_trainee' ||
-			$typemodel == 'fiche_presence_trainee_trainee') {
-			$file = $typemodel . '_' . $line->stagerowid . '.pdf';
+		$send_to = GETPOST('sendto', 'alpha');
+		$receiver = GETPOST('receiver', 'none');
 
-			$typemodel_override = $typemodel;
-			// this configuration variable is designed like
-			// standard_model_name:new_model_name&standard_model_name:new_model_name&....
-			if (!empty($conf->global->AGF_PDF_MODEL_OVERRIDE) && ($typemodel != 'convention')) {
-				$modelarray = explode('&', $conf->global->AGF_PDF_MODEL_OVERRIDE);
-				if (is_array($modelarray) && count($modelarray) > 0) {
-					foreach ($modelarray as $modeloveride) {
-						$modeloverridearray = explode(':', $modeloveride);
-						if (is_array($modeloverridearray) && count($modeloverridearray) > 0) {
-							if ($modeloverridearray[0] == $typemodel) {
-								$typemodel_override = $modeloverridearray[1];
+		$action = $pre_action;
+
+		$object = new Agsession($db);
+
+		$result = $object->fetch($id);
+
+		if ($result > 0) {
+			$result = $object->fetch_thirdparty();
+			$sendto = array();
+			if (!empty($send_to)) {
+				// Le destinataire a ete fourni via le champ libre
+				$sendto = array(
+					$send_to
+				);
+			} elseif (is_array($receiver) && count($receiver) > 0) {
+				foreach ($receiver as $id_receiver) {
+					// Initialisation donnees
+
+					if (preg_match("/_third/", $id_receiver)) {
+						$id_receiver = preg_replace('/_third/', '', $id_receiver);
+						$societe = new Societe($db);
+						$societe->fetch($id_receiver);
+						$sendto[$id_receiver . '_third'] = $societe->name . " <" . $societe->email . ">";
+					} elseif (preg_match("/_socp/", $id_receiver)) {
+						$id_receiver = preg_replace('/_socp/', '', $id_receiver);
+						if (!empty($id_receiver)) {
+							$contactstatic = new Contact($db);
+							$contactstatic->fetch($id_receiver);
+							if ($contactstatic->email != '') {
+								$sendto[$id_receiver . '_socp'] = trim($contactstatic->firstname . " " . $contactstatic->lastname) . " <" . $contactstatic->email . ">";
 							}
 						}
 					}
 				}
 			}
+			if (is_array($sendto) && count($sendto) > 0) {
+				$langs->load("commercial");
 
-			$id_external_model = GETPOST('id_external_model_confirm', 'none');
-			if (!empty($id_external_model) || strpos($typemodel, 'rfltr_agefodd') !== false) {
-				$path_external_model = '/referenceletters/core/modules/referenceletters/pdf/pdf_rfltr_agefodd.modules.php';
-				if (strpos($typemodel, 'rfltr_agefodd') !== false) $id_external_model = (int) strtr($typemodel, array('rfltr_agefodd_' => ''));
+				$from = GETPOST('fromname', 'none') . ' <' . GETPOST('frommail', 'none') . '>';
+				$replyto = GETPOST('replytoname', 'none') . ' <' . GETPOST('replytomail', 'none') . '>';
+				$message = GETPOST('message', 'none');
+				$sendtocc = GETPOST('sendtocc', 'none');
+				$deliveryreceipt = GETPOST('deliveryreceipt', 'none');
+
+				// Envoi du mail + trigger pour chaque contact
+				$i = 0;
+
+				foreach ($sendto as $send_id => $send_email) {
+
+					$models = GETPOST('models', 'alpha');
+
+					$subject = GETPOST('subject', 'none');
+
+					//Usefull for trigger actioncomm
+					if (preg_match("/_third/", $send_id)) {
+						$send_id = preg_replace('/_third/', '', $send_id);
+						$societe = new Societe($db);
+						$societe->fetch($send_id);
+						$object->socid = $send_id;
+						$object->sendtoid = 0;
+					} elseif (preg_match("/_socp/", $send_id)) {
+						$send_id = preg_replace('/_socp/', '', $send_id);
+						$contactstatic = new Contact($db);
+						$contactstatic->fetch($send_id);
+						$contactstatic->fetch_thirdparty();
+						$object->socid = $contactstatic->thirdparty->id;
+						$object->sendtoid = $send_id;
+					}
+
+					if ($models == 'attestation_trainee') {
+						if (empty($subject))
+							$langs->transnoentities('AgfAttestation') . ' ' . $object->formintitule;
+						$actiontypecode = 'AC_AGF_ATTES';
+						$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+						if ($message) {
+							$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+							$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+							$actionmsg .= $message;
+						}
+						$actionmsg2 = $langs->trans('ActionATTESTATION_SENTBYMAIL');
+					} elseif ($models == 'convocation_trainee') {
+						if (empty($subject))
+							$langs->transnoentities('AgfPDFConvocation') . ' ' . $object->formintitule;
+						$actiontypecode = 'AC_AGF_CONVO';
+						$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+						if ($message) {
+							$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+							$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+							$actionmsg .= $message;
+						}
+						$actionmsg2 = $langs->trans('ActionCONVOCATION_SENTBYMAIL');
+					} elseif ($models == 'fiche_presence_trainee_trainee') {
+						if (empty($subject))
+							$langs->transnoentities('AgfPDFFichePresence') . ' ' . $object->formintitule;
+						$actiontypecode = 'AC_AGF_PRES';
+						$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+						if ($message) {
+							$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+							$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+							$actionmsg .= $message;
+						}
+						$actionmsg2 = $langs->trans('ActionFICHEPRESENCE_SENTBYMAIL');
+					} elseif ($models == 'attestationendtraining_trainee') {
+						if (empty($subject))
+							$langs->transnoentities('AgfAttestationEndTraining') . ' ' . $object->formintitule;
+						$actiontypecode = 'AC_AGF_ATTES';
+						$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+						if ($message) {
+							$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+							$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+							$actionmsg .= $message;
+						}
+						$actionmsg2 = $langs->trans('ActionATTESTATION_SENTBYMAIL');
+					} elseif ($models == 'certificate_completion_trainee') {
+						if (empty($subject))
+							$langs->transnoentities('AgfCertificateCompletionTrainee') . ' ' . $object->formintitule;
+						$actiontypecode = 'AC_AGF_COMP';
+						$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+						if ($message) {
+							$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+							$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+							$actionmsg .= $message;
+						}
+						$actionmsg2 = $langs->trans('ActionCERTIFICATE_SENTBYMAIL');
+					}
+					// Create form object
+					include_once(DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php');
+					$formmail = new FormMail($db);
+
+					$attachedfiles = $formmail->get_attached_files();
+					$filepath = $attachedfiles ['paths'];
+					$filename = $attachedfiles ['names'];
+					$mimetype = $attachedfiles ['mimes'];
+
+
+
+					// Envoi de la fiche
+					require_once(DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php');
+                    if (!empty($conf->global->MAIN_MAIL_ADD_INLINE_IMAGES_IF_DATA)) {
+                        $upload_dir_tmp = DOL_DATA_ROOT.'/mail/img';
+                        $mailfile = new CMailFile($subject, $send_email, $from, $message, $filepath, $mimetype, $filename, $sendtocc, '', $deliveryreceipt, -1, '', '', '', '', 'standard', '', $upload_dir_tmp);
+                    }
+                    else
+                    {
+                        $mailfile = new CMailFile($subject, $send_email, $from, $message, $filepath, $mimetype, $filename, $sendtocc, '', $deliveryreceipt, -1);
+                    }
+					if ($mailfile->error) {
+						setEventMessage($mailfile->error, 'errors');
+					} else {
+						$result = $mailfile->sendfile();
+						if ($result) {
+							setEventMessage($langs->trans('MailSuccessfulySent', $mailfile->getValidAddress($from, 2), $mailfile->getValidAddress($send_email, 2)), 'mesgs');
+
+							$error = 0;
+							$object->actiontypecode = $actiontypecode;
+							$object->actionmsg = $actionmsg;
+							$object->actionmsg2 = $actionmsg2;
+							$object->fk_element = $object->id;
+							$object->elementtype = $object->element;
+
+							/* Appel des triggers */
+							include_once(DOL_DOCUMENT_ROOT . "/core/class/interfaces.class.php");
+							$interface = new Interfaces($db);
+							$models = GETPOST('models', 'alpha');
+							if ($models == 'convocation_trainee') {
+								$result = $interface->run_triggers('CONVOCATION_SENTBYMAIL', $object, $user, $langs, $conf);
+							} elseif ($models == 'attestation_trainee' || $models == 'attestationendtraining_trainee') {
+								$result = $interface->run_triggers('ATTESTATION_SENTBYMAIL', $object, $user, $langs, $conf);
+							} elseif ($models == 'fiche_presence_trainee_trainee') {
+								$result = $interface->run_triggers('FICHEPRESENCE_SENTBYMAIL', $object, $user, $langs, $conf);
+							} elseif ($models == 'certificate_completion_trainee') {
+								$result = $interface->run_triggers('CERTIFICAT_SENTBYMAIL', $object, $user, $langs, $conf);
+							}
+							if ($result < 0) {
+								$error++;
+								$object->errors = $interface->errors;
+							}
+							// Fin appel triggers
+
+							if ($error) {
+								setEventMessage($object->errors, 'errors');
+							} else {
+								$i++;
+								$action = '';
+							}
+						} else {
+							$langs->load("other");
+							if ($mailfile->error) {
+								setEventMessage($langs->transnoentities('ErrorFailedToSendMail', dol_escape_htmltag($from), $send_email), 'errors');
+								dol_syslog($langs->trans('ErrorFailedToSendMail', $from, $send_email) . ' : ' . $mailfile->error);
+							} else {
+								setEventMessage('No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS', 'errors');
+							}
+						}
+					}
+				}
+			} else {
+				$langs->load("other");
+				setEventMessage($langs->trans('ErrorMailRecipientIsEmpty'), 'errors');
+				dol_syslog('Recipient email is empty', LOG_ERR);
+				$action = $pre_action;
+			}
+		}
+	}
+
+
+	if ($action === 'confirm_sendmassmail' && $user->rights->agefodd->creer && !$cancel) {
+		$langs->load('mails');
+
+		$models = GETPOST('typemodelsend', 'none');
+		$subjectTemplate = GETPOST('subject', 'none');
+		$messageTemplate = GETPOST('message', 'none');
+
+		$from = $user->getFullName($langs) . ' <' . $user->email . '>';
+
+		$object = new Agsession($db);
+		$result = $object->fetch($id);
+		$agf_trainee = new Agefodd_session_stagiaire($db);
+		$result = $agf_trainee->fetch_stagiaire_per_session($id);
+		if ($result < 0) {
+			setEventMessage($agf_trainee->error, 'errors');
+		}
+		// tableau des fichiers envoyés aux stagiaires
+		$TSentFile = array();
+		$TstagiaireInfo = array();
+		$countSendmail = 0;
+
+		foreach ($agf_trainee->lines as $line) {
+
+			$agf_trainee = new Agefodd_stagiaire($db);
+			$agf_trainee->fetch($line->id);
+
+			$contact_trainee = new Contact($db);
+			$contact_trainee->fetch($agf_trainee->fk_socpeople);
+
+			$companyid = $contact_trainee->socid;
+			if (!empty($agf_trainee->fk_socpeople)) {
+				$contactid = $agf_trainee->fk_socpeople;
+			} else {
+				$contactid = 0;
 			}
 
-			$result = agf_pdf_create($db, $id, '', $typemodel_override, $outputlangs, $file, $line->stagerowid, $cour, $path_external_model, $id_external_model);
-		} elseif ($typemodel == 'attestation_trainee' || $typemodel == 'attestationendtraining_trainee') {
-			setEventMessage($langs->trans('AgfOnlyPresentTraineeGetAttestation', $line->nom . ' ' . $line->prenom), 'warnings');
+			//Perapre data for trigeer action comm
+			$object->socid = $companyid;
+			$object->sendtoid = $contactid;
+
+			$send_email = $agf_trainee->mail;
+
+			$sendmail_check = true;
+
+			if ($models == 'attestation_trainee' || $models == 'attestationendtraining_trainee') {
+
+				// Do not send attestation if status is not present
+				if ($line->status_in_session != 3 && $line->status_in_session != 4) {
+					$sendmail_check = false;
+					setEventMessage($langs->trans('AgfOnlyPresentTraineeGetAttestation', $line->nom . ' ' . $line->prenom), 'errors');
+				}
+
+				list($subject,$message) = getSubstitutes($object, $subjectTemplate, $messageTemplate, 'AgfSendAttestation', 'AgfSendAttestationBody' );
+
+				$actiontypecode = 'AC_AGF_ATTES';
+				$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+				if ($message) {
+					$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+					$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+					$actionmsg .= $message;
+				}
+				$actionmsg2 = $langs->trans('ActionATTESTATION_SENTBYMAIL');
+
+				if ($models == 'attestation_trainee') {
+					$file = $conf->agefodd->dir_output . '/' . 'attestation_trainee_' . $line->stagerowid . '.pdf';
+
+				} elseif ($models == 'attestationendtraining_trainee') {
+					$file = $conf->agefodd->dir_output . '/' . 'attestationendtraining_trainee_' . $line->stagerowid . '.pdf';
+				}
+
+
+
+				if (!file_exists($file))
+					$sendmail_check = false;
+
+				$TSentFile[$agf_trainee->id] = $file;
+
+				if ($models == 'attestation_trainee') {
+					$_SESSION['AGFMassActionFileSended'] = 'attestation_trainee_' . $line->stagerowid . '.pdf';
+				} elseif ($models == 'attestationendtraining_trainee') {
+					$_SESSION['AGFMassActionFileSended'] = 'attestationendtraining_trainee_' . $line->stagerowid . '.pdf';
+				}
+
+
+				$filepath = array(
+					$file
+				);
+				$filename = array(
+					basename($file)
+				);
+				$mimetype = array(
+					dol_mimetype($file)
+				);
+			} elseif ($models == 'convocation_trainee') {
+
+				list($subject, $message) = getSubstitutes($object, $subjectTemplate, $messageTemplate, 'AgfSendConvocation', 'AgfSendConvocationBody' );
+
+				$actiontypecode = 'AC_AGF_CONVO';
+				$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+				if ($message) {
+					$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+					$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+					$actionmsg .= $message;
+				}
+				$actionmsg2 = $langs->trans('ActionCONVOCATION_SENTBYMAIL');
+
+				$file = $conf->agefodd->dir_output . '/' . 'convocation_trainee_' . $line->stagerowid . '.pdf';
+
+				if (!file_exists($file))
+					$sendmail_check = false;
+
+				$TSentFile[$agf_trainee->id] = $file;
+				$_SESSION['AGFMassActionFileSended'] = 'convocation_trainee_' . $line->stagerowid . '.pdf';
+				$filepath = array(
+					$file
+				);
+				$filename = array(
+					basename($file)
+				);
+				$mimetype = array(
+					dol_mimetype($file)
+				);
+			} elseif ($models == 'certificate_completion_trainee') {
+
+				list($subject,$message) = getSubstitutes($object, $subjectTemplate, $messageTemplate, 'AgfMailToSendCertificateCompletion', 'AgfSendCertificateCompletionBody' );
+
+				$actiontypecode = 'AC_AGF_COMP';
+				$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+				if ($message) {
+					$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+					$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+					$actionmsg .= $message;
+				}
+				$actionmsg2 = $langs->trans('ActionCONVOCATION_SENTBYMAIL');
+
+				$file = $conf->agefodd->dir_output . '/' . 'certificate_completion_trainee_' . $line->stagerowid . '.pdf';
+
+				if (!file_exists($file))
+					$sendmail_check = false;
+
+				$TSentFile[$agf_trainee->id] = $file;
+				$_SESSION['AGFMassActionFileSended'] = 'certificate_completion_trainee_' . $line->stagerowid . '.pdf';
+				$filepath = array(
+					$file
+				);
+				$filename = array(
+					basename($file)
+				);
+				$mimetype = array(
+					dol_mimetype($file)
+				);
+			} elseif ($models == 'fiche_presence_trainee_trainee') {
+
+				list($subject,$message) = getSubstitutes($object, $subjectTemplate, $messageTemplate, 'AgfSendFeuillePresence', 'AgfSendFeuillePresenceBody' );
+
+
+				$actiontypecode = 'AC_AGF_PRES';
+				$actionmsg = $langs->trans('MailSentBy') . ' ' . $from . ' ' . $langs->trans('To') . ' ' . $send_email . ".\n";
+				if ($message) {
+					$actionmsg .= $langs->trans('MailTopic') . ": " . $subject . "\n";
+					$actionmsg .= $langs->trans('TextUsedInTheMessageBody') . ":\n";
+					$actionmsg .= $message;
+				}
+				$actionmsg2 = $langs->trans('ActionFICHEPRESENCE_SENTBYMAIL');
+
+				$file = $conf->agefodd->dir_output . '/' . 'fiche_presence_trainee_trainee_' . $line->stagerowid . '.pdf';
+
+				if (!file_exists($file))
+					$sendmail_check = false;
+
+				$TSentFile[$agf_trainee->id] = $file;
+				$_SESSION['AGFMassActionFileSended'] = 'fiche_presence_trainee_trainee_' . $line->stagerowid . '.pdf';
+				$filepath = array(
+					$file
+				);
+				$filename = array(
+					basename($file)
+				);
+				$mimetype = array(
+					dol_mimetype($file)
+				);
+			}
+
+			$parameters = array(
+				'contact_trainee' => & $contact_trainee,
+				'subject' => & $subject,
+				'send_email' => & $send_email,
+				'from' => & $from,
+				'message' => & $message,
+				'filepath' => & $filepath,
+				'mimetype' => & $mimetype,
+				'filename' => & $filename,
+				'sendtocc' => & $sendtocc,
+				'sendmail_check' => & $sendmail_check
+			);
+			$reshook = $hookmanager->executeHooks('sendMassmail', $parameters, $agf_trainee, $action); // Note that $action and $object may have been modified by some hooks
+			if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+			if (empty($reshook)) {
+
+				if ($sendmail_check == true) {
+					// Create form object
+					include_once(DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php');
+					$formmail = new FormMail($db);
+
+                    // FIX DA023766 USER_SIGNATURE éclatée à l'envoi de mail en masse
+                    // C'est le make_substitutions de dolibarr qui fait un dol_nl2br donc pas besoin de le faire
+					/*if (!empty($conf->global->FCKEDITOR_ENABLE_MAIL)) {
+						$message = str_replace("\n", "<br />", $message);
+					}*/
+					// les signatures sont ajoutées dans les modèles logiquement. pas ici
+					//$message .= '<br>' . $user->signature;
+
+					// Envoi de la fiche
+					require_once(DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php');
+					$attachedfiles = $formmail->get_attached_files();
+
+					if ($selectedMailModel > 0){
+						//SQL pour récupérer la valeur de joinfiles du template
+						$sql = 'SELECT joinfiles from '.MAIN_DB_PREFIX.'c_email_templates';
+						$sql.= ' WHERE rowid=' .intval($selectedMailModel);
+
+						$resql = $db->query($sql);
+
+						//if joinfiles return NULL or 0
+						if ($resql && $db->num_rows($resql) > 0){
+							$objJoinFiles = $db->fetch_object($resql);
+							if (empty($objJoinFiles->joinfiles)){
+								$filepath = $filename = $mimetype = array();
+							}
+						}
+					}
+
+
+					$filepath = array_merge($filepath, $attachedfiles['paths']);
+					$filename = array_merge($filename, $attachedfiles['names']);
+					$mimetype = array_merge($mimetype, $attachedfiles['mimes']);
+                    if (!empty($conf->global->MAIN_MAIL_ADD_INLINE_IMAGES_IF_DATA)) {
+                        $upload_dir_tmp = DOL_DATA_ROOT.'/mail/img';
+                        $mailfile = new CMailFile($subject, $send_email, $from, $message, $filepath, $mimetype, $filename, $sendtocc, '', 1, -1, '', '', '', '', 'standard', '', $upload_dir_tmp);
+                    }
+                    else {
+                        $mailfile = new CMailFile($subject, $send_email, $from, $message, $filepath, $mimetype, $filename, $sendtocc, '', 1, -1);
+                    }
+					if ($mailfile->error) {
+						setEventMessage($mailfile->error, 'errors');
+					} else {
+						$result = $mailfile->sendfile();
+						if ($result) {
+							setEventMessage($langs->trans('MailSuccessfulySent', $mailfile->getValidAddress($from, 2), $mailfile->getValidAddress($send_email, 2)), 'mesgs');
+							$TstagiaireInfo[] = $agf_trainee->civilite.' '.$agf_trainee->nom. ' ' .$agf_trainee->prenom;
+							$countSendmail++;
+
+							$error = 0;
+
+							$object->actiontypecode = $actiontypecode;
+							$object->actionmsg = $actionmsg;
+							$object->actionmsg2 = $actionmsg2;
+							$object->fk_element = $object->id;
+							$object->elementtype = $object->element;
+
+							/* Appel des triggers */
+							include_once(DOL_DOCUMENT_ROOT . "/core/class/interfaces.class.php");
+							$interface = new Interfaces($db);
+
+							if ($models == 'convocation_trainee') {
+								$result = $interface->run_triggers('CONVOCATION_SENTBYMAIL', $object, $user, $langs, $conf);
+							} elseif ($models == 'attestation_trainee' || $models == 'attestationendtraining_trainee') {
+								$result = $interface->run_triggers('ATTESTATION_SENTBYMAIL', $object, $user, $langs, $conf);
+							} elseif ($models == 'fiche_presence_trainee_trainee') {
+								$result = $interface->run_triggers('FICHEPRESENCE_SENTBYMAIL', $object, $user, $langs, $conf);
+							} elseif ($models == 'certificate_completion_trainee') {
+								$result = $interface->run_triggers('CERTIFICAT_SENTBYMAIL', $object, $user, $langs, $conf);
+							}
+							if ($result < 0) {
+								$error++;
+								$object->errors = $interface->errors;
+							}
+							// Fin appel triggers
+
+							if ($error) {
+								setEventMessage($object->errors, 'errors');
+							} else {
+								$i++;
+								$action = '';
+							}
+						} else {
+							$langs->load("other");
+							if ($mailfile->error) {
+								setEventMessage($langs->transnoentities('ErrorFailedToSendMail', dol_escape_htmltag($from), $send_email) . ":<br/>" . $mailfile->error, 'errors');
+								dol_syslog($langs->trans('ErrorFailedToSendMail', $from, $send_email) . ' : ' . $mailfile->error);
+							} else {
+								setEventMessage('No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS', 'errors');
+							}
+						}
+					}
+				}
+			}
+		}
+		$listeStagiaire = implode('<br>',$TstagiaireInfo);
+		if (!empty($TstagiaireInfo) && $countSendmail > 0){
+			setEventMessage($langs->trans('EmailSentToUser',$countSendmail),'mesgs');
+			setEventMessage($langs->transnoentities('EmailSentList',$listeStagiaire),'mesgs');
+		}
+
+		//Remove files from tmp folder if sent or cancelled
+		removeJoinFiles($formmail);
+
+		$agf_session = new Agsession($db);
+		$agf_session->fetch($id);
+
+		$parameters = array(
+			'TSentFile' => $TSentFile,
+			'from' => $from,
+			'mimetype' => $mimetype,
+			'sendmail_check' => &$sendmail_check
+		);
+		$reshook = $hookmanager->executeHooks('afterSendMassMail', $parameters, $agf_session, $action); // Note that $action and $object may have been modified by some hooks
+		if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+	}
+	if ($action == 'confirm_sendmassmail' && $cancel) {
+		removeJoinFiles($formmail);
+	}
+
+	if ($action == 'confirm_generateall' && $user->rights->agefodd->creer && $confirm == 'yes') {
+		// Define output language
+
+		$typemodel = GETPOST('typemodelgen', 'none');
+		$outputlangs = $langs;
+		$newlang = GETPOST('lang_id', 'alpha');
+		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
+			$newlang = $object->thirdparty->default_lang;
+		if (!empty($newlang)) {
+			$outputlangs = new Translate("", $conf);
+			$outputlangs->setDefaultLang($newlang);
+		}
+
+		$filter = "";
+		if (
+			$typemodel == 'attestation_trainee' ||
+			$typemodel == 'attestationendtraining_trainee' ||
+			$typemodel == 'certificate_completion_trainee'
+		) {
+
+			$filter = " AND ss.status_in_session in (3,4) ";
+		}
+
+		$agf_trainee = new Agefodd_session_stagiaire($db);
+		$result = $agf_trainee->fetch_stagiaire_per_session($id,0,'sa.nom','', '',$filter);
+		if ($result < 0) {
+			setEventMessage($agf_trainee->error, 'errors');
+		}
+
+        if (empty($agf_trainee->lines))
+        {
+            setEventMessage($langs->transnoentities("ErrNoTraineeOrNoCompatibleStatus"), 'errors');
+        }
+        else
+        {
+            foreach ($agf_trainee->lines as $line) {
+
+                if ($typemodel == 'attestation_trainee' ||
+                    $typemodel == 'attestationendtraining_trainee' ||
+                    $typemodel == 'certificate_completion_trainee' ||
+                    $typemodel == 'convocation_trainee' ||
+                    $typemodel == 'fiche_presence_trainee_trainee') {
+                    $file = $typemodel . '_' . $line->stagerowid . '.pdf';
+
+                    $typemodel_override = $typemodel;
+                    // this configuration variable is designed like
+                    // standard_model_name:new_model_name&standard_model_name:new_model_name&....
+                    if (!empty($conf->global->AGF_PDF_MODEL_OVERRIDE) && ($typemodel != 'convention')) {
+                        $modelarray = explode('&', $conf->global->AGF_PDF_MODEL_OVERRIDE);
+                        if (is_array($modelarray) && count($modelarray) > 0) {
+                            foreach ($modelarray as $modeloveride) {
+                                $modeloverridearray = explode(':', $modeloveride);
+                                if (is_array($modeloverridearray) && count($modeloverridearray) > 0) {
+                                    if ($modeloverridearray[0] == $typemodel) {
+                                        $typemodel_override = $modeloverridearray[1];
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    $id_external_model = GETPOST('id_external_model_confirm', 'none');
+                    if (!empty($id_external_model) || strpos($typemodel, 'rfltr_agefodd') !== false) {
+                        $path_external_model = '/referenceletters/core/modules/referenceletters/pdf/pdf_rfltr_agefodd.modules.php';
+                        if (strpos($typemodel, 'rfltr_agefodd') !== false) $id_external_model = (int)strtr($typemodel, array('rfltr_agefodd_' => ''));
+                    }
+
+                    $result = agf_pdf_create($db, $id, '', $typemodel_override, $outputlangs, $file, $line->stagerowid, $cour, $path_external_model, $id_external_model);
+
+                } elseif ($typemodel == 'attestation_trainee' || $typemodel == 'attestationendtraining_trainee') {
+                    setEventMessage($langs->trans('AgfOnlyPresentTraineeGetAttestation', $line->nom . ' ' . $line->prenom), 'warnings');
+                }
+            }
+        }
+
+	}
+
+	/*
+	 * Action delete pdf document
+	*/
+	if ($action == 'del' && $user->rights->agefodd->creer) {
+		$model = GETPOST('model', 'alpha');
+
+		$file = $conf->agefodd->dir_output . '/' . $model . '_' . $session_trainee_id . '.pdf';
+
+		if (is_file($file))
+			unlink($file);
+		else {
+			$error = $file . ' : ' . $langs->trans("AgfDocDelError");
+			setEventMessage($error, 'errors');
 		}
 	}
 }
 
-/*
- * Action delete pdf document
-*/
-if ($action == 'del' && $user->rights->agefodd->creer) {
-	$model = GETPOST('model', 'alpha');
 
-	$file = $conf->agefodd->dir_output . '/' . $model . '_' . $session_trainee_id . '.pdf';
-
-	if (is_file($file))
-		unlink($file);
-	else {
-		$error = $file . ' : ' . $langs->trans("AgfDocDelError");
-		setEventMessage($error, 'errors');
-	}
-}
 
 /*
  * View
@@ -651,10 +824,6 @@ if (!empty($conf->referenceletters->enabled)) {
 		RfltrTools::print_js_external_models('document_by_trainee');
 	}
 }
-
-$form = new Form($db);
-$formAgefodd = new FormAgefodd($db);
-$formmail = new FormMail($db);
 
 if (!empty($id)) {
 	$agf = new Agsession($db);
@@ -689,7 +858,8 @@ if (!empty($id)) {
 		/*
 		 * Formulaire d'envoi des documents
 		*/
-		if ($action == 'presend_attestation_trainee' || $action == 'presend_convocation_trainee' || $action == 'presend_attestationendtraining_trainee' || $action == 'presend_fichepres_trainee_trainee') {
+		if ($action == 'presend_attestation_trainee' || $action == 'presend_convocation_trainee' || $action == 'presend_attestationendtraining_trainee' || $action == 'presend_fichepres_trainee_trainee' || $action == 'presend_certificate_completion_trainee' || $action == 'presend_linked_certificate_completion_trainee') {
+
 			if ($action == 'presend_attestation_trainee') {
 				$filename = 'attestation_trainee_' . $session_trainee_id . '.pdf';
 			} elseif ($action == 'presend_convocation_trainee') {
@@ -698,6 +868,10 @@ if (!empty($id)) {
 				$filename = 'attestationendtraining_trainee_' . $session_trainee_id . '.pdf';
 			} elseif ($action == 'presend_fichepres_trainee_trainee') {
 				$filename = 'fiche_presence_trainee_trainee_' . $session_trainee_id . '.pdf';
+			} elseif ($action == 'presend_certificate_completion_trainee') {
+				$filename = 'certificate_completion_trainee_' . $session_trainee_id . '.pdf';
+			} elseif ($action == 'presend_linked_certificate_completion_trainee') {
+				$filename = 'linked_certificate_completion_trainee_' . $session_trainee_id . '.pdf';
 			}
 
 			if ($filename) {
@@ -709,19 +883,37 @@ if (!empty($id)) {
 				$formmail->clear_attached_files();
 				if ($action == 'presend_convocation_trainee') {
 					$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
-					if ((float) DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
+					if ((float)DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
 					else $formmail->param['fileinit'] = $file;
+
+					// add Rules of procedure to convocation mail
+					$dirRegInt = $conf->agefodd->multidir_output[$conf->entity].'/place/'.$agf->fk_session_place;
+					$listFiles = dol_dir_list($dirRegInt, 'files', 0, '^reglement_(.*)\.pdf$');
+					if (is_file($dirRegInt. '/' . $listFiles[0]['name'])) {
+						$file = $dirRegInt. '/' . $listFiles[0]['name'];
+						$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
+						if ((float)DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
+						else $formmail->param['fileinit'] = $file;
+					}
 				} elseif ($action == 'presend_attestation_trainee') {
 					$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
-					if ((float) DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
+					if ((float)DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
 					else $formmail->param['fileinit'] = $file;
 				} elseif ($action == 'presend_attestationendtraining_trainee') {
 					$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
-					if ((float) DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
+					if ((float)DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
 					else $formmail->param['fileinit'] = $file;
 				} elseif ($action == 'presend_fichepres_trainee_trainee') {
 					$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
-					if ((float) DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
+					if ((float)DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
+					else $formmail->param['fileinit'] = $file;
+				} elseif ($action == 'presend_certificate_completion_trainee') {
+					$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
+					if ((float)DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
+					else $formmail->param['fileinit'] = $file;
+				} elseif ($action == 'presend_linked_certificate_completion_trainee') {
+					$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
+					if ((float)DOL_VERSION >= 7.0) $formmail->param['fileinit'][] = $file;
 					else $formmail->param['fileinit'] = $file;
 				}
 			} else {
@@ -775,6 +967,16 @@ if (!empty($id)) {
 				$formmail->withbody = $langs->trans('AgfSendFichePresenceBody', '__FORMINTITULE__');
 				$formmail->param ['models'] = 'fiche_presence_trainee_trainee';
 				$formmail->param ['pre_action'] = 'presend_fichepres_trainee_trainee';
+			} elseif ($action == 'presend_certificate_completion_trainee') {
+				$formmail->withtopic = $langs->trans('AgfCertificateCompletionTrainee', '__FORMINTITULE__');
+				$formmail->withbody = $langs->trans('AgfSendCertificateCompletionTraineeBody', '__FORMINTITULE__');
+				$formmail->param ['models'] = 'certificate_completion_trainee';
+				$formmail->param ['pre_action'] = 'presend_certificate_completion_trainee';
+			} elseif ($action == 'presend_linked_certificate_completion_trainee') {
+				$formmail->withtopic = $langs->trans('AgfCertificateCompletion', '__FORMINTITULE__');
+				$formmail->withbody = $langs->trans('AgfSendCertificateCompletionBody', '__FORMINTITULE__');
+				$formmail->param ['models'] = 'linked_certificate_completion_trainee';
+				$formmail->param ['pre_action'] = 'presend_linked_certificate_completion_trainee';
 			}
 
 			if (!empty($conf->global->FCKEDITOR_ENABLE_MAIL)) {
@@ -823,6 +1025,7 @@ if (!empty($id)) {
 				}
 				$withtoname[] = $agf_trainee->nom . ' ' . $agf_trainee->prenom;
 			} else {
+
 				if (empty($conf->global->AGF_FILL_SENDTO_WITH_TRAINEE_MAIL_IF_NOT_SOCPEOPLE)) {
 					setEventMessage($langs->trans('AgfTraineeIsNotAContact', $agf_trainee->nom . ' ' . $agf_trainee->prenom . ' - ' . $agf_trainee->mail), 'warnings');
 				} else {
@@ -853,6 +1056,12 @@ if (!empty($id)) {
 			$date_conv = $agf->libSessionDate('daytext');
 			$formmail->substit['__FORMDATESESSION__'] = $date_conv;
 
+			if ($agf->fk_session_place > 0)  {
+				$place = new Agefodd_place($db);
+				$ret = $place->fetch($agf->fk_session_place);
+				if ($ret > 0) $formmail->substit['__LIEUSESSION__'] = $place->ref_interne . ", " . $place->adresse . ", " . $place->cp . " " . $place->ville;
+			}
+
 			if (is_array($withtocompanyname) && count($withtocompanyname) > 0) {
 				if (!empty($conf->global->FCKEDITOR_ENABLE_MAIL)) {
 					$formmail->substit['__THIRDPARTY_NAME__'] = implode('<br />', $withtocompanyname);
@@ -867,19 +1076,28 @@ if (!empty($id)) {
 				} else {
 					$formmail->substit['__CONTACTCIVNAME__'] = implode(', ', $withtoname);
 				}
+
 			}
 
 			$formmail->substit['__USER_SIGNATURE__'] = $user->signature;
 			$formmail->substit ['__PERSONALIZED__'] = '';
 
+			// Load extrafield agefodd session
+			if(!empty($agf->array_options) && is_array($agf->array_options)) {
+				foreach ($agf->array_options as $extrafieldKey => $extrafieldValue){
+					$sessionExtKey = '__SESSION_EXTRAFIELD_'.strtoupper($extrafieldKey).'__';
+					$formmail->substit[$sessionExtKey] = $extrafieldValue;
+				}
+			}
+			// end add extrafield session
+
 			// Tableau des parametres complementaires
 			$formmail->param ['action'] = 'send';
 			$formmail->param ['sessiontraineeid'] = $session_trainee_id;
 			$formmail->param ['id'] = $agf->id;
-			$formmail->param ['models_id'] = GETPOST('modelmailselected', 'none');
+			$formmail->param ['models_id'] = $selectedMailModel;
 			$formmail->param ['pre_action'] = $action;
 			$formmail->param ['returnurl'] = $_SERVER ["PHP_SELF"] . '?id=' . $agf->id;
-
 			if ($action == 'presend_convocation_trainee') {
 				print_fiche_titre($langs->trans('AgfSendDocuments'), '', dol_buildpath('/agefodd/img/mail_generic.png', 1), 1);
 			} elseif ($action == 'presend_attestation_trainee' || $action == 'presend_attestationendtraining_trainee') {
@@ -887,12 +1105,31 @@ if (!empty($id)) {
 			}
 
 			if (GETPOST('mode', 'none') != 'init') $formmail->param['fileinit'] = $formmail->get_attached_files()['paths'];
-			$formmail->show_form();
+			print $formmail->get_form();
 
 			if (!empty($mesg)) {
 				setEventMessage($mesg, $style_mesg);
 			}
-		} else {
+		}
+        else if($action === 'presendmassmail' && $user->rights->agefodd->creer) {
+			/** @var string $delayedhtmlcontent */
+			$session = new Agsession($db);
+			$result = $session->fetch($id);
+			if(! $result) dol_print_error($db);
+			$agf_trainee = new Agefodd_session_stagiaire($db);
+			$result = $agf_trainee->fetch_stagiaire_per_session($id);
+			if(! $result) dol_print_error($db);
+			$TStagiaire = $agf_trainee->lines;
+			$typeModele = GETPOST('typemodelsend', 'none');
+			$presendmassmail = presend_massmail($session, $typeModele, $selectedMailModel, $TStagiaire);
+
+			echo $presendmassmail;
+			llxFooter();
+			$db->close();
+			exit;
+		}
+		else {
+
 			$agf_trainee = new Agefodd_session_stagiaire($db);
 			$result = $agf_trainee->fetch_stagiaire_per_session($id);
 			if ($result < 0) {
@@ -936,7 +1173,7 @@ if (!empty($id)) {
 					print '<tr><td colspan=3 style="background-color:#d5baa8;">' . $langs->trans("AgfAfterTraining") . '</td></tr>' . "\n";
 					document_line($langs->trans("AgfSendAttestation"), "attestation_trainee", $agf_trainee->lines [$i]->stagerowid);
 					document_line($langs->trans("AgfAttestationEndTraining"), "attestationendtraining_trainee", $agf_trainee->lines [$i]->stagerowid);
-					document_line($langs->trans("AgfCompletionCertificateOfficialFrance"), "certificate_completion_trainee", $agf_trainee->lines [$i]->stagerowid);
+					document_line($langs->trans("AgfCompletionCertication"), "certificate_completion_trainee", $agf_trainee->lines [$i]->stagerowid);
 
 					print '</table>';
 					if ($i < $linecount)
@@ -945,6 +1182,7 @@ if (!empty($id)) {
 			}
 
 			print '</div>' . "\n";
+
 		}
 	} elseif ($result == 0) {
 		print '<div style="text-align:center"><br>' . $langs->trans('AgfThirdparyMandatory') . '</div>';
@@ -953,8 +1191,9 @@ if (!empty($id)) {
 	}
 
 	if (!empty($linecount)) {
+
 		//find if docedit model exits
-		$docedit_convtrainee_exists = $docedit_attestrainee_exists = $docedit_attesendtraining_trainee_exists = $docedit_fichepres_trainee_exists = false;
+		$docedit_convtrainee_exists = $docedit_attestrainee_exists = $docedit_attesendtraining_trainee_exists = $docedit_fichepres_trainee_exists = $docedit_certificatcomp_exists = false;
 		if ($conf->referenceletters->enabled) {
 			if (class_exists('RfltrTools') && method_exists('RfltrTools', 'getAgefoddModelList')) {
 				$TModels = RfltrTools::getAgefoddModelList();
@@ -970,6 +1209,9 @@ if (!empty($id)) {
 				if (array_key_exists('rfltr_agefodd_attestationendtraining_trainee', $TModels)) {
 					$docedit_attesendtraining_trainee_exists = true;
 				}
+				if (array_key_exists('rfltr_agefodd_certificat_completion_trainee', $TModels)) {
+					$docedit_certificatcomp_exists = true;
+				}
 			}
 		}
 
@@ -979,7 +1221,8 @@ if (!empty($id)) {
 		 */
 
 		print '<form name="gen" action="' . $_SERVER['PHP_SELF'] . '">';
-		print '<input type="hidden" name="action" id="action" value="generateall">';
+        print '<input type="hidden" name="token" value="'.$newToken.'">';
+        print '<input type="hidden" name="action" id="action" value="generateall">';
 		print '<input type="hidden" name="id" id="id" value="' . $id . '">';
 		print '<input type="hidden" name="confirm" id="confirm" value="">';
 
@@ -988,7 +1231,7 @@ if (!empty($id)) {
 			'fiche_presence_trainee_trainee' => $langs->trans('AgfPDFFichePresSeveral'),
 			'attestation_trainee' => $langs->trans('AgfAttestations'),
 			'attestationendtraining_trainee' => $langs->trans('AgfPDFAttestationEnd'),
-			'certificate_completion_trainee' => $langs->trans('AgfCompletionCertication')
+			'certificate_completion_trainee' => $langs->trans('AgfPDFCertificateCompletionTrainee')
 		);
 		$changeActionSelectGenerate = $form->selectarray('typemodelgen', $TtypeModelGenerate, '', 1);
 		print $changeActionSelectGenerate;
@@ -1022,14 +1265,16 @@ if (!empty($id)) {
 		 *     SEND
 		 */
 		print '<form name="send" action="' . $_SERVER['PHP_SELF'] . '">';
-		print '<input type="hidden" name="action" id="action" value="sendmassmail">';
+        print '<input type="hidden" name="token" value="'.$newToken.'">';
+        print '<input type="hidden" name="action" id="action" value="presendmassmail">';
 		print '<input type="hidden" name="id" id="id" value="' . $id . '">';
 
 		$TtypeModelSend = array(
 			'convocation_trainee' => $langs->trans('AgfPDFConvocations'),
 			'fiche_presence_trainee_trainee' => $langs->trans('AgfPDFFichePresSeveral'),
 			'attestation_trainee' => $langs->trans('AgfAttestations'),
-			'attestationendtraining_trainee' => $langs->trans('AgfPDFAttestationEnd')
+			'attestationendtraining_trainee' => $langs->trans('AgfPDFAttestationEnd'),
+			'certificate_completion_trainee' => $langs->trans('AgfPDFCertificateCompletionTrainee')
 		);
 		$changeActionSelectSend = $form->selectarray('typemodelsend', $TtypeModelSend, '', 1);
 		print $changeActionSelectSend;
@@ -1041,7 +1286,7 @@ if (!empty($id)) {
 		print '<div style="text-align:center"><br>' . $langs->trans('AgfNobody') . '</div>';
 		print '<div class="tabsAction">';
 		if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
-			print '<a class="butAction" href="' . dol_buildpath('/agefodd/session/subscribers.php', 1) . '?action=edit&id=' . $id . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
+			print '<a class="butAction" href="' . dol_buildpath('/agefodd/session/person.php', 1) . '?action=edit&id=' . $id . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
 		} else {
 			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
 		}

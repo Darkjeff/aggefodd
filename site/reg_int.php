@@ -23,17 +23,17 @@
  * \ingroup agefodd
  * \brief Internal rule pages for locations
  */
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once '../class/agefodd_place.class.php';
-require_once '../class/agefodd_reginterieur.class.php';
-require_once '../lib/agefodd.lib.php';
+require_once ('../class/agefodd_place.class.php');
+require_once ('../class/agefodd_reginterieur.class.php');
+require_once ('../lib/agefodd.lib.php');
 
-require_once DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php';
+require_once (DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php');
 
 // Security check
 if (! $user->rights->agefodd->agefodd_place->lire)
@@ -121,6 +121,7 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_place->creer)
 		$result = $agf->create($user);
 
 		if ($result > 0) {
+
 			$agf_place = new Agefodd_place($db);
 			$result_place = $agf_place->fetch($id);
 			$agf_place->fk_reg_interieur = $result;
@@ -172,6 +173,11 @@ dol_fiche_head($head, 'reg_int_tab', $langs->trans("AgfSessPlace"), 0, 'address'
 dol_agefodd_banner_tab($agf_place, 'id');
 print '<div class="underbanner clearboth"></div>';
 
+// advise users who display the tab to use the new feature
+print '<div class="warning">'.$langs->trans('AgfWarningRegIntInPDF').'</div>';
+
+print '<div class="underbanner clearboth"></div>';
+
 /*
  * Action create
 */
@@ -206,6 +212,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 } else {
 	// Card location
 	if ($result_place > 0 && $result_regint > 0) {
+
 		// Card location interal rules Edit mode
 		if ($action == 'edit') {
 			print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '" method="post">' . "\n";

@@ -22,11 +22,10 @@
  * \ingroup agefodd
  * \brief Manage training object
  */
-require_once DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php";
+require_once (DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php");
 
 
-class SessionCatalogue extends Formation
-{
+class SessionCatalogue extends Formation {
 	public $error;
 	public $errors = array ();
 	public $element = 'agefodd_session_catalogue';
@@ -39,8 +38,7 @@ class SessionCatalogue extends Formation
 	 *
 	 * @param DoliDb $db handler
 	 */
-	public function __construct($db)
-	{
+	public function __construct($db) {
 		$this->db = $db;
 		return 1;
 	}
@@ -52,8 +50,7 @@ class SessionCatalogue extends Formation
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, Id of created object if OK
 	 */
-	public function create($user, $notrigger = 0)
-	{
+	public function create($user, $notrigger = 0) {
 		global $conf, $langs;
 		$error = 0;
 
@@ -168,16 +165,17 @@ class SessionCatalogue extends Formation
 			}
 		}
 
-		if (! $error && ! $notrigger) {
+		if (! $error && ! $notrigger)
+		{
 			// Call trigger
-			$result=$this->call_trigger('AGEFODD_SESSION_CATALOGUE_CREATE', $user);
+			$result=$this->call_trigger('AGEFODD_SESSION_CATALOGUE_CREATE',$user);
 			if ($result < 0) { $error++; }
 			// End call triggers
 		}
 
 		// Commit or rollback
 		if ($error) {
-			foreach ($this->errors as $errmsg) {
+			foreach ( $this->errors as $errmsg ) {
 				dol_syslog(get_class($this) . "::create " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -196,8 +194,7 @@ class SessionCatalogue extends Formation
 	 * @param string $ref useless in this case but necessary because of heritage
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function fetch($id, $ref = '')
-	{
+	public function fetch($id, $ref='') {
 		$sql = "SELECT";
 		$sql .= " sc.rowid, sc.entity, sc.ref, sc.ref_interne, sc.intitule, sc.duree, sc.nb_place,";
 		$sql .= " sc.public, sc.methode, sc.prerequis, sc.but, sc.programme, sc.archive, sc.note1, sc.note2 ";
@@ -213,7 +210,7 @@ class SessionCatalogue extends Formation
 		$sql .= " ,sc.fk_session";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_catalogue as sc";
 		$sql .= " WHERE sc.rowid = " . $id;
-		$sql .= " AND sc.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
+		$sql .= " AND sc.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
 
 		dol_syslog(get_class($this) . "::fetch ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -260,7 +257,7 @@ class SessionCatalogue extends Formation
 				$this->accessibility_handicap = $obj->accessibility_handicap;
 				$this->fk_nature_action_code = $obj->fk_nature_action_code;
 				$this->fk_session = $obj->fk_session;
-				require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+				require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
 				$extrafields = new ExtraFields($this->db);
 				$extralabels = $extrafields->fetch_name_optionals_label($this->table_element, true);
 				if (count($extralabels) > 0) {
@@ -270,6 +267,7 @@ class SessionCatalogue extends Formation
 			$this->db->free($resql);
 
 			return $this->id;
+
 		} else {
 			$this->error = "Error " . $this->db->lasterror();
 			dol_syslog(get_class($this) . "::fetch " . $this->error, LOG_ERR);
@@ -283,8 +281,7 @@ class SessionCatalogue extends Formation
 	 * @param int $id object
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function info($id)
-	{
+	public function info($id) {
 		$sql = "SELECT";
 		$sql .= " c.rowid, c.entity, c.datec, c.tms, c.fk_user_author, c.fk_user_mod ";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_catalogue as c";
@@ -319,8 +316,7 @@ class SessionCatalogue extends Formation
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function update($user, $notrigger = 0)
-	{
+	public function update($user, $notrigger = 0) {
 		global $conf, $langs;
 		$error = 0;
 
@@ -403,16 +399,17 @@ class SessionCatalogue extends Formation
 			}
 		}
 
-		if (! $error && ! $notrigger) {
+		if (! $error && ! $notrigger)
+		{
 			// Call trigger
-			$result=$this->call_trigger('AGEFODD_SESSION_CATALOGUE_UPDATE', $user);
+			$result=$this->call_trigger('AGEFODD_SESSION_CATALOGUE_UPDATE',$user);
 			if ($result < 0) { $error++; }
 			// End call triggers
 		}
 
 		// Commit or rollback
 		if ($error) {
-			foreach ($this->errors as $errmsg) {
+			foreach ( $this->errors as $errmsg ) {
 				dol_syslog(get_class($this) . "::update " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -431,8 +428,7 @@ class SessionCatalogue extends Formation
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int if KO, >0 if OK
 	 */
-	public function remove($id, $notrigger = 0)
-	{
+	public function remove($id, $notrigger = 0) {
 		global $conf, $user;
 
 		$error = 0;
@@ -461,9 +457,10 @@ class SessionCatalogue extends Formation
 			}
 		}
 
-		if (! $error && ! $notrigger) {
+		if (! $error && ! $notrigger)
+		{
 			// Call trigger
-			$result=$this->call_trigger('AGEFODD_SESSION_CATALOGUE_DELETE', $user);
+			$result=$this->call_trigger('AGEFODD_SESSION_CATALOGUE_DELETE',$user);
 			if ($result < 0) { $error++; }
 			// End call triggers
 		}
@@ -483,8 +480,7 @@ class SessionCatalogue extends Formation
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function create_objpeda($user, $notrigger = 0)
-	{
+	public function create_objpeda($user, $notrigger = 0) {
 		global $conf, $langs;
 		$error = 0;
 
@@ -515,6 +511,7 @@ class SessionCatalogue extends Formation
 			$this->errors[] = "Error " . $this->db->lasterror();
 		}
 		if (! $error) {
+
 			if (! $notrigger) {
 				// Uncomment this and change MYOBJECT to your own tag if you
 				// want this action call a trigger.
@@ -530,7 +527,7 @@ class SessionCatalogue extends Formation
 
 		// Commit or rollback
 		if ($error) {
-			foreach ($this->errors as $errmsg) {
+			foreach ( $this->errors as $errmsg ) {
 				dol_syslog(get_class($this) . "::create " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -548,8 +545,7 @@ class SessionCatalogue extends Formation
 	 * @param int $id of object
 	 * @return int >0 if OK, 0 if not found, <0 if KO
 	 */
-	public function fetch_objpeda($id)
-	{
+	public function fetch_objpeda($id) {
 		$sql = "SELECT";
 		$sql .= " o.intitule, o.priorite, o.fk_formation_catalogue";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_catalogue_objectifs_peda";
@@ -583,8 +579,7 @@ class SessionCatalogue extends Formation
 	 * 		@return int  Number of lines added to $this->lines, -1 if KO
 	 * 		@throws Exception
 	 */
-	public function fetch_objpeda_per_session_catalogue($fk_session_catalogue)
-	{
+	public function fetch_objpeda_per_session_catalogue($fk_session_catalogue) {
 
 		$sql = "SELECT";
 		$sql .= " o.rowid, o.intitule, o.priorite, o.fk_session_catalogue, o.tms, o.fk_user_author";
@@ -647,7 +642,9 @@ class SessionCatalogue extends Formation
 			$this->errors[] = "Error " . $this->db->lasterror();
 			$this->db->rollback();
 			return -1;
-		} else $this->db->commit();
+		}
+		else
+			$this->db->commit();
 		return 1;
 	}
 
@@ -658,8 +655,7 @@ class SessionCatalogue extends Formation
 	 * @param int $notrigger triggers after, 1=disable triggers
 	 * @return int <0 if KO, >0 if OK
 	 */
-	public function update_objpeda($user, $notrigger = 0)
-	{
+	public function update_objpeda($user, $notrigger = 0) {
 		global $conf, $langs;
 		$error = 0;
 
@@ -701,7 +697,7 @@ class SessionCatalogue extends Formation
 
 		// Commit or rollback
 		if ($error) {
-			foreach ($this->errors as $errmsg) {
+			foreach ( $this->errors as $errmsg ) {
 				dol_syslog(get_class($this) . "::update " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -719,8 +715,7 @@ class SessionCatalogue extends Formation
 	 * @param int $id to delete
 	 * @return int if KO, >0 if OK
 	 */
-	public function remove_objpeda($id = null)
-	{
+	public function remove_objpeda($id=null) {
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "agefodd_session_catalogue_objectifs_peda";
 		$sql .= " WHERE fk_session_catalogue = " . intval($this->id);
 
@@ -741,8 +736,7 @@ class SessionCatalogue extends Formation
 	 *
 	 * @return void
 	 */
-	public function initAsSpecimen()
-	{
+	public function initAsSpecimen() {
 		$this->id = 0;
 		$this->ref = '';
 		$this->intitule = '';
@@ -761,8 +755,7 @@ class SessionCatalogue extends Formation
 	 *
 	 * @return string translated description
 	 */
-	public function getToolTip()
-	{
+	public function getToolTip() {
 		global $langs;
 
 		$langs->load("admin");
@@ -791,7 +784,7 @@ class SessionCatalogue extends Formation
 		$sql = "SELECT sc.rowid";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_catalogue as sc";
 		$sql .= " WHERE 1=1";
-		$sql .= " AND sc.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
+		$sql .= " AND sc.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
 		$sql .= " AND sc.fk_session =" . intval($fk_session);
 
 		$resql = $this->db->query($sql);
@@ -800,14 +793,21 @@ class SessionCatalogue extends Formation
 			$num = $this->db->num_rows($resql);
 
 			if ($num) {
+
 				$obj = $this->db->fetch_object($resql);
-				if (!empty($obj->rowid)) {
+				if (!empty($obj->rowid))
+				{
 					return $this->fetch($obj->rowid);
 				}
-			} else {
+
+			}
+			else
+			{
 				return 0;
 			}
-		} else {
+		}
+		else
+		{
 			$this->error = $this->db->lasterror();
 			return -1;
 		}
@@ -825,10 +825,9 @@ class SessionCatalogue extends Formation
 	 * 		@param array $array_options_keys extrafields to fetch
 	 * 		@return int  number of fetched lines, <0 if KO
 	 */
-	public function isCloned($sortorder, $sortfield, $limit, $offset, $arch = 0, $filter = array(), $array_options_keys = array())
-	{
+	public function isCloned($sortorder, $sortfield, $limit, $offset, $arch = 0, $filter = array(), $array_options_keys=array()) {
 		if (empty($array_options_keys)) {
-			require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+			require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
 			$extrafields = new ExtraFields($this->db);
 			$extrafields->fetch_name_optionals_label($this->table_element);
 			if (is_array($extrafields->attributes[$this->table_element]['label'])) {
@@ -848,10 +847,10 @@ class SessionCatalogue extends Formation
 		$sql .= " ON ef.fk_object = sc.rowid";
 
 		$sql .= " WHERE 1=1";
-		$sql .= " AND sc.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
+		$sql .= " AND sc.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
 		// Manage filter
 		if (! empty($filter)) {
-			foreach ($filter as $key => $value) {
+			foreach ( $filter as $key => $value ) {
 					$sql.= $value;
 			}
 		}
@@ -890,8 +889,7 @@ class SessionCatalogue extends Formation
 	 * @param int $fromid of object to clone
 	 * @return int id of clone
 	 */
-	public function createFromClone($fromid)
-	{
+	public function createFromClone($fromid) {
 		global $user, $conf;
 
 		$error = 0;
@@ -944,7 +942,8 @@ class SessionCatalogue extends Formation
 			$this->errors[] = $source->error;
 			$error ++;
 		}
-		foreach ($source->lines as $line) {
+		foreach ( $source->lines as $line ) {
+
 			$object->intitule = $line->intitule;
 			$object->priorite = $line->priorite;
 			$object->fk_formation_catalogue = $newid;
@@ -964,7 +963,7 @@ class SessionCatalogue extends Formation
 				$error ++;
 			}
 			$trainer_array = array();
-			foreach ($source->trainers as $trainer) {
+			foreach ( $source->trainers as $trainer ) {
 				$trainer_array[$trainer->id] = $trainer->id;
 			}
 			$object->id = $newid;
@@ -980,7 +979,7 @@ class SessionCatalogue extends Formation
 			$this->db->commit();
 			return $newid;
 		} else {
-			foreach ($this->errors as $errmsg) {
+			foreach ( $this->errors as $errmsg ) {
 				dol_syslog(get_class($this) . "::createFromClone " . $errmsg, LOG_ERR);
 				$this->error .= ($this->error ? ', ' . $errmsg : $errmsg);
 			}
@@ -994,8 +993,7 @@ class SessionCatalogue extends Formation
 	 * @param string $label
 	 * @return string
 	 */
-	public function getNomUrl($label = 'all')
-	{
+	public function getNomUrl($label = 'all') {
 		$link = dol_buildpath('/agefodd/training/card.php', 1);
 		if ($label == 'all') {
 			return '<a href="' . $link . '?id=' . $this->id . '">' . $this->ref . ((! empty($this->ref_interne)) ? ' (' . $this->ref_interne . ') ' : ' ') . $this->intitule . '</a>';
@@ -1010,17 +1008,17 @@ class SessionCatalogue extends Formation
 	 *
 	 * @return int  1 if successful, 0 if not found
 	 */
-	function generatePDAByLink()
-	{
+	function generatePDAByLink(){
 		global $conf;
 		require_once DOL_DOCUMENT_ROOT . '/core/class/link.class.php';
 		$link = new Link($this->db);
 		$links = array();
 		$link->fetchAll($links, $this->element, $this->id);
 
-		if (!empty($links)) {
-			foreach ($links as $link) {
-				if ($link->label=="PRG") {
+		if(!empty($links)){
+			foreach ($links as $link)
+			{
+				if($link->label=="PRG"){
 					$fopen = fopen($link->url, 'r');
 					if ($fopen !== false) {
 						file_put_contents($conf->agefodd->dir_output . '/' . 'fiche_pedago_recueil_' . $this->id . '.pdf', $fopen);
@@ -1031,4 +1029,6 @@ class SessionCatalogue extends Formation
 		}
 		return 0;
 	}
+
 }
+

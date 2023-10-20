@@ -50,7 +50,7 @@ $langs->load('agefodd@agefodd');
 
 llxHeader('', $langs->trans('AgefoddShort'),$conf->global->AGF_HELP_LINK);
 
-print_barre_liste($langs->trans("AgfBilanGlobal"),0,'','', '', '', '', 0);
+print_barre_liste($langs->trans("AgfBilanGlobal"),0,'','', '', '', '', 0, '', 'object_agefod32@agefodd');
 
 print '<table class="noborder">';
 print '<tr>';
@@ -130,7 +130,7 @@ if (! empty($conf->global->AGF_MANAGE_CERTIF)) {
 			}
 
 			print '<tr class="' . $style . '"><td>';
-			if (DOL_VERSION < 6.0) {
+			if (floatval(DOL_VERSION) < 6.0) {
 				print '<a href="' . dol_buildpath('/societe/soc.php', 1) . '?socid=' . $line->customer_id . '">' . $line->customer_name . '</a>';
 			} else {
 				print '<a href="' . dol_buildpath('/societe/card.php', 1) . '?socid=' . $line->customer_id . '">' . $line->customer_name . '</a>';

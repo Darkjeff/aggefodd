@@ -49,6 +49,9 @@ require_once ('../lib/agf_questionnaire.lib.php');
 
 
 $ret = $langs->loadLangs(array("questionnaire@questionnaire", "agfquestionnaire@agefodd"));
+
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 dol_include_once('/user/class/usergroup.class.php');
 dol_include_once('/societe/class/societe.class.php');
 dol_include_once('/contact/class/contact.class.php');
@@ -133,7 +136,13 @@ if (!empty($massaction) && $massaction == 'send' && !empty($arrayofselected))
             $content = prepareMailContent($invuser, $idQuestionnaire);
             include_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
 
-            $mailfile = new CMailFile($subject, $invuser->email, $conf->email_from, $content);
+            if (!empty($conf->global->MAIN_MAIL_ADD_INLINE_IMAGES_IF_DATA)) {
+                $upload_dir_tmp = DOL_DATA_ROOT.'/mail/img';
+                $mailfile = new CMailFile($subject, $invuser->email, $conf->email_from, $content, array(), array(), array(), "", '', 1, -1, '', '', '', '', 'standard', '', $upload_dir_tmp);
+            }
+            else {
+                $mailfile = new CMailFile($subject, $invuser->email, $conf->email_from, $content);
+            }
             if (!$mailfile->sendfile()) {
                 setEventMessages($langs->transnoentities($langs->trans("ErrorFailedToSendMail", $conf->email_from, $invuser->email) . '. ' . $mailfile->error), null, 'errors');
             } else {
@@ -391,6 +400,7 @@ if($objQuestionnaire->fetch($idQuestionnaire) < 1){
 
                     print '<div id="addInvitations-dialog" style="display: none" >';
                     print '<form action="'.$url.'" method="POST" >';
+                    print '<input type="hidden" name="token" value="'.$newToken.'">';
                     print '<input type="hidden" name="action" value="addInvitations" />';
                     print $formSelectDate;
                     print $formToSelectFields;

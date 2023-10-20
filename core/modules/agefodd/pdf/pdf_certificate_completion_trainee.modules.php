@@ -30,15 +30,12 @@ dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire_heures.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
-require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-/**
- * Put here description of your class
- */
-class pdf_certificate_completion_trainee extends ModelePDFAgefodd
-{
+require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+
+class pdf_certificate_completion_trainee extends ModelePDFAgefodd {
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -50,13 +47,20 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 	protected $colorLine;
 	public $TStagiairesSession = array();
 
+	/** @var TCPDF $pdf */
+	public $pdf;
+
+	/** @var Translate $outputlangs */
+	public $outputlangs;
+
+	public $dpi = 150; // 150 points par pouce
+
 
 	/**
 	 * \brief		Constructor
 	 * \param		db		Database handler
 	 */
-	function __construct($db)
-	{
+	function __construct($db) {
 		global $conf, $langs, $mysoc;
 
 		$this->db = $db;
@@ -101,12 +105,11 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 	 * file		Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $session_trainee_id)
-	{
+	function write_file($agf, $outputlangs, $file, $session_trainee_id) {
 		global $user, $langs, $conf, $mysoc;
 
-		if (! is_object($outputlangs))
-			$outputlangs = $langs;
+		if (! is_object($outputlangs)) $this->outputlangs = $outputlangs = $langs;
+		else $this->outputlangs = $outputlangs;
 
 		if (! is_object($agf)) {
 			$id = $agf;
@@ -126,7 +129,7 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 		}
 
 		if (file_exists($dir)) {
-			$pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
+			$pdf = $this->pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
 
 			$pdf->Open();
 			$pagenb = 0;
@@ -146,9 +149,11 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 
 			$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
 			$pdf->SetAutoPageBreak(1, 0);
+			$this->_resetColorsAndStyle();
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
+			{
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $pdf->importPage(1);
 			}
@@ -192,13 +197,13 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 
 			$newY = $this->marge_haute + 40;
 			$pdf->SetXY($this->marge_gauche + 1, $newY);
-			$pdf->SetTextColor($this->colorhead [0], $this->colorhead [1], $this->colorhead [2]);
 			$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', 20);
+			$this->setTextColor('head');
 			$pdf->Cell(0, 0, $outputlangs->transnoentities('AgfCompletionCertificate'), 0, 0, 'C', 0);
+			$this->setTextColor('text');
 
 			$newY = $pdf->GetY()+20;
 			$pdf->SetXY($this->marge_gauche, $newY);
-			$pdf->SetTextColor($this->colortext [0], $this->colortext [1], $this->colortext [2]);
 			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
 
 			//Je soussigné
@@ -221,8 +226,10 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 			$pdf->SetXY($this->marge_gauche, $newY+35);
 			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
 
-			foreach ($stagiaires->lines as $trainee) {
-				if ($trainee->stagerowid == $session_trainee_id) {
+			foreach ($stagiaires->lines as $trainee)
+			{
+				if ($trainee->stagerowid == $session_trainee_id)
+				{
 					$civilite = $trainee->civilitel;
 					$nom = $trainee->nom;
 					$prenom = $trainee->prenom;
@@ -254,15 +261,19 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 			$sql = 'SELECT code, label FROM llx_c_formation_nature_action WHERE active = 1';
 			$resql = $this->db->query($sql);
 
-			if ($resql) {
-				while ($obj = $this->db->fetch_object($resql)) {
-					if ($agf->fk_nature_action_code == $obj->code)
+			if($resql)
+			{
+				while($obj = $this->db->fetch_object($resql))
+				{
+					if($agf->fk_nature_action_code == $obj->code)
 						$this->str6 = "[x] ";
-					else $this->str6 = "[  ] ";
+					else
+						$this->str6 = "[  ] ";
 
-					if ($obj->code == 'AGF_NAT_ACT_AF')
+					if($obj->code == 'AGF_NAT_ACT_AF')
 						$this->str6 .= $outputlangs->transnoentities('AgfFormActionStar');
-					else $this->str6.= $obj->label;
+					else
+						$this->str6.= $obj->label;
 					$pdf->MultiCell($this->page_largeur-$this->marge_gauche-$this->marge_droite, 4, $this->str6, 0, 'L', 0);
 				}
 			}
@@ -271,16 +282,21 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 			$this->str6 = $outputlangs->transnoentities('AgfDateDelta') ." ". $agf->libSessionDate().' ';
 
 			//nombre d’heures réalisées: Si la conf est activée on prend les valeurs saisies manuellement, si non on prend la durée totale de la session
-			if (!empty($conf->global->AGF_USE_REAL_HOURS)) {
-				foreach ($stagiaires->lines as $trainee) {
-					if ($trainee->stagerowid == $session_trainee_id) {
+			if(!empty($conf->global->AGF_USE_REAL_HOURS))
+			{
+				foreach ($stagiaires->lines as $trainee)
+				{
+					if ($trainee->stagerowid == $session_trainee_id)
+					{
 						$totalHeures = $heures->heures_stagiaire($agf->id, $trainee->id);
 					}
 				}
 
 				$this->str6.= $outputlangs->transnoentities('AgfSessionDuration') ." ". $totalHeures . $outputlangs->transnoentities('AgfEffectHours');
 				$pdf->MultiCell($this->page_largeur-$this->marge_gauche-$this->marge_droite, 4, $this->str6, 0, 'L', 0);
-			} else {
+			}
+			else
+			{
 				$this->str6 .= $outputlangs->transnoentities('AgfSessionDuration') ." ". $agf->duree_session. $outputlangs->transnoentities('AgfEffectHours');
 				$pdf->MultiCell($this->page_largeur-$this->marge_gauche-$this->marge_droite, 4, $this->str6, 0, 'L', 0);
 			}
@@ -339,10 +355,11 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 					$TRealSizeLogo=dol_getImageSize($img_tampon);
 					$TSize = self::getGoodImageDimensionsForThirdpartyLogo($TRealSizeLogo['width'], $TRealSizeLogo['height']);
 
-					if (is_readable($img_tampon)) {
+					if (is_readable($img_tampon))
+					{
 						$pdf->Image($img_tampon, $this->page_largeur/2 +10, '', $TSize['width'], $TSize['height'], '', '', '', false, 300, ''); // width=0 (auto)
-						//                      $pdf->Image($img_tampon, $this->page_largeur - $this->marge_gauche - $this->marge_droite - 55, $newY, 50);
-						//var_dump($this->page_largeur);exit;
+//						$pdf->Image($img_tampon, $this->page_largeur - $this->marge_gauche - $this->marge_droite - 55, $newY, 50);
+//var_dump($this->page_largeur);exit;
 					}
 					$tampon_exitst = 22;
 				}
@@ -381,14 +398,15 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager)) {
+			if (! is_object($hookmanager))
+			{
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
 
 
 			return 1; // Pas d'erreur
@@ -407,8 +425,7 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs		Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
-	{
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -417,61 +434,94 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 
 		pdf_pagehead($pdf, $outputlangs, $pdf->page_hauteur);
 
-		$pdf->SetTextColor($this->colorhead [0], $this->colorhead [1], $this->colorhead [2]);
+		$posy=$this->marge_haute;
+		$posx=$this->marge_gauche;
 
-		$posy=$this->marge_haute-5;
-		$posx=$this->page_largeur-$this->marge_droite-185;
+		$logo = $conf->mycompany->dir_output.'/logos/'.$this->emetteur->logo;
 
-		$logo=dol_buildpath('/custom/agefodd/img/logo_ministere_travail.png');
+		$this->showLogo($posx, $posy, $logo);
 
-		$width_logo = pdf_getWidthForLogo($logo);
-
-		if (is_readable($logo)) {
-			$height= 38;
-			$width = 40;
-			$maxwidth=130;
-			dol_include_once('/core/lib/images.lib.php');
-			$TSizes = dol_getImageSize($logo);
-			if ($width > $maxwidth) $height = $height * $maxwidth / $width;
-			$pdf->Image($logo, $posx, $posy, $width, $height);
-		}
-
-		if ($showaddress) {
+		if ($showaddress)
+		{
 			// Sender properties
 			// Show sender
 			$posy=$this->marge_haute;
 			$posx=$this->marge_gauche;
 
 			$hautcadre=30;
-			$pdf->SetXY($posx, $posy);
-			$pdf->SetFillColor(255, 255, 255);
+			$pdf->SetXY($posx,$posy);
+			$pdf->SetFillColor(255,255,255);
 			$pdf->MultiCell(70, $hautcadre, "", 0, 'R', 1);
 
 			// Show sender name
-			$pdf->SetXY($posx, $posy);
-			$pdf->SetFont('', 'B', $default_font_size);
+			$pdf->SetXY($posx,$posy);
+			$pdf->SetFont('','B', $default_font_size);
 			$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->emetteur->name), 0, 'R');
 			$posy=$pdf->GetY();
 
 			 //Show sender information
-			$pdf->SetXY($posx, $posy);
-			$pdf->SetFont('', '', $default_font_size - 1);
+			$pdf->SetXY($posx,$posy);
+			$pdf->SetFont('','', $default_font_size - 1);
 			$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->emetteur->address), 0, 'R');
 			$posy=$pdf->GetY();
-			$pdf->SetXY($posx, $posy);
-			$pdf->SetFont('', '', $default_font_size - 1);
+			$pdf->SetXY($posx,$posy);
+			$pdf->SetFont('','', $default_font_size - 1);
 			$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->emetteur->zip.' '.$this->emetteur->town), 0, 'R');
 			$posy=$pdf->GetY();
-			$pdf->SetXY($posx, $posy);
-			$pdf->SetFont('', '', $default_font_size - 1);
+			$pdf->SetXY($posx,$posy);
+			$pdf->SetFont('','', $default_font_size - 1);
 			$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->emetteur->phone), 0, 'R');
 			$posy=$pdf->GetY();
-			$pdf->SetXY($posx, $posy);
-			$pdf->SetFont('', '', $default_font_size - 1);
+			$pdf->SetXY($posx,$posy);
+			$pdf->SetFont('','', $default_font_size - 1);
 			$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->emetteur->email), 0, 'R');
 			$posy=$pdf->GetY();
 
 			printRefIntForma($this->db, $outputlangs, $object, $default_font_size - 1, $pdf, $posx, $posy, 'R');
+		}
+	}
+
+	/**
+	 * @param TCPDF $pdf
+	 * @param string $style
+	 * @return void
+	 */
+	public function setTextColor($style) {
+		$prop = 'color' . $style;
+		$color = isset($this->{$prop}) ? $this->{$prop} : $this->colortext;
+		$this->pdf->SetTextColor($color[0], $color[1], $color[2]);
+	}
+
+	/**
+	 * Reset text color, draw color, line style and font.
+	 */
+	public function _resetColorsAndStyle()
+	{
+		$this->pdf->SetFont(pdf_getPDFFont($this->outputlangs));
+		$this->setTextColor('text');
+		$this->pdf->SetDrawColor($this->colorLine[0], $this->colorLine[1], $this->colorLine[2]);
+		$this->pdf->SetLineStyle(array(
+			'width' => 0.05,
+		));
+	}
+
+	public function showLogo($posx, $posy, $logo, $maxwidth = 90, $maxheight = 40)
+	{
+		if (is_readable($logo))
+		{
+			dol_include_once('/core/lib/images.lib.php');
+			$TSizes = dol_getImageSize($logo);
+			$realwidth = $TSizes['width'];
+			$realheight = $TSizes['height'];
+
+			$maxwidth = min($maxwidth, $realwidth / ($this->dpi / 25.4));
+			$maxheight = min($maxheight, $realheight / ($this->dpi / 25.4));
+
+			if ($realwidth > $realheight) {
+				$this->pdf->Image($logo, $posx, $posy, $maxwidth, 0, '', '', '', true);
+			} else {
+				$this->pdf->Image($logo, $posx, $posy, 0, $maxheight, '', '', '', true);
+			}
 		}
 	}
 
@@ -481,12 +531,12 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd
 	 * @param	int	$h	logo height
 	 * @return	array		array result
 	 */
-	static function getGoodImageDimensionsForThirdpartyLogo($w, $h)
-	{
+	static function getGoodImageDimensionsForThirdpartyLogo($w, $h) {
 
-		if ($w <= 80 && $h <= 30) return array('width'=>round($w), 'height'=>round($h));
+		if($w <= 80 && $h <= 30) return array('width'=>round($w), 'height'=>round($h));
 		else {
 			return self::getGoodImageDimensionsForThirdpartyLogo($w * 0.9, $h * 0.9);
 		}
+
 	}
 }

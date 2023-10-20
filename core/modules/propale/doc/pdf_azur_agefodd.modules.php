@@ -35,6 +35,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
 dol_include_once('/agefodd/lib/agefodd.lib.php');
+dol_include_once('/agefodd/lib/retroCompatibility.lib.php');
 
 /**
  *	Class to generate PDF proposal Azur

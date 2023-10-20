@@ -74,6 +74,27 @@ function training_prepare_head($object)
 	$hselected = $h;
 	$h++;
 
+	//Trainee List
+	$head [$h] [0] = dol_buildpath('/agefodd/trainee/list.php', 1) . '?trainee_view=1&search_training_ref=' . urlencode($object->ref_obj);
+	$head [$h] [1] = $langs->trans("AgfParticipant");
+	$sess = new Agsession($db);
+	$TbadgeNbSess = array();
+	$filt['s.fk_formation_catalogue'] = $object->id;
+	$badgeNbSess = $sess->fetch_all('', '', 0, 0, $filt);
+	$totalTrainee = 0;
+	if ($badgeNbSess > 0) {
+		foreach ($sess->lines as $key => $val) {
+			$TbadgeNbSess[$key['nb_stagiaire']] = $val->nb_stagiaire;
+			$nbSessTrainee = intval($TbadgeNbSess[$key['nb_stagiaire']]);
+			$totalTrainee += $nbSessTrainee;
+		}
+		$TbadgeNbSess = strval($totalTrainee);
+	}
+	if (!empty($badgeNbSess))
+		$head [$h] [1] .= " <span class='badge'>" . $TbadgeNbSess . "</span>";
+	$head [$h] [2] = 'trainee';
+	$h++;
+
 	$head [$h] [0] = dol_buildpath('/agefodd/training/training_adm.php', 1) . '?id=' . $object->id;
 	$head [$h] [1] = $langs->trans("AgftrainingAdmTask");
 	$head [$h] [2] = 'trainingadmtask';
@@ -178,28 +199,54 @@ function session_prepare_head($object, $showconv = 0)
 	$head [$h] [2] = 'calendar';
 	$h++;
 
-	if (!$user->rights->agefodd->session->trainer) {
-		$head [$h] [0] = dol_buildpath('/agefodd/session/trainer.php', 1) . '?action=edit&id=' . $id;
-		$head [$h] [1] = $langs->trans("AgfFormateur");
+//    if (!$user->rights->agefodd->session->trainer) {
+//        $head [$h] [0] = dol_buildpath('/agefodd/session/trainer.php', 1) . '?action=edit&id=' . $id;
+//        $head [$h] [1] = $langs->trans("AgfFormateur");
+//
+//        $formateurs = new Agefodd_session_formateur($db);
+//        $badgenbform = $formateurs->fetch_formateur_per_session($id);
+//        if (!empty($badgenbform))
+//            $head [$h] [1] .= " <span class='badge'>" . $badgenbform . "</span>";
+//        $head [$h] [2] = 'trainers';
+//        $h++;
+//    }
+//
+//    $head [$h] [0] = dol_buildpath('/agefodd/session/subscribers.php', 1) . '?action=edit&id=' . $id;
+//    $head [$h] [1] = $langs->trans("AgfParticipant");
+//
+//    $stagiaires = new Agefodd_session_stagiaire($db);
+//    $badgenbtrainee = $stagiaires->fetch_stagiaire_per_session($id);
+//    if (!empty($badgenbtrainee))
+//        $head [$h] [1] .= " <span class='badge'>" . $badgenbtrainee . "</span>";
+//
+//    $head [$h] [2] = 'subscribers';
+//    $h++;
 
+
+	if (empty($user->rights->agefodd->session->trainer)) {
 		$formateurs = new Agefodd_session_formateur($db);
 		$badgenbform = $formateurs->fetch_formateur_per_session($id);
-		if (!empty($badgenbform))
-			$head [$h] [1] .= " <span class='badge'>" . $badgenbform . "</span>";
-		$head [$h] [2] = 'trainers';
-		$h++;
 	}
-
-	$head [$h] [0] = dol_buildpath('/agefodd/session/subscribers.php', 1) . '?action=edit&id=' . $id;
-	$head [$h] [1] = $langs->trans("AgfParticipant");
+	$head [$h] [0] = dol_buildpath('/agefodd/session/person.php', 1) . '?action=edit&id=' . $id;
+	$head [$h] [1] = $langs->trans("AgfParticipantsTab");
 
 	$stagiaires = new Agefodd_session_stagiaire($db);
 	$badgenbtrainee = $stagiaires->fetch_stagiaire_per_session($id);
-	if (!empty($badgenbtrainee))
-		$head [$h] [1] .= " <span class='badge'>" . $badgenbtrainee . "</span>";
+	$badgenbtotalperson = $badgenbtrainee;
+	if (!empty($badgenbform)) $badgenbtotalperson += $badgenbform;
 
-	$head [$h] [2] = 'subscribers';
+	if (!empty($badgenbtotalperson))
+		$head [$h] [1] .= " <span class='badge'>" . $badgenbtotalperson . "</span>";
+
+	$head [$h] [2] = 'person';
 	$h++;
+
+    if(strpos($_SERVER['PHP_SELF'], 'signature_page.php') !== false) {
+        $head [$h] [0] = dol_buildpath('/agefodd/session/signature_page.php', 1).'?id='.$id.'&personid='.GETPOST('personid', 'int').'&person_type='.GETPOST('person_type', 'string');
+        $head [$h] [1] = $langs->trans('AgfPDFConv18');
+        $head [$h] [2] = 'signatures';
+        $h++;
+    }
 
 	if (!empty($conf->fullcalendarscheduler->enabled)) {
 		$head [$h] [0] = dol_buildpath('/agefodd/session/scheduler.php', 1) . '?id=' . $id;
@@ -208,12 +255,14 @@ function session_prepare_head($object, $showconv = 0)
 		$h++;
 	}
 
-	$head [$h] [0] = dol_buildpath('/agefodd/session/planningpertrainee.php', 1) . '?id=' . $id;
-	$head [$h] [1] = $langs->trans("AgfPlanningPerTrainee");
-	$head [$h] [2] = 'planningpertrainee';
-	$h++;
+	if (!empty($conf->global->AGF_DISPLAY_PLANNING_TRAINEE)) {
+		$head [$h] [0] = dol_buildpath('/agefodd/session/planningpertrainee.php', 1) . '?id=' . $id;
+		$head [$h] [1] = $langs->trans("AgfPlanningPerTrainee");
+		$head [$h] [2] = 'planningpertrainee';
+		$h++;
+	}
 
-	if ($conf->global->AGF_MANAGE_CERTIF) {
+	if (!empty($conf->global->AGF_MANAGE_CERTIF)) {
 		$head [$h] [0] = dol_buildpath('/agefodd/session/subscribers_certif.php', 1) . '?id=' . $id;
 		$head [$h] [1] = $langs->trans("AgfCertificate");
 
@@ -226,10 +275,10 @@ function session_prepare_head($object, $showconv = 0)
 		$h++;
 	}
 
-	if (!$user->rights->agefodd->session->trainer) {
-		$head [$h] [0] = dol_buildpath('/agefodd/session/administrative.php', 1) . '?id=' . $id;
-		$head [$h] [1] = $langs->trans("AgfAdmSuivi");
-		$head [$h] [2] = 'administrative';
+    if (empty($user->rights->agefodd->session->trainer)) {
+        $head [$h] [0] = dol_buildpath('/agefodd/session/administrative.php', 1) . '?id=' . $id;
+        $head [$h] [1] = $langs->trans("AgfAdmSuivi");
+        $head [$h] [2] = 'administrative';
 		$h++;
 	}
 
@@ -244,23 +293,25 @@ function session_prepare_head($object, $showconv = 0)
 	$head [$h] [2] = 'document';
 	$h++;
 
-	if (!$user->rights->agefodd->session->trainer) {
+	if (empty($user->rights->agefodd->session->trainer)) {
 		$head [$h] [0] = dol_buildpath('/agefodd/session/document_trainee.php', 1) . '?id=' . $id;
 		$head [$h] [1] = $langs->trans("AgfLinkedDocumentsByTrainee");
 		$head [$h] [2] = 'document_trainee';
 		$h++;
 	}
 
-	if (!empty($conf->global->AGF_ADVANCE_COST_MANAGEMENT) && (!$user->rights->agefodd->session->trainer)) {
-		$head [$h] [0] = dol_buildpath('/agefodd/session/cost.php', 1) . '?id=' . $id;
-		$head [$h] [1] = $langs->trans("AgfCostManagement");
-		$head [$h] [2] = 'cost';
-		$h++;
-	}
+    if (!empty($conf->global->AGF_ADVANCE_COST_MANAGEMENT) && (empty($user->rights->agefodd->session->trainer))) {
 
-	if (!$user->rights->agefodd->session->trainer) {
+        $head [$h] [0] = dol_buildpath('/agefodd/session/cost.php', 1) . '?id=' . $id;
+        $head [$h] [1] = $langs->trans("AgfCostManagement");
+        $head [$h] [2] = 'cost';
+        $h++;
+    }
+        complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_session');
+
+	if (empty($user->rights->agefodd->session->trainer)) {
 		$head [$h] [0] = dol_buildpath('/agefodd/session/history.php', 1) . '?id=' . $id;
-		$head[$h][1] .= $langs->trans("Events");
+		$head[$h][1] = $langs->trans("Events");
 		if (!empty($conf->agenda->enabled) && (!empty($user->rights->agenda->myactions->read) || !empty($user->rights->agenda->allactions->read))) {
 			$head[$h][1] .= '/';
 			$head[$h][1] .= $langs->trans("Agenda");
@@ -298,7 +349,7 @@ function session_prepare_head($object, $showconv = 0)
 		$h++;
 	}
 
-	complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_session');
+	complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_session', 'remove');
 
 	return $head;
 }
@@ -363,6 +414,8 @@ function trainee_prepare_head($object, $showcursus = 0)
 	$head [$h] [2] = 'soc_history';
 	$h++;
 
+    complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_trainee');
+
 	$head [$h] [0] = dol_buildpath('/agefodd/trainee/document_files.php', 1) . '?id=' . $object->id;
 	$head [$h] [1] = $langs->trans("Documents");
 	$badgeFiles = countFiles($object);
@@ -383,7 +436,7 @@ function trainee_prepare_head($object, $showcursus = 0)
 		$h++;
 	}
 
-	complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_trainee');
+    complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_trainee', 'remove');
 
 	return $head;
 }
@@ -482,10 +535,14 @@ function site_prepare_head($object)
 	$head [$h] [2] = 'card';
 	$h++;
 
-	$head [$h] [0] = dol_buildpath('/agefodd/site/reg_int.php', 1) . '?id=' . $object->id;
-	$head [$h] [1] = $langs->trans("AgfRegInt");
-	$head [$h] [2] = 'reg_int_tab';
-	$h++;
+	// hide "rules of procedure" tab but can be display with the hidden conf
+	if (!empty($conf->global->AGF_DISPLAY_REG_INT_TAB))
+	{
+		$head [$h] [0] = dol_buildpath('/agefodd/site/reg_int.php', 1) . '?id=' . $object->id;
+		$head [$h] [1] = $langs->trans("AgfRegInt");
+		$head [$h] [2] = 'reg_int_tab';
+		$h++;
+	}
 
 	$head [$h] [0] = dol_buildpath('/agefodd/site/document_files.php', 1) . '?id=' . $object->id;
 	$head [$h] [1] = $langs->trans("Documents");
@@ -565,7 +622,7 @@ function agefodd_admin_prepare_head()
 	$head = array();
 
 	$head [$h] [0] = dol_buildpath("/agefodd/admin/admin_agefodd.php", 1);
-	$head [$h] [1] = '<i class="fa fa-graduation-cap" aria-hidden="true"></i> ' . $langs->trans("AgfSettings");
+	$head [$h] [1] = '<i class="fa fa-graduation-cap" aria-hidden="true"></i> ' . $langs->trans("Settings");
 	$head [$h] [2] = 'settings';
 	$h++;
 
@@ -634,6 +691,7 @@ function agefodd_admin_prepare_head()
 	$head [$h] [2] = 'about';
 	$h++;
 
+    $object = new stdClass;
 	complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd');
 
 	return $head;
@@ -749,8 +807,7 @@ function agf_report_revenue_prepare_head()
  *
  * @return array Array of head
  */
-function agf_report_revenue_ventilated_prepare_head()
-{
+function agf_report_revenue_ventilated_prepare_head() {
 	global $langs, $conf, $user;
 
 	$h = 0;
@@ -772,9 +829,9 @@ function agf_report_revenue_ventilated_prepare_head()
 	// Entries must be declared in modules descriptor with line
 	// $this->tabs = array('entity:+tabname:Title:@mymodule:/mymodule/mypage.php?id=__ID__');   to add new tab
 	// $this->tabs = array('entity:-tabname);   												to remove a tab
-	complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_report_revenue_ventilated');
+	complete_head_from_modules($conf,$langs,$object,$head,$h,'agefodd_report_revenue_ventilated');
 
-	complete_head_from_modules($conf, $langs, $object, $head, $h, 'agefodd_report_revenue_ventilated', 'remove');
+	complete_head_from_modules($conf,$langs,$object,$head,$h,'agefodd_report_revenue_ventilated','remove');
 
 	return $head;
 }
@@ -1048,6 +1105,7 @@ function ebi_get_adm_lastFinishLevel($sessid)
 		$num = $db->num_rows($result);
 		if (!empty($num)) {
 			while ($obj = $db->fetch_object($result)) {
+
 				$sqlinner = "SELECT count(*) as cnt";
 				$sqlinner .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_adminsitu as s";
 				$sqlinner .= ' WHERE s.level_rank <>0 ';
@@ -1295,7 +1353,8 @@ function ebi_liste_a_puce($text, $form = false)
 					$str .= '<ul>';
 				$str .= '<li>' . preg_replace('/^### /', '', $row) . '</li>' . "\n";
 				$level = 3;
-			} else $str .= '   ' . $row . '<br />' . "\n";
+			} else
+				$str .= '   ' . $row . '<br />' . "\n";
 		} else {
 			if (preg_match('/^\!# /', $row))
 				$str .= preg_replace('/^\!# /', '', $row) . "\n";
@@ -1305,7 +1364,8 @@ function ebi_liste_a_puce($text, $form = false)
 				$str .= '   ' . '-' . preg_replace('/^##/', '', $row) . "\n";
 			elseif (preg_match('/^### /', $row))
 				$str .= '   ' . '  ' . chr(155) . ' ' . preg_replace('/^###/', '', $row) . "\n";
-			else $str .= '   ' . $row . "\n";
+			else
+				$str .= '   ' . $row . "\n";
 		}
 	}
 	return $str;
@@ -1335,6 +1395,7 @@ function ebi_get_adm_get_next_indice_action($id)
 		if (!empty($obj->nb_action)) {
 			return intval(intval($obj->nb_action) + 1);
 		} else {
+
 			$sql = "SELECT s.indice as parentindice FROM " . MAIN_DB_PREFIX . "agefodd_session_admlevel as s";
 			$sql .= " WHERE rowid = " . $id;
 
@@ -1346,11 +1407,14 @@ function ebi_get_adm_get_next_indice_action($id)
 				$parentIndice = $obj->parentindice;
 				return intval(intval($parentIndice) + 1);
 			} else {
+
 				$error = "Error " . $db->lasterror();
 				return -1;
 			}
+
 		}
 	} else {
+
 		$error = "Error " . $db->lasterror();
 		return -1;
 	}
@@ -1392,11 +1456,13 @@ function ebi_get_adm_training_get_next_indice_action($id)
 				$db->free($result);
 				return intval(intval($obj->nb_action) + 1);
 			} else {
+
 				$error = "Error " . $db->lasterror();
 				return -1;
 			}
 		}
 	} else {
+
 		$error = "Error " . $db->lasterror();
 		return -1;
 	}
@@ -1441,11 +1507,13 @@ function ebi_get_next_indice_action($id, $sessionid)
 				$db->free($result);
 				return intval(intval($obj->nb_action) + 1);
 			} else {
+
 				$error = "Error " . $db->lasterror();
 				return -1;
 			}
 		}
 	} else {
+
 		$error = "Error " . $db->lasterror();
 		return -1;
 	}
@@ -1516,7 +1584,7 @@ function pdf_agfpagefoot(&$pdf, $outputlangs, $paramfreetext, $fromcompany, $mar
 			'__FROM_EMAIL__' => $fromcompany->email,
 			'__TOTAL_TTC__'  => $object->total_ttc,
 			'__TOTAL_HT__'   => $object->total_ht,
-			'__TOTAL_VAT__'  => $object->total_vat
+			'__TOTAL_VAT__'  => $object->total_vat,
 		);
 		complete_substitutions_array($substitutionarray, $outputlangs, $object);
 		$newfreetext = make_substitutions($conf->global->$paramfreetext, $substitutionarray);
@@ -1602,7 +1670,7 @@ function pdf_agfpagefoot(&$pdf, $outputlangs, $paramfreetext, $fromcompany, $mar
 
 	// Prof Id 3
 	if ($fromcompany->tva_intra != '') {
-		$line4 .= ($line4 ? " - " : "") . $outputlangs->transnoentities("VATIntraShort") . ": " . $outputlangs->convToOutputCharset($fromcompany->tva_intra);
+		$line3 .= ($line3 ? " - " : "") . $outputlangs->transnoentities("VATIntraShort") . ": " . $outputlangs->convToOutputCharset($fromcompany->tva_intra);
 	}
 
 	$pdf->SetFont('', '', 7);
@@ -1610,7 +1678,8 @@ function pdf_agfpagefoot(&$pdf, $outputlangs, $paramfreetext, $fromcompany, $mar
 
 	// The start of the bottom of this page footer is positioned according to # of lines
 	$freetextheight = 0;
-	if ($line) {    // Free text
+	if ($line)    // Free text
+	{
 		//$line="eee<br>\nfd<strong>sf</strong>sdf<br>\nghfghg<br>";
 		if (empty($conf->global->PDF_ALLOW_HTML_FOR_FREE_TEXT)) {
 			$width = 20000;
@@ -1629,9 +1698,11 @@ function pdf_agfpagefoot(&$pdf, $outputlangs, $paramfreetext, $fromcompany, $mar
 	$marginwithfooter = $marge_basse + $freetextheight + (!empty($line1) ? 3 : 0) + (!empty($line2) ? 3 : 0) + (!empty($line3) ? 3 : 0) + (!empty($line4) ? 3 : 0);
 	$posy = $marginwithfooter + 0;
 
-	if ($line) {    // Free text
+	if ($line)    // Free text
+	{
 		$pdf->SetXY($dims['lm'], -$posy);
-		if (empty($conf->global->PDF_ALLOW_HTML_FOR_FREE_TEXT)) {   // by default
+		if (empty($conf->global->PDF_ALLOW_HTML_FOR_FREE_TEXT))   // by default
+		{
 			$pdf->MultiCell(0, 3, $line, 0, $align, 0);
 		} else {
 			$pdf->writeHTMLCell($pdf->page_largeur - $pdf->margin_left - $pdf->margin_right, $freetextheight, $dims['lm'], $dims['hk'] - $marginwithfooter, dol_htmlentitiesbr($line, 1, 'UTF-8', 0));
@@ -1651,7 +1722,7 @@ function pdf_agfpagefoot(&$pdf, $outputlangs, $paramfreetext, $fromcompany, $mar
 	}
 
 	if (!empty($line2)) {
-		$pdf->SetFont('', 'I', 5.5);
+	    $pdf->SetFont('', 'I', 5.5);
 		$pdf->SetXY($dims['lm'] - 6, -$posy);
 		$pdf->MultiCell($dims['wk'] - $dims['rm'], 2, $line2, 0, 'C', 0);
 		$posy -= 3;
@@ -1832,13 +1903,13 @@ function printRefIntForma(&$db, $outputlangs, &$object, $font_size, &$pdf, $x, $
 {
 	global $conf;
 
-	if ($conf->global->AGF_PRINT_INTERNAL_REF_ON_PDF && is_object($object)) {
+	if (!empty($conf->global->AGF_PRINT_INTERNAL_REF_ON_PDF) && is_object($object)) {
 		$forma_ref_int = null;
 		$className = get_class($object);
 
 		if ($className == "Agefodd")
 			$forma_ref_int = $object->ref_interne;
-		elseif ($className == "Agsession") {    // $object est une session
+		else if ($className == "Agsession") {    // $object est une session
 			$agf = new Formation($db);
 			$agf->fetch($object->fk_formation_catalogue);
 			$forma_ref_int = $agf->ref_interne;
@@ -1852,7 +1923,7 @@ function printRefIntForma(&$db, $outputlangs, &$object, $font_size, &$pdf, $x, $
 		if (!empty($forma_ref_int)) {
 			$pdf->SetXY($x, $y);
 			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $font_size);
-			$pdf->MultiCell(70, 4, $outputlangs->transnoentities('AgfRefInterne') . ' : ' . $outputlangs->convToOutputCharset($forma_ref_int), 0, $align);
+			$pdf->MultiCell(0, 4, $outputlangs->transnoentities('AgfRefInterne') . ' : ' . $outputlangs->convToOutputCharset($forma_ref_int), 0, $align);
 		}
 	}
 }
@@ -1861,7 +1932,7 @@ function printSessionFieldsWithCustomOrder()
 {
 	global $conf;
 
-	$customOrder = $conf->global->AGF_CUSTOM_ORDER;
+	$customOrder = !empty($conf->global->AGF_CUSTOM_ORDER) ? $conf->global->AGF_CUSTOM_ORDER : '';
 
 	if (!empty($customOrder)) {
 		$TClassName = explode(',', $customOrder);
@@ -1876,33 +1947,33 @@ function printSessionFieldsWithCustomOrder()
 			?>
 			<script type="text/javascript">
 
-				$(function () {
-					// Correspond aux premières lignes à afficher sur la fiche d'une session de formation
-					var agf_TClass = new Array(<?php print $order ?>); // "agefodd_agsession_extras_"+codeExtrafield, "order_intitule", "order_ref", "order_intituleCusto"
+                $(function () {
+                    // Correspond aux premières lignes à afficher sur la fiche d'une session de formation
+                    var agf_TClass = new Array(<?php print $order ?>); // "agefodd_agsession_extras_"+codeExtrafield, "order_intitule", "order_ref", "order_intituleCusto"
 
-					/**
-					 * @param elem (HTMLElement)
-					 * @return int  index of elem’s class in agf_TClass;
-					 *              - if elem has more than one class, return the smallest index of those found in agf_TClass
-					 *              - if elem has no class in agf_TClass, return agf_TClass.length
-					 */
-					let getOrderIndex = function (elem) {
-						// index = agf_TClass.indexOf(elem.className) would be ok if we were certain that <tr> have only one class
-						let index = agf_TClass.findIndex((className) => elem.classList.contains(className));
-						return (index === -1) ? agf_TClass.length : index;
-					};
+                    /**
+                     * @param elem (HTMLElement)
+                     * @return int  index of elem’s class in agf_TClass;
+                     *              - if elem has more than one class, return the smallest index of those found in agf_TClass
+                     *              - if elem has no class in agf_TClass, return agf_TClass.length
+                     */
+                    let getOrderIndex = function (elem) {
+                        // index = agf_TClass.indexOf(elem.className) would be ok if we were certain that <tr> have only one class
+                        let index = agf_TClass.findIndex((className) => elem.classList.contains(className));
+                        return (index === -1) ? agf_TClass.length : index;
+                    };
 
-					// le '>' est important pour éviter d’avoir les <tr> qui appartiennent à des tableaux imbriqués
-					let Tligne = Array.from(document.querySelectorAll('#session_card > tbody > tr'));
-					// trie les <tr> en fonction de l’ordre de leur(s) classe(s) dans agf_TClass
-					Tligne.sort((elemA, elemB) => getOrderIndex(elemA) - getOrderIndex(elemB));
-					// retire les <tr> de leur parent et les y rajoute dans l’ordre
-					let session_card_tbody = document.querySelector('#session_card > tbody');
-					Tligne.forEach((tr) => {
-						session_card_tbody.removeChild(tr);
-						session_card_tbody.appendChild(tr);
-					});
-				});
+                    // le '>' est important pour éviter d’avoir les <tr> qui appartiennent à des tableaux imbriqués
+                    let Tligne = Array.from(document.querySelectorAll('#session_card > tbody > tr'));
+                    // trie les <tr> en fonction de l’ordre de leur(s) classe(s) dans agf_TClass
+                    Tligne.sort((elemA, elemB) => getOrderIndex(elemA) - getOrderIndex(elemB));
+                    // retire les <tr> de leur parent et les y rajoute dans l’ordre
+                    let session_card_tbody = document.querySelector('#session_card > tbody');
+                    Tligne.forEach((tr) => {
+                        session_card_tbody.removeChild(tr);
+                        session_card_tbody.appendChild(tr);
+                    });
+                });
 
 			</script>
 			<?php
@@ -1966,7 +2037,8 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 					if ((!file_exists($fileimage) || (filemtime($fileimage) < filemtime($file)))
 						&& (!file_exists($fileimagebis) || (filemtime($fileimagebis) < filemtime($file)))
 					) {
-						if (empty($conf->global->MAIN_DISABLE_PDF_THUMBS)) {        // If you experience trouble with pdf thumb generation and imagick, you can disable here.
+						if (empty($conf->global->MAIN_DISABLE_PDF_THUMBS))        // If you experience trouble with pdf thumb generation and imagick, you can disable here.
+						{
 							$ret = dol_convert_file($file, 'png', $fileimage);
 							if ($ret < 0)
 								$error++;
@@ -1989,7 +2061,7 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 						$phototoshow .= '</div></div>';
 					}
 				}
-			} elseif (!$phototoshow) {
+			} else if (!$phototoshow) {
 				$phototoshow = $form->showphoto($modulepart, $object, 0, 0, 0, 'photoref', 'small', 1, 0, $maxvisiblephotos);
 			}
 
@@ -1999,6 +2071,7 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 				$contact = new Contact($db);
 				$contact->fetch($object->fk_socpeople);
 				$phototoshow = $form->showphoto($modulepart, $contact, 0, 0, 0, 'photoref', 'small', 1, 0, $maxvisiblephotos);
+
 			} elseif ($object->table_element == 'agefodd_formateur') {
 				if ($object->type_trainer == 'socpeople') {
 					dol_include_once('/contact/class/contact.class.php');
@@ -2030,16 +2103,20 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 				$morehtmlleft .= $phototoshow;
 				$morehtmlleft .= '</div>';
 			}
+
 		}
 	}
 
 	// libstatut
 	if ($object->table_element == 'agefodd_formation_catalogue') {
+
 		$morehtmlstatus .= '<span class="statusrefsell">' . $object->getLibStatut(1) . '</span>';
+
 	} elseif ($object->table_element == 'agefodd_session') {
+
 		$morehtmlstatus .= '<div align="right">' . $object->getLibStatut(1) . "<br>";
 
-		require_once __DIR__ . '/../class/agefodd_sessadm.class.php';
+		require_once(__DIR__ . '/../class/agefodd_sessadm.class.php');
 		$sess_adm = new Agefodd_sessadm($db);
 		$result = $sess_adm->fetch_all($object->id);
 
@@ -2055,7 +2132,7 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 
 			$morehtmlstatus .= displayProgress($roundedBilled, $langs->trans('AgfSheduleBillingState') . " : ", $billed . "/" . $total, '9em');
 		}
-		if (!$user->rights->agefodd->session->trainer) {
+		if (empty($user->rights->agefodd->session->trainer)) {
 			$morehtmlstatus .= $langs->trans("AgfFormTypeSession") . ' : ' . ($object->type_session ? $langs->trans('AgfFormTypeSessionInter') : $langs->trans('AgfFormTypeSessionIntra')) . "<br>";
 		}
 		if (!empty($object->fk_product)) {
@@ -2067,12 +2144,16 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 			}
 		}
 		$morehtmlstatus .= '</div>';
+
 	} elseif ($object->table_element == 'agefodd_place') {
+
 		$morehtmlstatus .= '<span class="statusrefsell">' . $object->getLibStatut(1) . '</span>';
+
 	}
 
 	// Other infos
 	if ($object->table_element == 'agefodd_formation_catalogue') { // formation catalogue
+
 		$morehtml .= '<a href="' . dol_buildpath('/agefodd/training/list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans("BackToList") . '</a>';
 
 		$morehtmlref .= '<div class="refidno">';
@@ -2081,7 +2162,9 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 		if (!empty($object->ref_interne))
 			$morehtmlref .= '<br>' . $object->ref_interne;
 		$morehtmlref .= '</div>';
+
 	} elseif ($object->table_element == 'agefodd_session') { //session formation
+
 		$morehtml .= '<a href="' . dol_buildpath('/agefodd/session/list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans("BackToList") . '</a>';
 		$morehtmlref .= '<div class="refidno">';
 		dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
@@ -2099,7 +2182,7 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 			$morehtmlref .= '<br>' . $langs->trans("Customer") . ' : ' . $soc->getNomUrl(1);
 		}
 
-		if (!empty($object->placeid) && (!$user->rights->agefodd->session->trainer)) {
+		if (!empty($object->placeid) && (empty($user->rights->agefodd->session->trainer))) {
 			$morehtmlref .= '<br>' . $langs->trans("AgfLieu") . ' : ';
 			$morehtmlref .= '<a href="' . dol_buildpath('/agefodd/site/card.php', 1) . '?id=' . $object->placeid . '">' . $object->placecode . '</a>';
 		}
@@ -2117,7 +2200,9 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 		// var_dump($object);
 
 		$morehtmlref .= '</div>';
+
 	} elseif ($object->table_element == 'agefodd_stagiaire') { // trainee
+
 		$morehtml .= '<a href="' . dol_buildpath('/agefodd/trainee/list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans("BackToList") . '</a>';
 		$morehtmlref .= '<div class="refidno">';
 
@@ -2135,14 +2220,18 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 		$morehtmlref .= (!empty($object->thirdparty)) ? $langs->trans('Company') . ' : ' . $object->thirdparty->getNomUrl(1) : '';
 
 		$morehtmlref .= '</div>';
+
 	} elseif ($object->table_element == 'agefodd_formateur') { // trainer
+
 		$morehtml .= '<a href="' . dol_buildpath('/agefodd/trainer/list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans("BackToList") . '</a>';
 
 		$morehtmlref .= '<div class="refidno">';
 		$morehtmlref .= $langs->trans('Name') . ' : ' . ucfirst(strtolower($object->civilite)) . ' ' . strtoupper($object->name) . ' ' . ucfirst(strtolower($object->firstname));
 		$morehtmlref .= '<br>' . $langs->trans('AgfTrainerNature') . ' : ' . $langs->trans('AgfTrainerType' . ucfirst($object->type_trainer));
 		$morehtmlref .= '</div>';
+
 	} elseif ($object->table_element == 'agefodd_place') { // Sites
+
 		$morehtml .= '<a href="' . dol_buildpath('/agefodd/site/list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans("BackToList") . '</a>';
 
 		$morehtmlref .= '<div class="refidno">';
@@ -2155,9 +2244,10 @@ function dol_agefodd_banner_tab($object, $paramid, $morehtml = '', $shownav = 1,
 		}
 
 		$morehtmlref .= '</div>';
+
 	}
 
-	if ($conf->multicompany->enabled)
+	if (!empty($conf->multicompany->enabled))
 		$object->element = 'agefodd';
 
 	print '<div class="' . ($onlybanner ? 'arearefnobottom ' : 'arearef ') . 'heightref valignmiddle" width="100%">';
@@ -2306,55 +2396,60 @@ function agf_getMailTemplate($id)
  */
 function get_agf_session_mails_infos(Agsession $agsession)
 {
-	global $db, $langs;
+    global $db, $langs;
 
-	if (empty($agsession->id)) {
-		return 0;
-	}
+    if (empty($agsession->id)) {
+        return 0;
+    }
 
-	$emailInfos = array();
+    $emailInfos = array();
 
-	// Recupération des stagiaires
-	dol_include_once('agefodd/class/agefodd_session_stagiaire.class.php');
+    // Recupération des stagiaires
+    dol_include_once('agefodd/class/agefodd_session_stagiaire.class.php');
 
-	$session_stagiaire = new Agefodd_session_stagiaire($db);
-	$session_stagiaire->fetch_stagiaire_per_session($agsession->id);
+    $session_stagiaire = new Agefodd_session_stagiaire($db);
+    $session_stagiaire->fetch_stagiaire_per_session($agsession->id);
 
-	if (!empty($session_stagiaire->lines)) {
-		foreach ($session_stagiaire->lines as $sessionLine) {
-			$infos = new stdClass();
-			$infos->nom = $sessionLine->nom;
-			$infos->prenom = $sessionLine->prenom;
-			$infos->civilite = $langs->trans($sessionLine->civilitel);
-			$infos->socname = $sessionLine->socname;
-			$infos->email = $sessionLine->email;
+    if (!empty($session_stagiaire->lines)) {
+        foreach ($session_stagiaire->lines as $sessionLine) {
 
-			$emailInfos[] = $infos;
-		}
-	}
+            $infos = new stdClass();
+            $infos->nom = $sessionLine->nom;
+            $infos->prenom = $sessionLine->prenom;
+            $infos->civilite = $langs->trans($sessionLine->civilitel);
+            $infos->socname = $sessionLine->socname;
+            $infos->email = $sessionLine->email;
 
-
-	// Recupération des stagiaires
-	dol_include_once('agefodd/class/agefodd_session_formateur.class.php');
-
-	$session_formateur = new Agefodd_session_formateur($db);
-	$session_formateur->fetch_formateur_per_session($agsession->id);
-
-	if (!empty($session_formateur->lines)) {
-		foreach ($session_formateur->lines as $sessionLine) {
-			$infos = new stdClass();
-			$infos->nom = $sessionLine->name_user;
-			$infos->prenom = $sessionLine->firstname_user;
-			$infos->civilite = '';
-			$infos->socname = '';
-			$infos->email = $sessionLine->email;
-
-			$emailInfos[] = $infos;
-		}
-	}
+            $emailInfos[] = $infos;
+        }
+    }
 
 
-	return $emailInfos;
+    // Recupération des stagiaires
+    dol_include_once('agefodd/class/agefodd_session_formateur.class.php');
+
+    $session_formateur = new Agefodd_session_formateur($db);
+    $session_formateur->fetch_formateur_per_session($agsession->id);
+
+    if (!empty($session_formateur->lines)) {
+        foreach ($session_formateur->lines as $sessionLine) {
+
+
+            $infos = new stdClass();
+            $infos->nom = $sessionLine->name_user;
+            $infos->prenom = $sessionLine->firstname_user;
+            $infos->civilite = '';
+            $infos->socname = '';
+            $infos->email = $sessionLine->email;
+
+            $emailInfos[] = $infos;
+
+        }
+    }
+
+
+    return $emailInfos;
+
 }
 
 /**
@@ -2389,19 +2484,70 @@ function getTraineeAvailableFields()
 			'methodename' => 'sendAgendaToTrainee',
 	);
 	$cronJob = new Cronjob($db);
-	$cronJob->fetchAll('DESC', 't.rowid', 0, 0, $status, $filter);
 
-	if (!empty($cronJob->lines)) {
+	if (method_exists($cronJob, 'fetch_all')){
+		$cronJob->fetch_all('DESC', 't.rowid',0, 0, $status, $filter);
+	}else{
+		$cronJob->fetchAll('DESC', 't.rowid',0, 0, $status, $filter);
+	}
+
+
+	if(!empty($cronJob->lines))
+	{
 		$TTraineeFields['disable_auto_mail'] = $langs->transnoentities("AgfSendAgendaMail");
 	}
 
 	$extrafields = new ExtraFields($db);
 	$extralabels = $extrafields->fetch_name_optionals_label('agefodd_stagiaire');
 
-	if (!empty($extralabels)) {
+	if (!empty($extralabels))
+	{
 		foreach ($extralabels as $key => $trad) $TTraineeFields['ef.'.$key] = $trad;
 	}
 
 	return $TTraineeFields;
 }
 
+/**
+ * @param AgfSessionLine $agfSession
+ * @return string
+ */
+function getAgefoddSessionLinePlaceReservationProgressBar($agfSession, $thin = true){
+
+	$progressClass = 'progress-bar-danger';
+	$progressBar = $progress = !empty($agfSession->nb_place) ? ($agfSession->nb_stagiaire * 100 / $agfSession->nb_place) : 0;
+
+	if ($progress == 100){
+		$progressClass = 'progress-bar-success';
+	}
+	if ($progress <= 99){
+		$progressClass = 'progress-bar-warning';
+	}
+	if ($progress > 100){
+		$progressClass = 'progress-bar-danger';
+	}
+
+	$class = '';
+	$displayProgress = intval($progressBar).'%';
+	if($thin){
+		$class = 'sm';
+		$displayProgress = '';
+	}
+
+	$out = '<div class="progress-group"><div class="progress '.$class.'">';
+	$out.= '<div class="progress-bar '.$progressClass.'" style="width: '.$progressBar.'%">'.$displayProgress.'</div>';
+	$out.= '</div>';
+
+	return $out;
+}
+
+/**
+ * @param $uri
+ * @return void
+ */
+function jsRedirection($uri)
+{
+	print '<script type="text/javascript">
+					$(document).ready(function(){ window.location.replace("' . $uri . '"); });
+					</script>';
+}

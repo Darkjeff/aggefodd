@@ -30,15 +30,11 @@ dol_include_once('/agefodd/class/agefodd_session_calendrier.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
-require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-/**
- * Put here description of your class
- */
-class pdf_convocation_trainee extends ModelePDFAgefodd
-{
+require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+class pdf_convocation_trainee extends ModelePDFAgefodd {
 	var $emetteur; // Objet societe qui emet
 
 	// Definition des couleurs utilisées de façon globales dans le document (charte)
@@ -53,8 +49,7 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 	 * \brief Constructor
 	 * \param db Database handler
 	 */
-	function __construct($db)
-	{
+	function __construct($db) {
 		global $conf, $langs, $mysoc;
 
 		$langs->load("agefodd@agefodd");
@@ -103,8 +98,7 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 	 * file Name of file to generate
 	 * \return int 1=ok, 0=ko
 	 */
-	function write_file($agf, $outputlangs, $file, $session_trainee_id)
-	{
+	function write_file($agf, $outputlangs, $file, $session_trainee_id) {
 		global $user, $langs, $conf, $mysoc;
 
 		if (! is_object($outputlangs))
@@ -172,7 +166,8 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 			$pdf->SetAutoPageBreak(1, 0);
 
 			// Set path to the background PDF File
-			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P)) {
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_P))
+			{
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_P);
 				$tplidx = $pdf->importPage(1);
 			}
@@ -352,7 +347,7 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 
 			$this->str ='';
 			$old_date='';
-			foreach ($agf_calendrier->lines as $line) {
+			foreach ( $agf_calendrier->lines as $line ) {
 				if ($line->date_session != $old_date) {
 					$this->str .= "\n";
 					$this->str .= dol_print_date($line->date_session, 'daytext') . ' ' . $outputlangs->transnoentities('AgfPDFConvocation4') . ' ' . dol_print_date($line->heured, 'hour') . ' ' . $outputlangs->transnoentities('AgfPDFConvocation5') . ' ' . dol_print_date($line->heuref, 'hour');
@@ -405,18 +400,18 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 			$pdf->Line($this->marge_gauche + 0.5, $posY, $this->page_largeur - $this->marge_droite, $posY);
 			$posY = $pdf->GetY() + $this->espace_apres_corps_text + 2;
 
-			if (!empty($conf->global->AGF_DEFAULT_MENTOR_ADMIN)) {
+			if (!empty($conf->global->AGF_DEFAULT_MENTOR_ADMIN)){
 				$u = new User($this->db);
 				$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_ADMIN));
-				if ($res) {
+				if ($res){
 					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
 					$this->str = ucfirst($langs->transnoentities('MentorAdmin') ." : " . $u->civility_code .' '.  $u->firstname . " " . $u->lastname);
-					$pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '');
+					$pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '' );
 					$posY = $pdf->GetY() + 0.5;
 				}
 			}
 
-			if (!empty($conf->global->AGF_DEFAULT_MENTOR_PEDAGO)) {
+			if (!empty($conf->global->AGF_DEFAULT_MENTOR_PEDAGO)){
 				$pdf->SetXY($posX, $posY);
 				$u = new User($this->db);
 				$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_PEDAGO));
@@ -428,7 +423,7 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 				}
 			}
 
-			if (!empty($conf->global->AGF_DEFAULT_MENTOR_HANDICAP)) {
+			if (!empty($conf->global->AGF_DEFAULT_MENTOR_HANDICAP)){
 				$pdf->SetXY($posX, $posY);
 				$u = new User($this->db);
 				$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_HANDICAP));
@@ -471,6 +466,7 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 			 * Page 4 (Annexe 1)
 			 */
 			if (! empty($conf->global->AGF_MERGE_ADVISE_AND_CONVOC)) {
+
 				// this configuration variable is designed like
 				// standard_model_name:new_model_name&standard_model_name:new_model_name&....
 				$model='conseils';
@@ -478,7 +474,7 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 				if (! empty($conf->global->AGF_PDF_MODEL_OVERRIDE) && ($model != 'convention')) {
 					$modelarray = explode('&', $conf->global->AGF_PDF_MODEL_OVERRIDE);
 					if (is_array($modelarray) && count($modelarray) > 0) {
-						foreach ($modelarray as $modeloveride) {
+						foreach ( $modelarray as $modeloveride ) {
 							$modeloverridearray = explode(':', $modeloveride);
 							if (is_array($modeloverridearray) && count($modeloverridearray) > 0) {
 								if ($modeloverridearray[0] == $model) {
@@ -494,11 +490,26 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 				if (is_file($infileconseil)) {
 					$countconseil = $pdf->setSourceFile($infileconseil);
 					// import all page
-					for ($iconseil = 1; $iconseil <= $countconseil; $iconseil ++) {
+					for($iconseil = 1; $iconseil <= $countconseil; $iconseil ++) {
 						// New page
 						$pdf->AddPage();
 						$tplIdxconseil = $pdf->importPage($iconseil);
 						$pdf->useTemplate($tplIdxconseil);
+					}
+				}
+
+				// add Rules of procedure to convocation if it exists and if merge conf is enabled
+				$dirRegInt = $conf->agefodd->multidir_output[$conf->entity].'/place/'.$agf->fk_session_place;
+				$listFiles = dol_dir_list($dirRegInt, 'files', 0, '^reglement_(.*)\.pdf$');
+				$infile = $dirRegInt. '/' . $listFiles[0]['name'];
+				if (is_file($infile)) {
+					$countreg = $pdf->setSourceFile($infile);
+					// import all page
+					for($ireg = 1; $ireg <= $countreg; $ireg ++) {
+						// New page
+						$pdf->AddPage();
+						$tplIdxreg = $pdf->importPage($ireg);
+						$pdf->useTemplate($tplIdxreg);
 					}
 				}
 			}
@@ -510,14 +521,15 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 
 
 			// Add pdfgeneration hook
-			if (! is_object($hookmanager)) {
+			if (! is_object($hookmanager))
+			{
 				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 				$hookmanager=new HookManager($this->db);
 			}
 			$hookmanager->initHooks(array('pdfgeneration'));
 			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
 			global $action;
-			$reshook=$hookmanager->executeHooks('afterPDFCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
 
 
 			return 1; // Pas d'erreur
@@ -536,8 +548,7 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
-	{
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -556,12 +567,11 @@ class pdf_convocation_trainee extends ModelePDFAgefodd
 	 * \param outputlang Object lang for output
 	 * \remarks Need this->emetteur object
 	 */
-	function _pagefoot(&$pdf, $object, $outputlangs)
-	{
+	function _pagefoot(&$pdf, $object, $outputlangs) {
 		global $conf, $langs, $mysoc;
 
 		$pdf->SetTextColor($this->colorfooter [0], $this->colorfooter [1], $this->colorfooter [2]);
 		$pdf->SetDrawColor($this->colorfooter [0], $this->colorfooter [1], $this->colorfooter [2]);
-		return pdf_agfpagefoot($pdf, $outputlangs, '', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, 1, $hidefreetext);
+		return pdf_agfpagefoot($pdf,$outputlangs,'',$this->emetteur,$this->marge_basse,$this->marge_gauche,$this->page_hauteur,$object,1,$hidefreetext);
 	}
 }

@@ -19,6 +19,9 @@ require_once '../lib/agefodd.lib.php';
 
 $langs->load("admin");
 $langs->load('agefodd@agefodd');
+
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+
 $action = GETPOST("action", 'none');
 if ($action == 'save_multicompany_shared_conf')
 {
@@ -57,6 +60,59 @@ if ($action == 'save_multicompany_shared_conf')
 	}
 }
 
+/*
+ * Paramètre de getEntity disponible grâce à ces valeurs :
+ * - &element=agefodd_base (recueil formation, lieu, formateur)
+ * - &element=agefodd_session (session, participants)
+ */
+if($action == 'display_agefodd_conf_on_multicompany_conf') {
+    global $db;
+
+    $nameOfObject = GETPOST('element', 'alpha');
+	$agefoddBase = '';
+
+	if ($nameOfObject == 'agefodd_session' && $conf->global->MULTICOMPANY_AGSESSION_SHARING_ENABLED) {
+		$agefoddBase = 'agefodd_base';
+		dolibarr_set_const($db, 'MULTICOMPANY_AGEFODD_BASE_SHARING_ENABLED', 1, 'chaine', 1, '', 0);
+	}
+    if($conf->global->MULTICOMPANY_EXTERNAL_MODULES_SHARING) {
+        $TMulticompanySharingAgefodd = json_decode($conf->global->MULTICOMPANY_EXTERNAL_MODULES_SHARING);
+
+        $TMulticompanySharingAgefodd[0]->sharingelements->$nameOfObject = [];
+        $TMulticompanySharingAgefodd[0]->sharingmodulename->$nameOfObject = 'agefodd';
+
+		if ($agefoddBase) {
+			$TMulticompanySharingAgefodd[0]->sharingelements->$agefoddBase = [];
+			$TMulticompanySharingAgefodd[0]->sharingmodulename->$agefoddBase = 'agefodd';
+		}
+    }
+    else {
+        $TMulticompanySharingAgefodd = [];
+        $TMulticompanySharingAgefodd[0] = new stdClass();
+
+        $TMulticompanySharingAgefodd[0]->sharingelements = new stdClass();
+        $TMulticompanySharingAgefodd[0]->sharingelements->$nameOfObject = [];
+
+        $TMulticompanySharingAgefodd[0]->sharingmodulename = new stdClass();
+        $TMulticompanySharingAgefodd[0]->sharingmodulename->$nameOfObject = 'agefodd';
+
+		if ($agefoddBase) {
+			$TMulticompanySharingAgefodd = [];
+			$TMulticompanySharingAgefodd[0] = new stdClass();
+
+			$TMulticompanySharingAgefodd[0]->sharingelements = new stdClass();
+			$TMulticompanySharingAgefodd[0]->sharingelements->$agefoddBase = [];
+
+			$TMulticompanySharingAgefodd[0]->sharingmodulename = new stdClass();
+			$TMulticompanySharingAgefodd[0]->sharingmodulename->$agefoddBase = 'agefodd';
+		}
+    }
+    $conf->global->MULTICOMPANY_EXTERNAL_MODULES_SHARING = json_encode($TMulticompanySharingAgefodd);
+
+    dolibarr_set_const($db, 'MULTICOMPANY_EXTERNAL_MODULES_SHARING', $conf->global->MULTICOMPANY_EXTERNAL_MODULES_SHARING, 'chaine', 1, '', 0);
+}
+
+
 
 $extrajs = $extracss = array();
 if (!empty($conf->multicompany->enabled) && !empty($conf->global->MULTICOMPANY_SHARINGS_ENABLED))
@@ -78,7 +134,7 @@ print_fiche_titre($langs->trans("AgefoddSetupMulticompany"), $linkback, 'setup')
 
 // Configuration header
 $head = agefodd_admin_prepare_head();
-dol_fiche_head($head, 'multicompany', $langs->trans("Module103000Name"), 0, "agefodd@agefodd");
+dol_fiche_head($head, 'multicompany', $langs->trans("Module103000Name"), -2, "agefodd@agefodd");
 
 
 
@@ -89,8 +145,9 @@ if (!empty($conf->multicompany->enabled) && !empty($conf->global->MULTICOMPANY_S
 
 	//var_dump($mc);
 	print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
-	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.$newToken.'">';
 	print '<input type="hidden" name="action" value="save_multicompany_shared_conf">';
+	print '<input type="hidden" name="action" value="display_agefodd_conf_on_multicompany_conf">';
 
 	print '<table class="noborder" width="100%">';
 	print '<tr class="liste_titre">';
@@ -98,10 +155,9 @@ if (!empty($conf->multicompany->enabled) && !empty($conf->global->MULTICOMPANY_S
 	print '<td align="center" ></td>';
 	print '</tr>';
 
-	$element = 'agefodd';
+    // Activer le partage des formations (recueil, lieux et formateurs) entre entités
+	$element = 'agefodd_base';
 	$moduleSharingEnabled = 'MULTICOMPANY_'.strtoupper($element).'_SHARING_ENABLED';
-
-
 
 	print '<tr class="oddeven" >';
 	print '<td align="left" >';
@@ -109,69 +165,47 @@ if (!empty($conf->multicompany->enabled) && !empty($conf->global->MULTICOMPANY_S
 	print '</td>';
 	print '<td align="center" >';
 	print ajax_constantonoff($moduleSharingEnabled, array(), 0);
-	print '</td>';
+    print '<a href="?action=display_agefodd_conf_on_multicompany_conf&element=agefodd_base"><i class="fas fa-sync" title="'.$langs->trans("ActivateSharing").'"></i></a>';
+    print $form->textwithpicto('', $langs->trans("HelperMulticompanyAgefodd"), 1, 'help');
+    print '</td>';
 	print '</tr>';
 
+    // Activer le partage des sessions entre entités
+    $element = 'agefodd_session';
+    $moduleSharingEnabled = 'MULTICOMPANY_'.strtoupper($element).'_SHARING_ENABLED';
 
-	print '<tr class="liste_titre">';
-	print '<td>'.$langs->trans("MulticompanyConfiguration").'</td>'."\n";
-	print '<td align="center" >'.$langs->trans("ShareWith").'</td>';
-	print '</tr>';
+    print '<tr class="oddeven" >';
+    print '<td align="left" >';
+    print $langs->trans("ActivateSharingSession");
+    print '</td>';
+    print '<td align="center" >';
+    print ajax_constantonoff($moduleSharingEnabled, array(), 0);
+    print '<a href="?action=display_agefodd_conf_on_multicompany_conf&element=agefodd_session"><i class="fas fa-sync" title="'.$langs->trans("ActivateSharingSession").'"></i></a>';
+    print $form->textwithpicto('', $langs->trans("HelperMulticompanyAgefodd"), 1, 'help');
+    print '</td>';
+    print '</tr>';
 
 	$m = new ActionsMulticompany($db);
 
 	$dao = new DaoMulticompany($db);
 	$dao->getEntities();
 
-	if (is_array($dao->entities))
-	{
-
-		foreach ($dao->entities as $entitie)
-		{
-
-			if (intval($conf->entity) === 1 || intval($conf->entity) === intval($entitie->id))
-			{
-
-				print '<tr class="oddeven" >';
-				print '<td align="left" >';
-				print $entitie->name.' <em>('.$entitie->label.')</em> ';
-				//
-				print '</td>';
-				print '<td align="center" >';
-				print _multiselect_entities('multicompany-agefodd['.$entitie->id.']', $entitie, '', $element);
-				print '</td>';
-				print '</tr>';
-			}
+	/*
+	 * Renseigner le tableau Tconfs avec le nom des confs AGEFODD qui ne commencent pas par AGF_
+	 * → supprime toutes les confs agefodd qui ne sont pas sur l'entité principale
+	 */
+	$mainEntity = $dao->entities[0]->id;
+	if (!empty($conf->global->MULTICOMPANY_BACKWARD_COMPATIBILITY) && $conf->entity == $mainEntity) {
+		$Tconfs = ['RELATION_LINK_SELECTED_ON_THRIDPARTY_TRAINING_SESSION'];
+		foreach ($Tconfs as &$localConf) {
+			$localConf = '"'.$localConf.'"';
 		}
-
-
-		print '<tr>';
-		print '<td colspan="2" style="text-align:right;" >';
-		print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
-		print '</td>';
-		print '</tr>';
+		unset($localConf);
+		$sql = "DELETE FROM ".MAIN_DB_PREFIX."const WHERE entity > 1";
+		$sql.=" AND (name LIKE 'AGF_%'";
+		$sql.=" OR name IN (".implode(',' ,$Tconfs)."))";
+		$db->query($sql);
 	}
-	print '</table>';
-
-	print '</form>';
-
-	$langs->loadLangs(array('languages', 'multicompany@multicompany'));
-
-	print '<script type="text/javascript">';
-	print '$(document).ready(function () {';
-
-	print '     $.extend($.ui.multiselect.locale, {';
-	print '         addAll:\''.$langs->transnoentities("AddAll").'\',';
-	print '         removeAll:\''.$langs->transnoentities("RemoveAll").'\',';
-	print '         itemsCount:\''.$langs->transnoentities("ItemsCount").'\'';
-	print '    });';
-
-
-	print '    $(function(){';
-	print '        $(".multiselect").multiselect({sortable: false, searchable: false});';
-	print '    });';
-	print '});';
-	print '</script>';
 }
 
 

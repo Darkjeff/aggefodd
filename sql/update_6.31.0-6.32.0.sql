@@ -1,0 +1,1 @@
+INSERT INTO llx_c_email_templates (entity,module,type_template,lang,private,fk_user,datec,label,position,enabled,active,topic,content,content_lines,joinfiles) VALUES (0,'agefodd','cron_session','',0,null,null,'__(AgefoddCompletionMailTrainee)__',95,1,1,'__(AgfMailToCompletionMailTraineeTemplate)__','__(AgfMailToCompletionMailTraineeBodyTemplate)__',null, 1);

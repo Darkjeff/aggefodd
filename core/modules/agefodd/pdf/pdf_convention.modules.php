@@ -31,15 +31,11 @@ dol_include_once('/agefodd/class/agefodd_convention.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
-require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
-require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
-
-/**
- * Put here description of your class
- */
+require_once (DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php');
 class pdf_convention extends ModelePDFAgefodd
 {
 	var $emetteur; // Objet societe qui emet
@@ -56,8 +52,7 @@ class pdf_convention extends ModelePDFAgefodd
 	 * \brief Constructor
 	 * \param db Database handler
 	 */
-	function __construct($db)
-	{
+	function __construct($db) {
 		global $conf, $langs, $mysoc;
 
 		$langs->load("agefodd@agefodd");
@@ -109,8 +104,7 @@ class pdf_convention extends ModelePDFAgefodd
 	 * file Name of file to generate
 	 * \return int 1=ok, 0=k
 	 */
-	function write_file($agf, $outputlangs, $file, $socid, $courrier)
-	{
+	function write_file($agf, $outputlangs, $file, $socid, $courrier) {
 		global $user, $langs, $conf, $mysoc, $db;
 
 		$default_font_size = pdf_getPDFFontSize($outputlangs);
@@ -173,6 +167,7 @@ class pdf_convention extends ModelePDFAgefodd
 			$result = true;
 			$agf_comdetails = new Agefodd_convention($this->db);
 			$agf_comdetails->fetch(0, 0, $agf_conv->id);
+
 			if ($agf_conv->element_type == 'invoice') {
 				$result = $agf_comdetails->fetch_invoice_lines($agf_conv->fk_element);
 			}
@@ -305,7 +300,7 @@ class pdf_convention extends ModelePDFAgefodd
 							$wlogo = pdf_getWidthForLogo($logo_client);
 							$X =  ($this->page_largeur / 2) - ($wlogo / 2) ;
 							$Y = $this->marge_haute;
-							$pdf->Image($logo_client, $X, $Y, $wlogo, $hlogo, '', '', '', true);
+							$pdf->Image($logo_client,$X ,$Y, $wlogo, $hlogo,'','','',true);
 						}
 					}
 				}
@@ -456,7 +451,8 @@ class pdf_convention extends ModelePDFAgefodd
 						. ' '
 						. ++$art
 						. ' - '
-						. $outputlangs->transnoentities($rightTranslationKey);
+						. $outputlangs->transnoentities($rightTranslationKey)
+						;
 				};
 				/**
 				 * @param string $title   Titre complet du chapitre (y compris le préfixe "Article - ")
@@ -478,7 +474,7 @@ class pdf_convention extends ModelePDFAgefodd
 						$pdf->AddPage(); if (! empty($tplidx)) { $pdf->useTemplate($tplidx); }
 						$this->_pagehead($pdf, $agf, 1, $outputlangs);
 						$pdf->SetAutoPageBreak(1, $breakMargin);
-						//                      $pdf->setPageOrientation('', 1, $hauteurpied);
+//						$pdf->setPageOrientation('', 1, $hauteurpied);
 						$posY = $this->marge_haute;
 						$posX = $this->marge_gauche;
 						$pdf->SetXY($posX, $posY);
@@ -523,14 +519,15 @@ class pdf_convention extends ModelePDFAgefodd
 					$this->str = $agf_conv->art2;
 					$funcPrintChapter($chapterTitle, $agf_conv->art2);
 				}
-
+				
 				$chapterTitle = $funcGetChapterTitle('AgfPDFConv13');
 				if (preg_match('/List_Participants/', $agf_conv->art3)) {
 					if (is_array($agf_conv->line_trainee) && count($agf_conv->line_trainee) > 0) {
+						$traine_list = [];
 						$nbstag = count($agf_conv->line_trainee);
 						$stagiaires_session_conv = new Agefodd_session_stagiaire($this->db);
 
-						foreach ($agf_conv->line_trainee as $trainee_session_id) {
+						foreach ( $agf_conv->line_trainee as $trainee_session_id ) {
 							$result = $stagiaires_session_conv->fetch($trainee_session_id);
 							if ($result < 0) {
 								setEventMessage($stagiaires_session_conv->error, 'errors');
@@ -543,16 +540,17 @@ class pdf_convention extends ModelePDFAgefodd
 							$traine_list[] = $stagiaire_conv->nom . ' ' . $stagiaire_conv->prenom;
 						}
 					}
-					if (count($traine_list) > 0) {
-						if (count($traine_list) > 1) {
+					if (is_array($traine_list)){
+					 if (count($traine_list) > 0) {
+					 	if (count($traine_list) > 1) {
 							$trainee_list_str = ' ' . $langs->trans('AgfConvArt3_2') . ' ' . implode(', ', $traine_list);
 						} else {
 							$trainee_list_str = ' ' . $langs->trans('AgfConvArt3_3') . ' ' . implode(', ', $traine_list);
 						}
-					} elseif (count($traine_list) == 0) {
+					 } else if (count($traine_list) == 0) {
 						$trainee_list_str = $langs->transnoentities('AgfConvArt3_5');
+					 }
 					}
-
 					$art3 = str_replace('List_Participants', $trainee_list_str, $agf_conv->art3);
 				} else {
 					$art3 = $agf_conv->art3;
@@ -577,12 +575,13 @@ class pdf_convention extends ModelePDFAgefodd
 				$this->str = $agf_conv->art5;
 
 				if (preg_match('/List_OPCA/', $this->str)) {
+
 					$TOPCA = array();
 
 					if (! empty($agf->type_session)) { // Session inter-entreprises : OPCA gérés par participant
 						dol_include_once('/agefodd/class/agefodd_opca.class.php');
 
-						foreach ($agf_conv->line_trainee as $idSessionTrainee) {
+						foreach ( $agf_conv->line_trainee as $idSessionTrainee ) {
 							$sessionTrainee = new Agefodd_session_stagiaire($db);
 							$sessionTrainee->fetch($idSessionTrainee);
 
@@ -614,11 +613,11 @@ class pdf_convention extends ModelePDFAgefodd
 				$this->forcePageBreak($pdf, $agf, $outputlangs);
 				$chapterTitle = $funcGetChapterTitle('AgfPDFConv16');
 				$this->str = $agf_conv->art6;
-				$funcPrintChapter($chapterTitle, $this->str);
+				$funcPrintChapter($chapterTitle,$this->str);
 				$chapterTitle = $funcGetChapterTitle('AgfPDFConv17');
 				$this->str = $agf_conv->art7;
 				$funcPrintChapter($chapterTitle, $this->str);
-				//
+//
 				$chapterTitle = $funcGetChapterTitle('AgfPDFConv18');
 				$pdf->SetXY($posX, $posY);
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
@@ -644,7 +643,7 @@ class pdf_convention extends ModelePDFAgefodd
 				$nombre = $pdf->PageNo(); // page suivante = annexe1
 				$this->str .= $outputlangs->transnoentities('AgfPDFConv22') . " " . $literal[$nombre - 1] . " (" . $nombre . ") " . $outputlangs->transnoentities('AgfPDFConv23') . ' ';
 				$funcPrintChapter($chapterTitle, $this->str);
-				$this->printBlocSignatures($pdf, $agf, $outputlangs);
+				$this->printBlocSignatures($pdf, $agf, $outputlangs, $agf_conv);
 				// Pied de page
 				$this->_pagefoot($pdf, $agf, $outputlangs);
 				$pdf->SetAutoPageBreak(0, 0);
@@ -656,8 +655,10 @@ class pdf_convention extends ModelePDFAgefodd
 					$agfTraining = new Formation($db);
 					$agfTraining->fetch($agf->fk_formation_catalogue);
 					$agfTraining->generatePDAByLink();
-					$addFile = '';
-					$infile = $conf->agefodd->dir_output . '/fiche_pedago_' . $agf->fk_formation_catalogue . '.pdf';
+                    $addFile = '';
+					$infile = $conf->agefodd->dir_output . '/fiche_pedago_recueil_' . $agf->id . '.pdf';
+					if (!is_file($infile))
+						$infile = $conf->agefodd->dir_output . '/fiche_pedago_' . $agf->fk_formation_catalogue . '.pdf';
 					$infileModules = $conf->agefodd->dir_output . '/fiche_pedago_modules_' . $agf->fk_formation_catalogue . '.pdf';
 					if (is_file($infile)) {
 						$addFile = $infile;
@@ -667,7 +668,7 @@ class pdf_convention extends ModelePDFAgefodd
 					if (!empty($addFile)) {
 						$count = $pdf->setSourceFile($addFile);
 						// import all page
-						for ($i = 1; $i <= $count; $i ++) {
+						for($i = 1; $i <= $count; $i ++) {
 							// New page
 							$pdf->AddPage();
 							$pagenb ++;
@@ -745,8 +746,7 @@ class pdf_convention extends ModelePDFAgefodd
 	 * \param showaddress 0=no, 1=yes
 	 * \param outputlangs Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs)
-	{
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
 		global $conf, $langs;
 
 		$outputlangs->load("main");
@@ -774,7 +774,9 @@ class pdf_convention extends ModelePDFAgefodd
 		$pdf->SetTextColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
 		$ret = pdf_agfpagefoot($pdf, $outputlangs, 'AGEFODD_CONVENTION_FREE_TEXT', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, 1, $hidefreetext);
 		$pdf->SetAutoPageBreak(1, $breakMargin);
-		return $ret;
+        // reset body's color of the pdf next the footer
+        $pdf->SetTextColor($this->colorheaderText[0], $this->colorheaderText[1], $this->colorheaderText[2]);
+        return $ret;
 	}
 
 	/**
@@ -797,8 +799,9 @@ class pdf_convention extends ModelePDFAgefodd
 	 * @param TCPDI $pdf
 	 * @param Object $agf
 	 * @param Translate $outputlangs
+	 * @param Agefodd_convention $agf_conv
 	 */
-	function printBlocSignatures(&$pdf, $agf, $outputlangs)
+	function printBlocSignatures(&$pdf, $agf, $outputlangs, $agf_conv)
 	{
 		global $mysoc, $langs, $conf;
 		static $recurseLevel = 0;
@@ -856,7 +859,7 @@ class pdf_convention extends ModelePDFAgefodd
 			$pdf->rollbackTransaction(true);
 			$this->forcePageBreak($pdf, $agf, $outputlangs);
 			$recurseLevel++;
-			if ($recurseLevel < 2) $this->printBlocSignatures($pdf, $agf, $outputlangs);
+			if ($recurseLevel < 2) $this->printBlocSignatures($pdf, $agf, $outputlangs, $agf_conv);
 		} else {
 			$pdf->commitTransaction();
 		}
@@ -873,7 +876,6 @@ class pdf_convention extends ModelePDFAgefodd
 		global $langs;
 		static $recurseLevel = 0;
 		$curPage = $pdf->getPage();
-		$pdf->startTransaction();
 		$breakMargin = $this->hauteurpied;
 		$posX = $this->marge_gauche;
 		$posY = $pdf->GetY();
@@ -900,7 +902,7 @@ class pdf_convention extends ModelePDFAgefodd
 			20,
 			20
 		);
-		for ($i = 0; $i < count($header); $i ++) {
+		for($i = 0; $i < count($header); $i ++) {
 			$pdf->Cell($w[$i], 6, $header[$i], 1, 0, 'C', 1);
 		}
 		$posY += 6;
@@ -908,12 +910,33 @@ class pdf_convention extends ModelePDFAgefodd
 		$total_ht = 0;
 		$total_tva = 0;
 		$total_ttc = 0;
-		for ($i = 0; $i < count($agf_comdetails->lines); $i ++) {
+
+		for($i = 0; $i < count($agf_comdetails->lines); $i ++) {
+			$pdf->startTransaction();
+			
 			$pdf->SetXY($posX, $posY);
 			$posY = $pdf->GetY();
 			$pdf->writeHTMLCell($w[0], 0, $posX, $posY, $outputlangs->transnoentities($agf_comdetails->lines[$i]->description), 1, 1);
 			$posY_after = $pdf->GetY();
 			$hauteur = ($posY_after - $posY);
+
+			if ($posY_after < $posY) // c'est qu'on est passé à la page suivantez en auto
+			{
+				$pdf->rollbackTransaction(true);
+				$this->forcePageBreak($pdf, $agf, $outputlangs);
+
+				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize - 1);
+				for($j = 0; $j < count($header); $j ++) {
+		                        $pdf->Cell($w[$j], 6, $header[$j], 1, 0, 'C', 1);
+		                }
+                		$fill = false;
+				$pdf->startTransaction();
+				$posY = $pdf->GetY()+6;
+				$pdf->writeHTMLCell($w[0], 0, $posX, $posY, $outputlangs->transnoentities($agf_comdetails->lines[$i]->description), 1, 1);
+				$posY_after = $pdf->GetY();
+                        	$hauteur = ($posY_after - $posY);
+				$curPage = $pdf->getPage();
+			}
 
 			$pdf->SetXY($posX + $w[0], $posY);
 			$pdf->Cell($w[1], $hauteur, vatrate($agf_comdetails->lines[$i]->tva_tx, 1), 1, 0, 'C', $fill);
@@ -925,6 +948,9 @@ class pdf_convention extends ModelePDFAgefodd
 
 			$pdf->Ln();
 			$posY = $pdf->GetY();
+
+
+			$pdf->commitTransaction();
 
 			$total_ht += $agf_comdetails->lines[$i]->total_ht;
 			$total_tva += $agf_comdetails->lines[$i]->total_tva;
@@ -956,14 +982,6 @@ class pdf_convention extends ModelePDFAgefodd
 		$pdf->Cell(0, 4, $outputlangs->transnoentities("AmountInCurrency", $outputlangs->transnoentitiesnoconv("Currency" . $conf->currency)), 0, 0, 'R', 0);
 		$posY += $this->hApresCorpsArticle + 4;
 
-		if ($pdf->GetPage() > $curPage) {
-			$pdf->rollbackTransaction(true);
-			$this->forcePageBreak($pdf, $agf, $outputlangs);
-			$recurseLevel++;
-			if ($recurseLevel < 2) $posY = $this->printTableauDispositionsFinancieres($pdf, $agf, $outputlangs, $agf_comdetails);
-		} else {
-			$pdf->commitTransaction();
-		}
 		return $posY;
 	}
 }

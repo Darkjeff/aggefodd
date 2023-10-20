@@ -21,22 +21,22 @@
  * \brief list of certificate
  */
 
-$res = @include "../../main.inc.php"; // For root directory
+$res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
-	$res = @include "../../../main.inc.php"; // For "custom" directory
+	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
 
-require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-require_once '../class/agsession.class.php';
-require_once '../class/agefodd_formation_catalogue.class.php';
-require_once '../class/agefodd_place.class.php';
-require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-require_once '../lib/agefodd.lib.php';
-require_once '../class/html.formagefodd.class.php';
-require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php';
-require_once '../class/agefodd_formateur.class.php';
-require_once '../class/agefodd_stagiaire_certif.class.php';
+require_once (DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
+require_once ('../class/agsession.class.php');
+require_once ('../class/agefodd_formation_catalogue.class.php');
+require_once ('../class/agefodd_place.class.php');
+require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
+require_once ('../lib/agefodd.lib.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once (DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php');
+require_once ('../class/agefodd_formateur.class.php');
+require_once ('../class/agefodd_stagiaire_certif.class.php');
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -68,7 +68,7 @@ $search_certif_end_date2 = dol_mktime(0, 0, 0, GETPOST('search_certif_end_date2m
 
 // Do we click on purge search criteria ?
 if (GETPOST("button_removefilter_x", 'none')) {
-	$search_soc = '';
+    $search_soc = '';
 	$search_trainning_name = '';
 	$search_teacher_id = "";
 	$search_training_ref = '';
@@ -87,8 +87,8 @@ if (GETPOST("button_removefilter_x", 'none')) {
 
 $filter = array ();
 if (! empty($search_soc)) {
-	$filter ['soc.nom'] = $search_soc;
-	$option .= "&search_soc=" . $search_soc;
+    $filter ['soc.nom'] = $search_soc;
+    $option .= "&search_soc=" . $search_soc;
 }
 if (! empty($search_trainning_name)) {
 	$filter ['c.intitule'] = $search_trainning_name;
@@ -103,25 +103,25 @@ if (! empty($search_start_date)) {
 	$filter ['s.dated'] = $db->idate($search_start_date);
 }
 if (! empty($search_start_date2)) {
-	$filter ['s.dated2'] = $db->idate($search_start_date2);
+    $filter ['s.dated2'] = $db->idate($search_start_date2);
 }
 if (! empty($search_end_date)) {
-	$filter ['s.datef'] =  $db->idate($search_end_date);
+    $filter ['s.datef'] =  $db->idate($search_end_date);
 }
 if (! empty($search_end_date)) {
-	$filter ['s.datef2'] =  $db->idate($search_end_date2);
+    $filter ['s.datef2'] =  $db->idate($search_end_date2);
 }
 if (! empty($search_certif_start_date)) {
-	$filter ['certif.certif_dt_start'] = $db->idate($search_certif_start_date);
+    $filter ['certif.certif_dt_start'] = $db->idate($search_certif_start_date);
 }
 if (! empty($search_certif_start_date2)) {
-	$filter ['certif.certif_dt_start2'] = $db->idate($search_certif_start_date2);
+    $filter ['certif.certif_dt_start2'] = $db->idate($search_certif_start_date2);
 }
 if (! empty($search_certif_end_date)) {
-	$filter ['certif.certif_dt_end'] = $db->idate($search_certif_end_date);
+    $filter ['certif.certif_dt_end'] = $db->idate($search_certif_end_date);
 }
 if (! empty($search_certif_end_date2)) {
-	$filter ['certif.certif_dt_end2'] = $db->idate($search_certif_end_date2);
+    $filter ['certif.certif_dt_end2'] = $db->idate($search_certif_end_date2);
 }
 if (! empty($search_site) && $search_site != - 1) {
 	$filter ['s.fk_session_place'] = $search_site;
@@ -142,7 +142,7 @@ if (empty($arch))
 
 if (empty($page) || $page == -1) { $page = 0; }
 
-$limit = GETPOST("limit", 'none')?GETPOST("limit", "int"):$conf->liste_limit;
+$limit = GETPOST("limit", 'none')?GETPOST("limit","int"):$conf->liste_limit;
 $offset = $limit * $page;
 $pageprev = $page - 1;
 $pagenext = $page + 1;
@@ -281,7 +281,8 @@ if ($resql>=0) {
 	}
 
 	$var = true;
-	foreach ($agf->lines as $line) {
+	foreach ( $agf->lines as $line ) {
+
 		// Affichage tableau des sessions
 		$var = ! $var;
 		print "<tr $bc[$var]>";
@@ -320,8 +321,8 @@ if ($resql>=0) {
 
 		print '<td>' . dol_print_date($line->certif_dt_end, '%d/%m/%Y') . '</td>';
 
-		if (!empty($line->certif_dt_end) && $line->certif_dt_end < dol_now()) $style = "background-color:red;";
-		elseif (!empty($line->certif_dt_warning) && $line->certif_dt_warning < dol_now()) $style = "background-color:orange;";
+		if(!empty($line->certif_dt_end) && $line->certif_dt_end < dol_now()) $style = "background-color:red;";
+		elseif(!empty($line->certif_dt_warning) && $line->certif_dt_warning < dol_now()) $style = "background-color:orange;";
 		else $style = "background-color:green;";
 
 		print '<td style="'.$style.'">'.dol_print_date($line->certif_dt_warning, '%d/%m/%Y').'</td>';

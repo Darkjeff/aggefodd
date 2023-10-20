@@ -70,8 +70,7 @@ abstract class ModelePDFAgefodd extends CommonDocGenerator
 	 * @param string $maxfilenamelength length of value to show
 	 * @return array of templates
 	 */
-	static function liste_modeles($db, $maxfilenamelength = 0)
-	{
+	static function liste_modeles($db, $maxfilenamelength = 0) {
 		global $conf;
 
 		$type = 'agefodd';
@@ -86,8 +85,7 @@ abstract class ModelePDFAgefodd extends CommonDocGenerator
 	 *
 	 * @param string $txt
 	 */
-	public function getRealHeightLine($type = '')
-	{
+	public function getRealHeightLine($type = '') {
 		global $conf;
 
 		// Determine if jump pages is needed
@@ -124,7 +122,7 @@ abstract class ModelePDFAgefodd extends CommonDocGenerator
 				$height = $end_y - $start_y;
 				// print 'aa$height='.$height.'<br>';
 			} else {
-				for ($page = $start_page; $page <= $end_page; $page ++) {
+				for($page = $start_page; $page <= $end_page; $page ++) {
 					$this->pdf->setPage($page);
 					// print '$page='.$page.'<br>';
 					if ($page == $start_page) {
@@ -159,8 +157,7 @@ abstract class ModelePDFAgefodd extends CommonDocGenerator
 /**
  * Classe mere des modeles de numerotation des references de Agefodd
  */
-abstract class ModeleNumRefAgefodd
-{
+abstract class ModeleNumRefAgefodd {
 	var $error = '';
 
 	/**
@@ -168,8 +165,7 @@ abstract class ModeleNumRefAgefodd
 	 *
 	 * @return boolean true if module can be used
 	 */
-	function isEnabled()
-	{
+	function isEnabled() {
 		return true;
 	}
 
@@ -178,8 +174,7 @@ abstract class ModeleNumRefAgefodd
 	 *
 	 * @return string Texte descripif
 	 */
-	function info()
-	{
+	function info() {
 		global $langs;
 		$langs->load("agefodd@agefodd");
 		return $langs->trans("AgfNoDescription");
@@ -190,8 +185,7 @@ abstract class ModeleNumRefAgefodd
 	 *
 	 * @return string Example
 	 */
-	function getExample()
-	{
+	function getExample() {
 		global $langs;
 		$langs->load("agefodd@agefodd");
 		return $langs->trans("AgfNoExample");
@@ -203,8 +197,7 @@ abstract class ModeleNumRefAgefodd
 	 *
 	 * @return boolean false si conflit, true si ok
 	 */
-	function canBeActivated()
-	{
+	function canBeActivated() {
 		return true;
 	}
 
@@ -215,8 +208,7 @@ abstract class ModeleNumRefAgefodd
 	 * @param Project $project
 	 * @return string
 	 */
-	function getNextValue($objsoc, $project)
-	{
+	function getNextValue($objsoc, $project) {
 		global $langs;
 		return $langs->trans("NotAvailable");
 	}
@@ -226,8 +218,7 @@ abstract class ModeleNumRefAgefodd
 	 *
 	 * @return string Valeur
 	 */
-	function getVersion()
-	{
+	function getVersion() {
 		global $langs;
 		$langs->load("admin");
 
@@ -249,23 +240,25 @@ abstract class ModeleNumRefAgefodd
  * \param		outputlangs		objet lang a utiliser pour traduction
  * \return int <0 if KO, >0 if OK
  */
-function agf_pdf_create($db, $id, $message, $typeModele, $outputlangs, $file, $socid, $courrier = '', $path_external_model = '', $id_external_model = '', $obj_agefodd_convention = '')
+function agf_pdf_create($db, $id, $message, $typeModele, $outputlangs, $file, $socid, $courrier = '', $path_external_model='', $id_external_model='', $obj_agefodd_convention='')
 {
 	global $conf, $langs;
 	$langs->load('agefodd@agefodd');
 	$langs->load('bills');
 
 	// Charge le modele
-	if (empty($path_external_model)) {
+	if(empty($path_external_model))
+	{
 		if (file_exists(dol_buildpath('/agefodd/core/modules/agefodd/pdf/pdf_' . $typeModele . '.modules.php'))) $nomModele = dol_buildpath('/agefodd/core/modules/agefodd/pdf/pdf_' . $typeModele . '.modules.php');
 		else $nomModele = dol_buildpath('/agefodd/core/modules/agefodd/pdf/override/pdf_' . $typeModele . '.modules.php');
-	} else $nomModele = dol_buildpath($path_external_model);
+	}
+	else $nomModele = dol_buildpath($path_external_model);
 
 	if (file_exists($nomModele)) {
-		require_once $nomModele;
+		require_once ($nomModele);
 
 		$classname = "pdf_" . $typeModele;
-		if (!empty($id_external_model)) $classname = 'pdf_rfltr_agefodd';
+		if(!empty($id_external_model)) $classname = 'pdf_rfltr_agefodd';
 
 		$obj = new $classname($db);
 		$obj->message = $message;
@@ -274,10 +267,10 @@ function agf_pdf_create($db, $id, $message, $typeModele, $outputlangs, $file, $s
 		// output format that does not support UTF8.
 		$sav_charset_output = $outputlangs->charset_output;
 
-		if (empty($path_external_model)) $res_writefile = $obj->write_file($id, $outputlangs, $file, $socid, $courrier);
-		elseif (!empty($id_external_model) && is_callable(array($obj,'write_file_custom_agefodd'))) {
+		if(empty($path_external_model)) $res_writefile = $obj->write_file($id, $outputlangs, $file, $socid, $courrier);
+		elseif(!empty($id_external_model) && is_callable(array($obj,'write_file_custom_agefodd'))) {
 			$res_writefile = $obj->write_file_custom_agefodd($id, $id_external_model, $outputlangs, $file, $obj_agefodd_convention, $socid, $courrier);
-		} else {
+		} else  {
 			$res_writefile = $obj->write_file($id, $id_external_model, $outputlangs, $file, $obj_agefodd_convention, $socid);
 		}
 

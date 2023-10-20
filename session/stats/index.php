@@ -211,6 +211,8 @@ if (empty($socid)) {
 	// Show filter box
 	print '<form name="stats" method="POST" action="' . $_SERVER ["PHP_SELF"] . '">';
 	print '<input type="hidden" name="mode" value="' . $mode . '">';
+	$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+	print '<input type="hidden" name="token" value="' . $newToken . '">';
 	print '<table class="border" width="100%">';
 	print '<tr><td class="liste_titre" colspan="2">' . $langs->trans("Filter") . '</td></tr>';
 	// Company

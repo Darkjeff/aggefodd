@@ -27,8 +27,7 @@ include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
 /**
  * Class to manage the box
  */
-class box_agefodd_stats extends ModeleBoxes
-{
+class box_agefodd_stats extends ModeleBoxes {
 	var $boxcode = "agefodd_stats";
 	var $boximg = "agefodd@agefodd";
 	var $boxlabel;
@@ -43,8 +42,7 @@ class box_agefodd_stats extends ModeleBoxes
 	/**
 	 * Constructor
 	 */
-	function __construct()
-	{
+	function __construct() {
 		global $langs,$user;
 		$langs->load("boxes");
 
@@ -59,11 +57,11 @@ class box_agefodd_stats extends ModeleBoxes
 	 * @param int $max of records to load
 	 * @return void
 	 */
-	function loadBox()
-	{
+	function loadBox() {
 		global $conf, $user, $langs, $db;
 
-		$this->max = $max;
+		if(!empty($max)) $this->max = $max;
+		else $this->max = 0;
 
 		dol_include_once('/agefodd/class/agefodd_index.class.php');
 
@@ -153,7 +151,7 @@ class box_agefodd_stats extends ModeleBoxes
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfMenuSessArchList"), "generic").$langs->trans("AgfMenuSessArchList")
+					'text' => img_object($langs->trans("AgfMenuSessArchList"), "generic").' '.$langs->trans("AgfMenuSessArchList")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left"',
@@ -162,6 +160,8 @@ class box_agefodd_stats extends ModeleBoxes
 			);
 			$key ++;
 		}
+
+
 	}
 
 	/**
@@ -172,8 +172,7 @@ class box_agefodd_stats extends ModeleBoxes
 	 * @param integer $nooutput nooutput
 	 * @return string
 	 */
-	function showBox($head = null, $contents = null, $nooutput = 0)
-	{
+	function showBox($head = null, $contents = null, $nooutput = 0) {
 		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }
