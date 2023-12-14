@@ -233,8 +233,7 @@ if ($action == 'send' && empty($addfile) && empty($removedfile) && $user->rights
 	}
 	// tableau des fichiers envoyés aux stagiaires
 	$TSentFile = array();
-
-	if (!empty($TParticipant)){
+ 	if (!empty($TParticipant)){
 		foreach ($TParticipant as $line) {
 
 			$substitutionarray = getCommonSubstitutionArray($langs, 0, null, $object);
@@ -315,7 +314,9 @@ if ($action == 'send' && empty($addfile) && empty($removedfile) && $user->rights
 			$object->sendtoid = $contactid;
 
 			$send_email = $agf_trainee->mail;
-
+			if (get_class($line) == 'AgfSessionTrainer' && empty($send_email)) {
+				$send_email = $line->email;
+			}
 			$sendmail_check = true;
 
 
@@ -2423,7 +2424,8 @@ if (! empty($id)) {
 						print '<tr><td>' . $langs->trans("AgfOPCAName") . '</td>';
 						print '	<td>';
 						$htmlname_thirdparty='fksocOPCA';
-						print $form->select_company($agf_opca->fk_soc_OPCA, $htmlname_thirdparty, '(s.client IN (1,2))', 'SelectThirdParty', 1, 0);
+                        $filter = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3))' :  's.client in (1,2,3)';
+						print $form->select_company($agf_opca->fk_soc_OPCA, $htmlname_thirdparty, $filter, 'SelectThirdParty', 1, 0);
 						$events[]=array('showempty' => 1, 'method' => 'getContacts', 'url' => dol_buildpath('/core/ajax/contacts.php',1), 'htmlname' => 'fksocpeopleOPCA', 'params' => array('add-customer-contact' => 'disabled'));
 						//Select contact regarding comapny
 						if (count($events))
@@ -2962,7 +2964,8 @@ if (! empty($id)) {
 				print '<tr><td width="20%">' . $langs->trans("AgfOPCAName") . '</td>';
 				print '	<td>';
 				$htmlname_thirdparty='fksocOPCA';
-				print $form->select_company($agf->fk_soc_OPCA, $htmlname_thirdparty, '(s.client IN (1,2,3))', 'SelectThirdParty', 1, 0);
+                $filter = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3))' :  's.client in (1,2,3)';
+				print $form->select_company($agf->fk_soc_OPCA, $htmlname_thirdparty, $filter, 'SelectThirdParty', 1, 0);
 				$events[]=array('method' => 'getContacts', 'url' => dol_buildpath('/core/ajax/contacts.php',1), 'htmlname' => 'fksocpeopleOPCA', 'params' => array('add-customer-contact' => 'disabled'));
 				//Select contact regarding comapny
 				if (count($events))

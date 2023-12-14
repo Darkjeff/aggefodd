@@ -266,19 +266,12 @@ class ActionsAgefodd
 
 
 		if (empty($conf->global->AGEFODD_HIDE_QUICK_SEARCH) && $user->rights->agefodd->lire && empty($user->societe_id)) {
-			$str_search_id = '';
-			$str_search_ref = '';
-			$str_search_trainee = '';
-			if (floatval(DOL_VERSION) < 8) {
-				$str_search_id = '&search_id=' . urlencode($parameters['search_boxvalue']);
-				$str_search_ref = '&search_session_ref=' . urlencode($parameters['search_boxvalue']);
-				$str_search_trainee = '&search_namefirstname=' . urlencode($parameters['search_boxvalue']);
-			}
+			$str_search      = urlencode($parameters['search_boxvalue']);
 
 			$this->results['searchintoagefoddsession'] = array(
 				'position' => 103000,
 				'text' => img_object('', 'agefodd@agefodd') . ' ' . $langs->trans("AgfSessionId"),
-				'url' => dol_buildpath('/agefodd/session/list.php', 1) . '?search_by=search_id' . $str_search_id
+				'url' => dol_buildpath('/agefodd/session/list.php', 1) . '?agefodd_session_search_by_id=' . $str_search // nom du paramètre intercepté par JS fixrecherche.js
 			);
 
 			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION)){
@@ -288,7 +281,7 @@ class ActionsAgefodd
 			$this->results['searchintoagefoddsessionref'] = array(
 				'position' => 103000,
 				'text' => img_object('', 'agefodd@agefodd') . ' ' . $langs->trans("AgfSessionRef"),
-				'url' => dol_buildpath('/agefodd/session/list.php', 1) . '?search_by=search_session_ref' . $str_search_ref
+				'url' => dol_buildpath('/agefodd/session/list.php', 1) . '?agefodd_session_search_by_ref=' . $str_search // nom du paramètre intercepté par JS fixrecherche.js
 			);
 			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION_REF))
 				$this->results['searchintoagefoddsessionref']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_SESSION_REF;
@@ -296,7 +289,7 @@ class ActionsAgefodd
 			$this->results['searchintoagefoddtrainee'] = array(
 				'position' => 103000,
 				'text' => img_object('', 'contact') . ' ' . $langs->trans("AgfMenuActStagiaire"),
-				'url' => dol_buildpath('/agefodd/trainee/list.php', 1) . '?search_by=search_namefirstname' . $str_search_trainee
+				'url' => dol_buildpath('/agefodd/trainee/list.php', 1) . '?search_namefirstname=' . $str_search
 			);
 			if (!empty($conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_TRAINEE)) {
 				$this->results['searchintoagefoddtrainee']['position'] = $conf->global->AGEFODD_POSITION_SEARCH_TO_AGEFODD_TRAINEE;

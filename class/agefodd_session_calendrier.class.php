@@ -109,7 +109,11 @@ class Agefodd_sesscalendar extends CommonObject{
 		if(empty($this->fk_user_author)) $this->fk_user_author = $user->id;
 
 		$TExcludedScheduleType = array();
-		if (!empty($conf->global->AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE)) $TExcludedScheduleType = json_decode($conf->global->AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE);
+        if (!empty($conf->global->AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE)) {
+            $jsonDecodeReturn = json_decode($conf->global->AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE);
+            if($jsonDecodeReturn != false) $TExcludedScheduleType = $jsonDecodeReturn;
+            else setEventMessage($langs->trans('ErrAGF_NO_TRAINER_CHECK_SCHEDULE_TYPE_invalid'));
+        }
 		// Clean parameters
 		if (!is_numeric($this->status)) $this->status = 0;
 		// Check parameters

@@ -318,8 +318,8 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 					'add-customer-contact' => 'disabled'
 			)
 	);
-	print '<td>' . $form->select_thirdparty_list('', 'societe', '((s.client IN (1,2,3)) OR (s.fournisseur=1))', 'SelectThirdParty', 1, 0, $events) . '</td></tr>';
-
+	$filters = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3) OR (s.fournisseur:=:1) )' : '((s.client IN (1,2,3)) OR (s.fournisseur=1))';
+	print '<td>' . $form->select_thirdparty_list('', 'societe', $filters, 'SelectThirdParty', 1, 0, $events) . '</td></tr>';
 	print '<tr><td>' . $langs->trans("Contact") . '</td>';
 	print '<td>';
 	if (! empty($societe)) {
@@ -434,7 +434,8 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 								'add-customer-contact' => 'disabled'
 						)
 				);
-				print '<td>' . $form->select_thirdparty_list($agf->socid, 'societe', '((s.client IN (1,2,3)) OR (s.fournisseur=1))', 'SelectThirdParty', 1, 0,$events) . '</td></tr>';
+				$filters = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3) OR (s.fournisseur:=:1) )' :  '((s.client IN (1,2,3)) OR (s.fournisseur=1))';
+				print '<td>' . $form->select_thirdparty_list($agf->socid, 'societe', $filters, 'SelectThirdParty', 1, 0,$events) . '</td></tr>';
 
 				print '<tr><td>' . $langs->trans("Contact") . '</td>';
 				print '<td>';

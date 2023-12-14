@@ -76,6 +76,7 @@ $search_intitule = GETPOST("search_intitule", 'none');
 $search_ref = GETPOST("search_ref", 'none');
 $search_ref_interne = GETPOST("search_ref_interne", 'none');
 $search_datec = dol_mktime(0, 0, 0, GETPOST('search_datecmonth', 'int'), GETPOST('search_datecday', 'int'), GETPOST('search_datecyear', 'int'));
+
 $search_duree = GETPOST('search_duree', 'none');
 $search_nb_place = GETPOST('search_nb_place', 'none');
 // $search_dated = dol_mktime ( 0, 0, 0, GETPOST ( 'search_datedmonth', 'int' ), GETPOST ( 'search_datedday', 'int' ), GETPOST ( 'search_datedyear',
@@ -95,6 +96,10 @@ if ($search_fk_product == - 1) {
 	$search_fk_product = '';
 }
 
+$search_nb_session = GETPOST('search_nb_session', 'int');
+
+$search_dated = dol_mktime(0, 0, 0, GETPOST('search_datedmonth', 'int'), GETPOST('search_datedday', 'int'), GETPOST('search_datedyear', 'int'));
+
 	// Do we click on purge search criteria ?
 if (GETPOST("button_removefilter_x", 'none')) {
 	$search_intitule = '';
@@ -103,10 +108,11 @@ if (GETPOST("button_removefilter_x", 'none')) {
 	$search_datec = '';
 	$search_duree = "";
 	$search_nb_place = "";
-	// $search_dated = "";
 	$search_id = '';
 	$search_categ = '';
 	$search_fk_product='';
+    $search_dated = '';
+    $search_nb_session = '';
 }
 $contextpage = 'listtraining';
 include DOL_DOCUMENT_ROOT.'/core/actions_changeselectedfields.inc.php';
@@ -176,7 +182,7 @@ if (! empty($search_ref_interne)) {
 }
 if (! empty($search_datec)) {
 	$filter ['c.datec'] = $db->idate($search_datec);
-	$option .= '&search_datecmonth=' . dol_print_date($search_datec,'%m').'&search_datecday='.dol_print_date($search_datec,'%d').'&search_datecyear='.dol_print_date($search_datec,'%Y');
+    $option .= '&search_datecmonth=' . dol_print_date($search_datec,'%m').'&search_datecday='.dol_print_date($search_datec,'%d').'&search_datecyear='.dol_print_date($search_datec,'%Y');
 }
 if (! empty($search_duree)) {
 	$filter ['c.duree'] = $search_duree;
@@ -205,7 +211,14 @@ if (! empty($search_fk_product)) {
 if (!empty($limit)) {
 	$option .= '&limit=' . $limit;
 }
-
+if (! empty($search_dated)) {
+    $filter ['lastsession'] = $db->idate($search_dated);
+    $option .= '&search_datedmonth=' . dol_print_date($search_dated,'%m').'&search_datedday='.dol_print_date($search_dated,'%d').'&search_datedyear='.dol_print_date($search_dated,'%Y');
+}
+if (! empty($search_nb_session)) {
+    $filter ['nbsession'] = $search_nb_session;
+    $option .= '&search_nb_session=' . $search_nb_session;
+}
 
 foreach ($search_array_options as $key => $val)
 {
@@ -304,13 +317,14 @@ if (! empty($arrayfields['c.nb_place']['checked'])){
 	print '</td>';
 }
 if (! empty($arrayfields['a.dated']['checked'])){
-	print '<td class="liste_titre">';
-	// print $form->select_date ( $search_dated, 'search_dated', 0, 0, 1, 'search_form' );
+	print '<td class="liste_titre nowraponall">';
+    print $form->select_date ( $search_dated, 'search_dated', 0, 0, 1, 'search_form' );
 	print '</td>';
 }
 if (! empty($arrayfields['AgfNbreAction']['checked'])){
 	print '<td class="liste_titre">';
-	print '</td>';
+    print '<input type="text" class="flat maxwidth50" name="search_nb_session" value="' . $search_nb_session . '">';
+    print '</td>';
 }
 
 if (! empty($arrayfields['c.fk_product']['checked'])) {

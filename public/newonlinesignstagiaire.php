@@ -106,8 +106,8 @@ if (!empty($person_type))
     }
 }
 
-$idstagiaire = GETPOST('fk_stagiaire', 'int');
-$idformateur = GETPOST('fk_formateur', 'int');
+if(empty($idstagiaire)) $idstagiaire = GETPOST('fk_stagiaire', 'int');
+if(empty($idformateur)) $idformateur = GETPOST('fk_formateur', 'int');
 $newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 $toselect = GETPOST('toselect', 'array');
 $formAgefodd = new FormAgefodd($db);
@@ -197,7 +197,6 @@ if ($source == 'agefodd_agsession') {
 
 // Check securitykey
 $securekeyseed = isset($conf->global->AGEFODD_ONLINE_SIGNATURE_SECURITY_TOKEN) ? $conf->global->AGEFODD_ONLINE_SIGNATURE_SECURITY_TOKEN : '';
-
 if (!dol_verifyHash($securekeyseed .$id . $idparticipant. $typeparticipant .  (empty($conf->multicompany->enabled) ? '' : $entity), $SECUREKEY, '0')) {
 	http_response_code(403);
 	print 'Bad value for securitykey. Value provided ' . dol_escape_htmltag($SECUREKEY) . ' does not match expected value for ref=' . dol_escape_htmltag($ref);

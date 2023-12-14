@@ -217,8 +217,7 @@ print '<td>' . $langs->trans('ParentCompany') . '</td>';
 $extrafields = new ExtraFields($db);
 $extrafields->fetch_name_optionals_label('thirdparty');
 if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison',$extrafields->attributes['societe']['type'])) {
-
-	$filter='extra.ts_maison=1';
+	$filter= (float) DOL_VERSION >= 18.0 ? '( (extra.ts_maison:=:1) )' :  'extra.ts_maison=1';
 } else {
 	$filter='';
 }

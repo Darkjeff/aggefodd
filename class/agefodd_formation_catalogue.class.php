@@ -892,14 +892,16 @@ class Formation extends CommonObject {
 		if (! empty($filter)) {
 			foreach ( $filter as $key => $value ) {
 				// To allow $filter['YEAR(s.dated)']=>$year
-				if ($key == 'c.datec') {
+				if ($key == 'c.datec' ) {
 					$sql .= ' AND DATE_FORMAT(' . $key . ',\'%Y-%m-%d\') = \'' . dol_print_date($value, '%Y-%m-%d') . '\'';
 				} elseif ($key == 'c.duree' || $key == 'c.fk_c_category' || $key == 'c.fk_c_category_bpf') {
 					$sql .= ' AND ' . $key . ' = ' . $value;
 				} elseif (strpos($key,'ef.')!==false){
 					$sql.= $value;
 				} else {
-					$sql .= ' AND ' . $key . ' LIKE \'%' . $value . '%\'';
+                    if($key != 'lastsession' && $key != 'nbsession') {            // doivent être filtrés avec un having
+                        $sql .= ' AND ' . $key . ' LIKE \'%' . $value . '%\'';
+                    }
 				}
 			}
 		}
@@ -909,13 +911,18 @@ class Formation extends CommonObject {
 		{
 			$sql.= ',ef.'.$key;
 		}
-		if (! empty($sortfield)) {
-			$sql .= ' ORDER BY ' . $sortfield . ' ' . $sortorder;
-		}
-		if (! empty($limit)) {
-			$sql .= ' ' . $this->db->plimit($limit + 1, $offset);
-		}
-
+        if(!empty($filter['lastsession']) || !empty($filter['nbsession'])) {
+            $sql .= ' HAVING ';
+            if(!empty($filter['lastsession']))       $sql .= 'DATE_FORMAT(lastsession,\'%Y-%m-%d\') = \'' . dol_print_date($filter['lastsession'], '%Y-%m-%d') . '\'';
+            if(!empty($filter['lastsession']) && !empty($filter['nbsession'])) $sql .= ' AND ';
+            if(!empty($filter['nbsession']))         $sql .= 'nbsession = '.$filter['nbsession'];
+        }
+        if (! empty($sortfield)) {
+            $sql .= ' ORDER BY ' . $sortfield . ' ' . $sortorder;
+        }
+        if (! empty($limit)) {
+            $sql .= ' ' . $this->db->plimit($limit + 1, $offset);
+        }
 		dol_syslog(get_class($this) . "::fetch_all ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {

@@ -218,11 +218,12 @@ if (empty($socid)) {
 	// Company
 	print '<tr><td>' . $langs->trans("ThirdParty") . '</td><td>';
 	if ($mode == 'customer') {
-		$filter = 's.client in (1,2,3)';
+		$filter = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3))' :  's.client in (1,2,3)';
 	}
 	if ($mode == 'supplier') {
-		$filter = 's.fournisseur = 1';
+		$filter = (float) DOL_VERSION >= 18.0 ? '( (s.fournisseur:=:1) )' : 's.fournisseur = 1';
 	}
+
 	print $form->select_thirdparty_list($socid, 'socid', $filter, 'SelectThirdParty');
 	print '</td></tr>';
 	// User

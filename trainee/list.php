@@ -58,7 +58,8 @@ $search_soc = GETPOST("search_soc", 'none');
 $search_tel = GETPOST("search_tel", 'none');
 $search_tel2 = GETPOST("search_tel2", 'none');
 $search_mail = GETPOST("search_mail", 'none');
-$search_namefirstname = GETPOST("search_namefirstname", 'none');
+$search_namefirstname = GETPOST("search_namefirstname", 'none'); // filtre depuis la page
+$search_namefirstname = GETPOST("search_all", 'none');           // recherche depuis la loupe globale
 $search_training_ref = GETPOST("search_training_ref", 'alpha');
 $trainee_view = GETPOST("trainee_view", 'int');
 

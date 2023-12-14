@@ -166,7 +166,7 @@ class InterfaceAgefodd {
 				$object->note_private = dol_concatdesc($object->note_private, "\n".$langs->transnoentities('AttachedFiles').': '.$_SESSION['AGFMassActionFileSended']);
 				unset($_SESSION['AGFMassActionFileSended']);
 			}
-			$object->update($user);
+			$object->update($user, true);
 		}
 
 		// Users
@@ -174,15 +174,14 @@ class InterfaceAgefodd {
 			dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . $user->id . ". id=" . $object->id);
 
 			if ($object->type_code == 'AC_AGF_SESS') {
-
-				$action = new ActionComm($this->db);
+                $action = new ActionComm($this->db);
 				$result = $action->fetch($object->id);
 
 				if ($result != - 1) {
 
 					if ($object->id == $action->id) {
 
-						$agf_cal = new Agefodd_sesscalendar($this->db);
+						$agf_cal = new Agefodd_sesscalendar($object->db);
 						$result = $agf_cal->fetch_by_action($action->id);
 						if ($result > 0) {
 
@@ -210,7 +209,6 @@ class InterfaceAgefodd {
 				}
 			}
 			if ($object->type_code == 'AC_AGF_SESST') {
-
 				$action = new ActionComm($this->db);
 				$result = $action->fetch($object->id);
 
@@ -218,7 +216,7 @@ class InterfaceAgefodd {
 
 					if ($object->id == $action->id) {
 
-						$agf_cal = new Agefoddsessionformateurcalendrier($this->db);
+						$agf_cal = new Agefoddsessionformateurcalendrier($object->db);
 						$result = $agf_cal->fetch_by_action($action->id);
                         if ($result > 0) {
 

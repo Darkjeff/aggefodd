@@ -47,7 +47,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 	 * \brief		Constructor
 	 * \param		db		Database handler
 	 */
-	function pdf_conseils($db) {
+	function __construct($db) {
 		global $conf, $langs, $mysoc;
 
 		$langs->load("agefodd@agefodd");
@@ -145,7 +145,6 @@ class pdf_conseils extends ModelePDFAgefodd {
 		}
 
 		if (file_exists($dir)) {
-
 			$pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
 
 			if (class_exists('TCPDF')) {
@@ -161,8 +160,7 @@ class pdf_conseils extends ModelePDFAgefodd {
 			$pdf->SetCreator("Dolibarr " . DOL_VERSION . ' (Agefodd module)');
 			$pdf->SetAuthor($outputlangs->convToOutputCharset($user->fullname));
 			$pdf->SetKeyWords($outputlangs->convToOutputCharset($agf->ref_interne) . " " . $outputlangs->transnoentities("Document"));
-			if ($conf->global->MAIN_DISABLE_PDF_COMPRESSION)
-				$pdf->SetCompression(false);
+			if (!empty($conf->global->MAIN_DISABLE_PDF_COMPRESSION)) $pdf->SetCompression(false);
 
 			$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
 			$pdf->SetAutoPageBreak(1, $this->marge_basse);
@@ -190,7 +188,6 @@ class pdf_conseils extends ModelePDFAgefodd {
 				$this->_pagehead($pdf, $agf, 1, $outputlangs);
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
 				$pdf->SetTextColor($this->colorheaderText [0], $this->colorheaderText [1], $this->colorheaderText [2]);
-
 
 				$posY=$this->marge_haute;
 				$posX=$this->page_largeur-$this->marge_droite-55;

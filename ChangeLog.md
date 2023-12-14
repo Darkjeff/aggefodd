@@ -1,12 +1,16 @@
 
 # Change Log
 All notable changes to this project will be documented in this file.
-
-# UNRELEASED
-
-
 ## Version 7.14 - Released on *29/05/2023*
 
+- FIX : DA024012 : rapport détaillé par client, fichier rendu scrollable horizontalement - *14/11/2023* - 7.14.28
+- FIX : liste receuils: champs dernieres session + session réalisées filtrables - *13/11/2023* - 7.14.25 (backport)
+- FIX : DA023972 dans le cas du formateur lors de l'envoi d'email de signature il n'y avait pas d'adresse mail - *08/11/2023* - 7.14.27
+- FIX : warnings à la création de calendrier depuis une session - *31/10/2023* - 7.14.26
+- FIX : compat php8 pour génération PDF Conseils pratiques - *31/10/2023* - 7.14.26
+- FIX : filtre select_thirdparty oublié lors de la correction dans la 7.14.24 (dans session > edit subro) - *31/10/2023* - 7.14.26
+- FIX : DA023972 - token signature - *10/10/2023* - 7.14.25
+- FIX : modification des filtres passés à select_thirdparty_list pour la version 18.0 dolibarr  - *12/10/2023)* - 7.14.24  
 - FIX : missing user message when no trainee or no compatible status in massgeneration - *12/09/2023* - 7.14.23
 - FIX : fix fatal multicompany BIS - *07/06/2023* - 7.14.22
 - FIX : trainer mode affichage lieu - *31/08/2023* - 7.14.21  
@@ -110,6 +114,9 @@ complète avec ajout d'une ligne avec le produit lié à la formation" de rensei
 - Fusion des onglets participants et formateurs - 21/10/2022 - 7.0.0
 
 ## Version 6.34 - Released on *20/10/2022*
+
+- FIX : DA024012 : rapport détaillé par client, fichier rendu scrollable horizontalement (backport de 7.14.28) - *14/11/2023* - 6.34.29
+- FIX : DA023880 generation convention pagebreak disposition financière refacto fonction generative  - *09/10/2023* - 6.34.28
 - FIX : Modification section G du BPF - *01/08/2023* - 6.34.27
 - FIX : Modification de  F-2 pour ne selectionner que les prestataires - *31/07/2023* - 6.34.26  
 - FIX : suppression de la ligne c13 dans le pdf - *27/07/2023* - 6.34.25  

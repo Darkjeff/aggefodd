@@ -692,8 +692,6 @@ class AgefoddExportExcelByCustomer {
 				$this->workbook->getActiveSheet()->getRowDimension($i)->setRowHeight(25);
 			}
 
-			$this->workbook->getActiveSheet()->freezePaneByColumnAndRow($max_value_key,$this->rowheader+1);
-
 			$this->workbook->getActiveSheet()->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
 			$this->workbook->getActiveSheet()->getPageSetup()->setPrintArea('A1:'.\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($max_value_key).$this->row);
 

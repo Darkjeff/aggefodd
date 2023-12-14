@@ -58,7 +58,7 @@ class modAgefodd extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Trainning Management Assistant Module";
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '7.14.23';
+		$this->version = '7.14.28';
 
 		// Url to the file with your last numberversion of this module
 		require_once __DIR__ . '/../../class/techatm.class.php';
@@ -166,6 +166,7 @@ class modAgefodd extends DolibarrModules
 			'substitutions' => '/agefodd/core/substitutions/',
 			'models' => 1,
 			'css' => array('/agefodd/css/agefodd.css'),
+            'js' => array('/agefodd/js/fixrecherche.js')
 		);
 
 		// Dependencies

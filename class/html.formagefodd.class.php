@@ -2279,4 +2279,24 @@ class FormAgefodd extends Form
 
 		return $this->multiselectarray($htmlname, $options_array, $selected_array);
 	}
+
+    /*
+    * Renvoie le formulaire pour la selection du champs send_survey_status
+    * @param   Agsession   $agf        Agsession
+    * @param   string      $htmlname   nom de l'input
+    * @param   int         $selected    choix selectionné
+    * @param   bool        $showempty  afficher choix vide
+    * @return  string      html code du formulaire
+    */
+    function select_send_survey_status(Agsession $agf, string $htmlname, int $selected = 0, bool $showempty = true) : string {
+           global $langs;
+           $out                 = '<select name="'.$htmlname.'" id="'.$htmlname.'">';
+           if($showempty) $out .= '<option value="-1"></option>';
+           if(!empty($agf->fields['send_survey_status']['arrayofkeyval'])) foreach($agf->fields['send_survey_status']['arrayofkeyval'] as $key => $val) {
+                $sel        = ($key == $selected) ? 'selected': '';
+                $out       .= '<option value="'.$key.'" '.$sel.'>'.$langs->trans($val).'</option>';
+           }
+           $out    .= '</select>';
+           return $out;
+    }
 }

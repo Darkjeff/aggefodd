@@ -65,7 +65,7 @@ AgfResyncroniseFromStandardCatalogue=Resynchroniser depuis le recueil standard
 AgfTraining=Formation
 AgfMenuCatListActivees=Formations actives
 AgfMenuCatListArchivees=Formations archivées
-ActionComAssociatedSessionNotFound=La session associée n'a pas était trouvée. Note: les évènements de type "Session de formation" et "Session de formation des formateurs" ne doivent pas être créés manuellement.
+ActionComAssociatedSessionNotFound=La session associée n'a pas été trouvée. Note: les évènements de type "Session de formation" et "Session de formation des formateurs" ne doivent pas être créés manuellement.
 AgfCatActive=Active
 AgfCatArchivee=Archivée
 Updated=Mis à jour
@@ -2028,3 +2028,4 @@ ErrorsTraineeMerge=Echec de la fusion de 2 enregistrements. Demande annulée.
 AGF_lastDateGenPdf= Date de génération :
 
 ErrNoTraineeOrNoCompatibleStatus=Pas de participant dans la session ou aucun participant n'a un statut compatible <br /> Les statuts compatibles avec la génération sont "présent" et "partiellement présent"
+ErrAGF_NO_TRAINER_CHECK_SCHEDULE_TYPE_invalid=Configuration AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE invalide

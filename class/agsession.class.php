@@ -2828,6 +2828,7 @@ class Agsession extends CommonObject
 		$sql .= " ,s.fk_soc_requester";
 		$sql .= " ,s.fk_socpeople_requester";
 		$sql .= " ,s.fk_socpeople_presta";
+        $sql .= ", s.send_survey_status";
 		$sql .= " ,sorequester.nom as socrequestername";
 		$sql .= " ,soemployer.nom as soemployername";
 		$sql .= " ,CASE WHEN sc.color IS NULL THEN c.color ELSE sc.color END as trainingcolor";
@@ -3048,7 +3049,7 @@ class Agsession extends CommonObject
 					$line->fk_soc_employer = $obj->fk_soc_employer;
 					$line->trainerrowid = $obj->trainerrowid;
 					$line->type_session = $obj->type_session;
-
+                    $line->send_survey_status = $obj->send_survey_status;
 					$line->date_res_trainer = $this->db->jdate($obj->date_res_trainer);
 					$line->fk_session_place = $obj->fk_session_place;
 					$line->dated = $this->db->jdate($obj->dated);
@@ -6706,8 +6707,8 @@ class Agsession extends CommonObject
 		$out = '';
 
 		if($key == 'send_survey_status'){
-			if(isset($this->fields[$key]['arrayofkeyval'][$this->send_survey_status])){
-				$out.= $langs->trans($this->fields[$key]['arrayofkeyval'][$this->send_survey_status]);
+			if(isset($this->fields[$key]['arrayofkeyval'][$value])){
+				$out.= $langs->trans($this->fields[$key]['arrayofkeyval'][$value]);
 			}
 		}
 		elseif ($key == 'status'){
@@ -6877,6 +6878,7 @@ class AgfSessionLine
 	public $fk_user_com;
 	public $archivestatuslib;
 	public $array_options = array();
+    public $send_survey_status;
 	public function __construct() {
 		return 1;
 	}

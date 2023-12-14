@@ -519,7 +519,7 @@ class pdf_convention extends ModelePDFAgefodd
 					$this->str = $agf_conv->art2;
 					$funcPrintChapter($chapterTitle, $agf_conv->art2);
 				}
-				
+
 				$chapterTitle = $funcGetChapterTitle('AgfPDFConv13');
 				if (preg_match('/List_Participants/', $agf_conv->art3)) {
 					if (is_array($agf_conv->line_trainee) && count($agf_conv->line_trainee) > 0) {
@@ -875,6 +875,7 @@ class pdf_convention extends ModelePDFAgefodd
 	{
 		global $langs;
 		static $recurseLevel = 0;
+		$colheight = 6;
 		$curPage = $pdf->getPage();
 		$breakMargin = $this->hauteurpied;
 		$posX = $this->marge_gauche;
@@ -893,49 +894,50 @@ class pdf_convention extends ModelePDFAgefodd
 			$langs->transnoentities("TotalHT"),
 			$langs->transnoentities("TotalTTC")
 		);
-		$w = array(
-			80,
-			13,
-			19,
-			13,
-			8,
-			20,
-			20
-		);
-		for($i = 0; $i < count($header); $i ++) {
-			$pdf->Cell($w[$i], 6, $header[$i], 1, 0, 'C', 1);
-		}
-		$posY += 6;
+		$w = array(80, 13, 19, 13, 8, 20, 20);
+
 		$fill = false;
 		$total_ht = 0;
 		$total_tva = 0;
 		$total_ttc = 0;
-
+		$posY_after = 0;
 		for($i = 0; $i < count($agf_comdetails->lines); $i ++) {
-			$pdf->startTransaction();
-			
-			$pdf->SetXY($posX, $posY);
-			$posY = $pdf->GetY();
-			$pdf->writeHTMLCell($w[0], 0, $posX, $posY, $outputlangs->transnoentities($agf_comdetails->lines[$i]->description), 1, 1);
-			$posY_after = $pdf->GetY();
-			$hauteur = ($posY_after - $posY);
 
-			if ($posY_after < $posY) // c'est qu'on est passé à la page suivantez en auto
+			if ($posY_after < $posY)
 			{
-				$pdf->rollbackTransaction(true);
-				$this->forcePageBreak($pdf, $agf, $outputlangs);
+				if ($i > 0){
 
-				$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize - 1);
-				for($j = 0; $j < count($header); $j ++) {
-		                        $pdf->Cell($w[$j], 6, $header[$j], 1, 0, 'C', 1);
-		                }
-                		$fill = false;
+					$pdf->rollbackTransaction(true);
+					$this->forcePageBreak($pdf, $agf, $outputlangs);
+					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize - 1);
+					$fill = false;
+				}
+
 				$pdf->startTransaction();
+
+				for($j = 0; $j < count($header); $j ++) {
+					$pdf->Cell($w[$j], 6, $header[$j], 1, 0, 'C', 1);
+				}
 				$posY = $pdf->GetY()+6;
 				$pdf->writeHTMLCell($w[0], 0, $posX, $posY, $outputlangs->transnoentities($agf_comdetails->lines[$i]->description), 1, 1);
 				$posY_after = $pdf->GetY();
-                        	$hauteur = ($posY_after - $posY);
-				$curPage = $pdf->getPage();
+                $hauteur = ($posY_after - $posY);
+			}else{
+
+				$pdf->startTransaction();
+				$pdf->SetXY($posX, $posY);
+				$posY = $pdf->GetY();
+				$pdf->writeHTMLCell($w[0], 0, $posX, $posY, $outputlangs->transnoentities($agf_comdetails->lines[$i]->description), 1, 1);
+				$posY_after = $pdf->GetY();
+				$hauteur = ($posY_after - $posY);
+
+				// c'est qu'on est passé à la page suivante en auto
+				if ($posY_after < $posY)
+				{
+					$pdf->rollbackTransaction(true);
+					$this->forcePageBreak($pdf, $agf, $outputlangs);
+					$i--; // nous allons rejouer cette ligne
+				}
 			}
 
 			$pdf->SetXY($posX + $w[0], $posY);
@@ -949,8 +951,9 @@ class pdf_convention extends ModelePDFAgefodd
 			$pdf->Ln();
 			$posY = $pdf->GetY();
 
-
-			$pdf->commitTransaction();
+			if ( is_object($this->objcopy)){
+				$pdf->commitTransaction();
+			}
 
 			$total_ht += $agf_comdetails->lines[$i]->total_ht;
 			$total_tva += $agf_comdetails->lines[$i]->total_tva;
@@ -965,22 +968,25 @@ class pdf_convention extends ModelePDFAgefodd
 		$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
 		$pdf->Cell($w[5], 5, $langs->transnoentities("TotalHT"), 0, 0, 'R', 1);
 		$pdf->Cell($w[6], 5, price($total_ht, 0, $outputlangs), 1, 0, 'R');
-		$posY += 6;
+		$posY = $pdf->GetY() + 6;
 		// total TVA
 		$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
 		$pdf->Cell($w[5], 5, $langs->transnoentities("TotalVAT"), 0, 0, 'R', 1);
 		$pdf->Cell($w[6], 5, price($total_tva, 0, $outputlangs), 1, 0, 'R');
-		$posY += 6;
+		$posY = $pdf->GetY() + 6;
+
 		// total TTC
 		$pdf->SetXY($posX + array_sum($w) - $w[5] - $w[6], $posY);
 		$pdf->Cell($w[5], 5, $langs->transnoentities("TotalTTC"), 0, 0, 'R', 1);
 		$pdf->Cell($w[6], 5, price($total_ttc, 0, $outputlangs), 1, 0, 'R');
-		$posY += 5;
+		$posY = $pdf->GetY() + 5;
+
 		// txt "montant euros"
 		$pdf->SetXY($posX, $posY);
 		$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', $this->defaultFontSize - 2);
 		$pdf->Cell(0, 4, $outputlangs->transnoentities("AmountInCurrency", $outputlangs->transnoentitiesnoconv("Currency" . $conf->currency)), 0, 0, 'R', 0);
-		$posY += $this->hApresCorpsArticle + 4;
+		$posY = $pdf->GetY() + $this->hApresCorpsArticle + 4;
+		//$posY += $this->hApresCorpsArticle + 4;
 
 		return $posY;
 	}
