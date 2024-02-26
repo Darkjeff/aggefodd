@@ -24,10 +24,27 @@
  */
 require_once (DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php");
 
+//TODO Reprendre la version du commonobject en dolibarr v24
+if((float) DOL_VERSION >= 18) {
+	class Formation18 extends CommonObject {
+		public function update_note($note, $suffix = '', $notrigger = 0) {
+			return static::update_note_formation($note, $suffix, $notrigger);
+		}
+	}
+}
+else {
+	class Formation18 extends CommonObject {
+		public function update_note($note, $suffix = '') {
+			return static::update_note_formation($note, $suffix);
+		}
+	}
+}
+
+
 /**
  * trainning Class
  */
-class Formation extends CommonObject {
+class Formation extends Formation18 {
 	public $error;
 	public $errors = array ();
 	public $element = 'agefodd_formation_catalogue';
@@ -1277,8 +1294,8 @@ class Formation extends CommonObject {
      *  @param		string		$suffix		'', '_public' or '_private'
      *  @return     int      		   		<0 if KO, >0 if OK
      */
-    function update_note($note,$suffix='')
-    {
+    function update_note_formation($note,$suffix='', $notrigger = 0)
+	{
 
         global $user;
     	if (! $this->table_element)

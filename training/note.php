@@ -60,14 +60,14 @@ $user->rights->agefodd_formation_catalogue->creer = $user->rights->agefodd->agef
 
 if ($action == 'setnote_public' && $user->rights->agefodd->agefodd_formation_catalogue->creer) {
 	$object->fetch($id);
-	$result = $object->update_note(dol_html_entity_decode(GETPOST('note_public', 'none'), ENT_QUOTES), '_public');
+	$result = $object->update_note_formation(dol_html_entity_decode(GETPOST('note_public', 'none'), ENT_QUOTES), '_public');
 	if ($result < 0)
 		setEventMessage($object->error, 'errors');
 }
 
 else if ($action == 'setnote_private' && $user->rights->agefodd->agefodd_formation_catalogue->creer) {
 	$object->fetch($id);
-	$result = $object->update_note(dol_html_entity_decode(GETPOST('note_private', 'none'), ENT_QUOTES), '_private');
+	$result = $object->update_note_formation(dol_html_entity_decode(GETPOST('note_private', 'none'), ENT_QUOTES), '_private');
 	if ($result < 0)
 		setEventMessage($object->error, 'errors');
 }

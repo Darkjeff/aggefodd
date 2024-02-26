@@ -67,7 +67,7 @@ function _printAjaxActionCommList($id) {
 
 			$.ajax({
 				// Appel ajax à la liste des événements agenda (avec le paramètre url origin_page=agefodd_history)
-				url:"<?php print dol_buildpath('/comm/action/list.php', 2).'?origin_page=agefodd_history&search_status=&'.http_build_query($TParamURL); ?>"
+				url:"<?php print dol_buildpath('/comm/action/list.php', 1).'?origin_page=agefodd_history&search_status=&'.http_build_query($TParamURL); ?>"
 			}).done(function(data) {
 
 				// On ne récupère que le bloc formulaire

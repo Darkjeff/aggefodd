@@ -5110,7 +5110,7 @@ class Agsession extends CommonObject
 		// $invoice->duree_validite = $conf->global->PROPALE_VALIDITY_DURATION;
 		$invoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
 
-		if (! empty($this->fk_product)) {
+		if (intval($this->fk_product) > 0) {
 
 			$product = new Product($this->db);
 			$result = $product->fetch($this->fk_product);
@@ -5417,7 +5417,6 @@ class Agsession extends CommonObject
 
 			$invoice->note_public = $financial_doc->note_public;
 		}
-
 		if (empty($error)) {
 			$newinvoiceid = $invoice->create($user);
 			if ($newinvoiceid < 0) {

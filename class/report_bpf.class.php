@@ -1437,6 +1437,7 @@ class ReportBPF extends AgefoddExportExcel
 				- ou unique clef :  AGF_CAT_BPF_OPCA :
 				- champs vide  pas de filtre dans la requête finale
 		- confcustlabel    clé de trad du libellé de la conf confcust
+		- notinconfcust    permet d'indiquer que les catégories clientes seront exclues du filtre
 		- employer         bool: si oui, filtrera les lignes des factures dont le tiers est l'employeur lié à la session
 		- checkOPCA        bool: si oui, filtrera les lignes des factures dont le tiers est l'OPCA de la session
 		- checkPV          bool: si oui,
@@ -1451,6 +1452,7 @@ class ReportBPF extends AgefoddExportExcel
 				'confprodlabel' => 'AgfReportBPFCategProdPeda',
 				'label'         => 'C-1 Produits provenant des entreprises pour la formation de leurs salariés',
 				'confcust'      => 'AGF_CAT_BPF_OPCA,AGF_CAT_PRODUCT_CHARGES,AGF_CAT_BPF_ADMINISTRATION,AGF_CAT_BPF_PARTICULIER,AGF_CAT_BPF_PRESTA,AGF_CAT_BPF_TOOLPEDA,AGF_CAT_BPF_FEEPRESTA,AGF_CAT_BPF_PRODPEDA,AGF_CAT_BPF_FOREIGNCOMP',
+				'notinconfcust' => 1,
 				'employer'      => 0,
 				'checkOPCA'     => 0,
 				'checkPV'       => 0,
@@ -2425,9 +2427,15 @@ class ReportBPF extends AgefoddExportExcel
 
 		// si défini, filtre sur catégorie(s) du tiers de la facture
 		if (!empty($confcust)) {
+			if($data['notinconfcust'] > 0) {
+				$sqlParts['where'] .= /* @lang SQL */
+					" AND f.fk_soc NOT IN ";
+			} else {
+				$sqlParts['where'] .= /* @lang SQL */
+					' AND f.fk_soc IN ';
+			}
 			$sqlParts['where'] .= /* @lang SQL */
-				" AND f.fk_soc IN ("
-				. "    SELECT cs.fk_soc"
+				"  (  SELECT cs.fk_soc"
 				. "    FROM " . MAIN_DB_PREFIX . "categorie_societe AS cs"
 				. "    WHERE cs.fk_categorie IN (" . $confcust . ")"
 				. ")";

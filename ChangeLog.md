@@ -2,7 +2,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 ## Version 7.14 - Released on *29/05/2023*
-
+- FIX : DA024423 : FIX Rapport BPF C1 ne doit pas tenir comptes des catégories clientes BPF - *01/02/2024* - 7.14.33
+- FIX : DA024295 : FIX check if product id is superior to 0 - *10/01/2024* - 7.14.32
+- FIX : DA024298 : FIX Compat PHP 8 for V7.14 - *04/01/2024* - 7.14.31
+- FIX : DA024183 : onglet evenement/agenda d'une session utilisait le mauvais parametrge de dol_buildpath - *15/12/2023* - 7.14.30
+- FIX : DA024173 : select liste formateur lors de l'édition d'un formateur virait le formateur sélectionné du select - *23/11/2023* - 7.14.29 
 - FIX : DA024012 : rapport détaillé par client, fichier rendu scrollable horizontalement - *14/11/2023* - 7.14.28
 - FIX : liste receuils: champs dernieres session + session réalisées filtrables - *13/11/2023* - 7.14.25 (backport)
 - FIX : DA023972 dans le cas du formateur lors de l'envoi d'email de signature il n'y avait pas d'adresse mail - *08/11/2023* - 7.14.27

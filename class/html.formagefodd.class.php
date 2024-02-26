@@ -820,7 +820,6 @@ class FormAgefodd extends Form
 	 */
 	public function select_formateur($selectid = '', $htmlname = 'formateur', $filter = '', $showempty = 0, $forcecombo = 0, $event = array()) {
 		global $conf, $langs;
-
 		if (! empty($conf->use_javascript_ajax) && ! empty($conf->global->AGF_TRAINER_USE_SEARCH_TO_SELECT)) {
 			$placeholder = '';
 			$selected_input_value = '';
@@ -901,7 +900,9 @@ class FormAgefodd extends Form
             {
                 if (!empty($strfilter)) $strfilter.= ' AND ';
 
-                $strfilter.= 's.rowid NOT IN (SELECT fk_agefodd_formateur FROM ' . MAIN_DB_PREFIX . 'agefodd_session_formateur WHERE fk_session=' . $this->db->escape($filter["excludeContributors"]["sessid"]) . ')';
+                $strfilter.= 's.rowid NOT IN (SELECT fk_agefodd_formateur FROM ' . MAIN_DB_PREFIX . 'agefodd_session_formateur WHERE fk_session=' . $this->db->escape($filter["excludeContributors"]["sessid"]);
+				if($selectid > 0) $strfilter.= ' AND fk_agefodd_formateur !='.intval($selectid);
+				$strfilter .= ')';
                 if (array_key_exists("training", $filter["excludeContributors"]) && !empty($filter["excludeContributors"]["training"]))
                 {
                     $strfilter .= ' AND s.rowid IN (SELECT fk_trainer FROM ' . MAIN_DB_PREFIX . 'agefodd_formateur_training WHERE fk_training=' . $this->db->escape($filter["excludeContributors"]["training"]) . ')';
