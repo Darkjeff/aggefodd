@@ -1152,7 +1152,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						print '</td>';
 						print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolContactHelp"), 1, 'help') . '</td></tr></table>';
 						if (! empty($agf->sourcecontactid) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 					} else {
@@ -1161,7 +1161,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						print $formAgefodd->select_agefodd_contact($agf->contactid, 'contact', '', 1);
 						print '</td><td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddContactHelp"), 1, 'help') . '</td></tr></table>';
 						if (! empty($agf->contactid) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 					}
@@ -1180,7 +1180,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						);
 						print $form->select_company($agf->fk_soc_requester, 'fk_soc_requester', '', 'SelectThirdParty', 1, 0, $events);
 						if (! empty($agf->fk_soc_requester) && ! empty($conf->global->COMPANY_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_requester">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_requester&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 
@@ -1194,7 +1194,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						print '</td>';
 						print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolRequesterHelp"), 1, 'help') . '</td></tr></table>';
 						if (! empty($agf->fk_socpeople_requester) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactrequester">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactrequester&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 					}
@@ -1204,7 +1204,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					print '</td>';
 					print '<td>' . $form->textwithpicto('', $langs->trans("AgfTypePrestaHelp"), 1, 'help') . '</td></tr></table>';
 					if (! empty($agf->fk_socpeople_presta) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactpresta">' . img_delete($langs->trans('Delete')) . '</a>';
+						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactpresta&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
 					}
 					print '</td></tr>';
 
@@ -1214,7 +1214,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					print '</td>';
 					print '<td>' . $form->textwithpicto('', $langs->trans("AgfTypeEmployeeHelp"), 1, 'help') . '</td></tr></table>';
 					if (! empty($agf->fk_soc_employer) && ! empty($conf->global->COMPANY_USE_SEARCH_TO_SELECT)) {
-						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_employer">' . img_delete($langs->trans('Delete')) . '</a>';
+						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_employer&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
 					}
 					print '</td></tr>';
 
