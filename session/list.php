@@ -174,6 +174,19 @@ if ($sall_prefix == 'ID')
 else if ($sall_prefix == 'REF') {
     $search_by = "search_session_ref";
 }
+
+if (GETPOSTISSET('agefodd_session_search_by_id')
+	&& GETPOSTISSET('search_all')
+	&& !empty(GETPOST('search_all','alpha'))) {
+	$search_id = GETPOST('search_all','int');
+}
+
+if (GETPOSTISSET('agefodd_session_search_by_ref')
+	&& GETPOSTISSET('search_all')
+	&& !empty(GETPOST('search_all','alpha'))) {
+	$search_session_ref = GETPOST('search_all','alpha');
+}
+
 if (!empty($sall) && !empty($sall_prefix))
 	${$search_by} = $sall;
 
