@@ -258,7 +258,7 @@ class pdf_certificate_completion_trainee extends ModelePDFAgefodd {
 			$pdf->MultiCell($this->page_largeur-$this->marge_gauche-$this->marge_droite, 4, $this->str6, 0, 'L', 0);
 
 			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
-			$sql = 'SELECT code, label FROM llx_c_formation_nature_action WHERE active = 1';
+			$sql = 'SELECT code, label FROM '.$this->db->prefix().'c_formation_nature_action WHERE active = 1';
 			$resql = $this->db->query($sql);
 
 			if($resql)
