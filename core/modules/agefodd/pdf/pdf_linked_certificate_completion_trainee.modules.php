@@ -278,7 +278,7 @@ class pdf_linked_certificate_completion_trainee extends ModelePDFAgefodd {
 					//nombre d’heures réalisées: Si la conf est activée on prend les valeurs saisies manuellement, si non on prend la durée totale de la session
 					if (!empty($conf->global->AGF_USE_REAL_HOURS)) {
 						foreach ($stagiaires->lines as $trainee) {
-							if ($trainee->stagerowid == $socid) {
+							if ($trainee->stagerowid == $trainee->id) {
 								$totalHeures = $heures->heures_stagiaire($agf->id, $trainee->id);
 							}
 						}
