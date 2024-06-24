@@ -233,10 +233,11 @@ function session_prepare_head($object, $showconv = 0)
 	$stagiaires = new Agefodd_session_stagiaire($db);
 	$badgenbtrainee = $stagiaires->fetch_stagiaire_per_session($id);
 	$badgenbtotalperson = $badgenbtrainee;
-	if (!empty($badgenbform)) $badgenbtotalperson += $badgenbform;
+	if (!empty($badgenbform))
+		$head [$h] [1] .= " <span class='badge'>" . $badgenbform . " (F) </span>";
 
 	if (!empty($badgenbtotalperson))
-		$head [$h] [1] .= " <span class='badge'>" . $badgenbtotalperson . "</span>";
+		$head [$h] [1] .= " <span class='badge'>" . $badgenbtotalperson . " (P) </span>";
 
 	$head [$h] [2] = 'person';
 	$h++;
