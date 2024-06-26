@@ -94,7 +94,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportCommercial'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/commercial';
+$upload_dir = $conf->agefodd->dir_output . '/report/commercial/';
 
 $agf = new Agsession($db);
 
@@ -114,7 +114,7 @@ if ($search_type_session != '' && $search_type_session != - 1)
 	$filter['s.type_session'] = $search_type_session;
 }
 
-if (! empty($search_sale) && $search_sale > 0)
+if (! empty($search_sale))
 {
 	$filter['sale.fk_user'] = $search_sale;
 }
@@ -169,7 +169,7 @@ if ($action == 'builddoc')
 		$report = new ReportCommercial($db, $outputlangs);
 
 		$file_sub_title = $report->getSubTitlFileName($filter);
-		$report->file = $upload_dir . '/reportcommercial' . $file_sub_title . '.xlsx';
+		$report->file = $upload_dir . 'reportcommercial' . $file_sub_title . '.xlsx';
 
 
 		$result = $report->write_file($filter);

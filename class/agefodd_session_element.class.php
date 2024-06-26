@@ -141,10 +141,16 @@ class Agefodd_session_element extends CommonObject {
 			$this->id = $this->db->last_insert_id(MAIN_DB_PREFIX . "agefodd_session_element");
 
 			if (! $notrigger) {
-                // Call trigger
-                $result = $this->call_trigger('AGEFODD_SESSION_ELEMENT_CREATE', $user);
-                if ($result < 0) { $error++; }
-                // End call triggers
+				// Uncomment this and change MYOBJECT to your own tag if you
+				// want this action calls a trigger.
+
+				// // Call triggers
+				// include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+				// $interface=new Interfaces($this->db);fetch_by_session sql=SELECT rowid, fk_element, element_type, fk_soc FROM
+				// llx_agefodd_session_element WHERE fk_session_agefodd=419
+				// $result=$interface->run_triggers('MYOBJECT_CREATE',$this,$user,$langs,$conf);
+				// if ($result < 0) { $error++; $this->errors=$interface->errors; }
+				// // End call triggers
 			}
 		}
 
@@ -264,15 +270,7 @@ class Agefodd_session_element extends CommonObject {
 			require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
 		}
 		if ($type == 'prop') {
-			$sql .= " f.rowid, f.fk_soc, f.ref, f.datec, soc.nom as socname";
-			if(floatval(DOL_VERSION) < 14)
-			{
-				$sql .= ", f.total as amount";
-			}
-			else
-			{
-				$sql .= ", f.total_ttc as amount";
-			}
+			$sql .= " f.rowid, f.fk_soc, f.ref, f.datec, f.total as amount, soc.nom as socname";
 			$sql .= " FROM " . MAIN_DB_PREFIX . "propal as f";
 			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe as soc ON soc.rowid=f.fk_soc";
 
@@ -627,10 +625,15 @@ class Agefodd_session_element extends CommonObject {
 
 		if (! $error) {
 			if (! $notrigger) {
-                // Call trigger
-                $result = $this->call_trigger('AGEFODD_SESSION_ELEMENT_UPDATE', $user);
-                if ($result < 0) { $error++; }
-                // End call triggers
+				// Uncomment this and change MYOBJECT to your own tag if you
+				// want this action calls a trigger.
+
+				// // Call triggers
+				// include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+				// $interface=new Interfaces($this->db);
+				// $result=$interface->run_triggers('MYOBJECT_MODIFY',$this,$user,$langs,$conf);
+				// if ($result < 0) { $error++; $this->errors=$interface->errors; }
+				// // End call triggers
 			}
 		}
 
@@ -663,10 +666,15 @@ class Agefodd_session_element extends CommonObject {
 
 		if (! $error) {
 			if (! $notrigger) {
-                // Call trigger
-                $result = $this->call_trigger('AGEFODD_SESSION_ELEMENT_DELETE', $user);
-                if ($result < 0) { $error++; }
-                // End call triggers
+				// Uncomment this and change MYOBJECT to your own tag if you
+				// want this action calls a trigger.
+
+				// // Call triggers
+				// include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+				// $interface=new Interfaces($this->db);
+				// $result=$interface->run_triggers('MYOBJECT_DELETE',$this,$user,$langs,$conf);
+				// if ($result < 0) { $error++; $this->errors=$interface->errors; }
+				// // End call triggers
 			}
 		}
 
@@ -959,7 +967,7 @@ class Agefodd_session_element extends CommonObject {
 
 						if (is_array($commandefourn->lines) && count($commandefourn->lines) > 0)
 						{ // facture fournisseur
-							if($commandefourn->statut==0 || $commandefourn->statut > 5) continue;
+							if($commandefourn->statut==0)continue;
 							foreach ($commandefourn->lines as $line)
 							{
 								if (!($action == 'confirm_deleteline' && $lineid == $line->id))
@@ -1183,7 +1191,7 @@ class Agefodd_session_element extends CommonObject {
 		if ($result < 0) {
 			return -1;
 		}
-
+		
 		// Par defaut si montant facturé non payé ou facturé payé => prix de vent c'est facturé non payé + facturé payé
 		// Sinon montant total propal
 		$invoiced_amount = 0;

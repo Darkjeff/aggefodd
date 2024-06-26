@@ -34,7 +34,6 @@ require_once ('../lib/agefodd.lib.php');
 require_once ('../class/agsession.class.php');
 require_once ('../class/agefodd_session_calendrier.class.php');
 require_once ('../class/agefodd_formation_catalogue.class.php');
-require_once ('../class/agefodd_session_catalogue.class.php');
 require_once ('../class/agefodd_session_element.class.php');
 require_once ('../class/agefodd_session_formateur.class.php');
 require_once ('../class/agefodd_convention.class.php');
@@ -58,8 +57,6 @@ $langs->load('propal');
 $langs->load('bills');
 $langs->load('orders');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
@@ -69,9 +66,6 @@ $arch = GETPOST('arch', 'int');
 $model_doc = GETPOST('model_doc', 'alpha');
 
 $langs->load("companies");
-
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
 
 /*
  * Actions delete
@@ -366,19 +360,17 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	// We try to find is a convetion have already been done for this customers
 	// If yes we retrieve the old value
 	// else we use default
-    if(!empty($conf->global->AGF_USE_PREV_CONVENTION_BY_SOC)) {
-        $agf_last = new Agefodd_convention($db);
-        $result = $agf_last->fetch_last_conv_per_socity($socid);
-        if($result > 0) {
-            $agf_conv = new Agefodd_convention($db);
-            if(! empty($agf_last->sessid) && empty($conf->global->AGF_ALWAYS_USE_DEFAULT_CONVENTION)) {
-                $result = $agf_conv->fetch($agf_last->sessid, $socid);
-                if($agf_last->sessid) {
-                    $last_conv = 'ok';
-                }
-            }
-        }
-    }
+	$agf_last = new Agefodd_convention($db);
+	$result = $agf_last->fetch_last_conv_per_socity($socid);
+	if ($result > 0) {
+		$agf_conv = new Agefodd_convention($db);
+		if (! empty($agf_last->sessid)) {
+			$result = $agf_conv->fetch($agf_last->sessid, $socid);
+			if ($agf_last->sessid) {
+				$last_conv = 'ok';
+			}
+		}
+	}
 
 	// intro1
 	$statut = getFormeJuridiqueLabel($mysoc->forme_juridique_code);
@@ -458,19 +450,8 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	$art1 = $langs->trans('AgfConvArt1_1') . "\n";
 	$art1 .= $langs->trans('AgfConvArt1_2') . ' ' . $agf->formintitule . ' ' . $langs->trans('AgfConvArt1_3') . " \n" . "\n";
 
-	$obj_peda = new SessionCatalogue($db);
-	$ret = $obj_peda->fetchSessionCatalogue($agf->id);
-
-	if (empty($ret)) // pas de clone
-	{
-		$obj_peda = new Formation($db);
-		$resql = $obj_peda->fetch_objpeda_per_formation($agf->formid);
-	}
-	else
-	{
-		$obj_peda->fetch_objpeda_per_session_catalogue($ret);
-	}
-
+	$obj_peda = new Formation($db);
+	$resql = $obj_peda->fetch_objpeda_per_formation($agf->formid);
 	if (count($obj_peda->lines) > 0) {
 		$art1 .= $langs->trans('AgfConvArt1_4') . "\n";
 	}
@@ -527,14 +508,8 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	$art1 .= "\n" . $langs->trans('AgfConvArt1_13');
 
 	if ($conf->global->AGF_CONV_ADD_SANCTION) {
-		$training = new SessionCatalogue($db);
-		$ret = $training->fetchSessionCatalogue($agf->id);
-		if (empty($ret)) // pas de clone
-		{
-			$training = new Formation($db);
-			$training->fetch($agf->formid);
-		}
-
+		$training = new Formation($db);
+		$training->fetch($agf->formid);
 		if (!empty($training->sanction)) {
 			$art1 .=  "\n".$training->sanction;
 		}
@@ -642,7 +617,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	($last_conv == 'ok') ? print $langs->trans("AgfConvLastWarning") : print $langs->trans("AgfConvDefaultWarning");
 	print '</div>' . "\n";
 	print '<form name="create" action="convention.php" method="post">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 	print '<input type="hidden" name="action" value="create_confirm">' . "\n";
 	print '<input type="hidden" name="sessid" value="' . $sessid . '">' . "\n";
 	print '<input type="hidden" name="socid" value="' . $socid . '">' . "\n";
@@ -690,7 +665,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	}
 	print '</select>';
 	if (! empty($agf->fk_product)) {
-		print '<br />';
+		print '<BR>';
 		print '<input type="checkbox" value="1" name="only_product_session" id="only_product_session">' . $langs->trans('AgfOutputOnlySessionProductInConv');
 	}
 	print '</td></tr>';
@@ -821,7 +796,6 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	}
 
 	if ($result) {
-
 		$agf_session = new Agsession($db);
 		$agf_session->fetch($agf->sessid);
 
@@ -837,7 +811,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 		// Affichage en mode "édition"
 		if ($action == 'edit') {
 			print '<form name="update" action="convention.php" method="post">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="update">' . "\n";
 			print '<input type="hidden" name="id" value="' . $id . '">' . "\n";
 			print '<input type="hidden" name="socid" value="' . $agf->socid . '">' . "\n";
@@ -888,7 +862,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			}
 			print '</select>';
 			if (! empty($agf_session->fk_product)) {
-				print '<br />';
+				print '<BR>';
 				print '<input type="checkbox" value="1" name="only_product_session"  id="only_product_session" ' . (empty($agf->only_product_session) ? '' : 'checked="checked"') . '>' . $langs->trans('AgfOutputOnlySessionProductInConv');
 			}
 			print '</td></tr>';
@@ -985,7 +959,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			print '<tr><td align="center" colspan=2>';
 			print '<input type="submit" class="butAction" value="' . $langs->trans("Save") . '"> &nbsp; ';
 			print '<input type="submit" name="cancel" class="butActionDelete" value="' . $langs->trans("Cancel") . '">';
-			print '<a class="butActionDelete" href="convention.php?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+			print '<a class="butActionDelete" href="convention.php?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 			print '</td></tr>';
 			print '</table>';
 			print '</form>';
@@ -1080,7 +1054,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					}
 				}
 			}
-			print '</td></tr>';
+			print print '</td></tr>';
 
 			if (!empty($conf->global->MAIN_MULTILANGS)) {
 				$langs->load('admin');
@@ -1108,7 +1082,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						setEventMessage($stagiaires->error, 'errors');
 					}
 
-					print $stagiaire->nom . ' ' . $stagiaire->prenom . ' (' . $stagiaire->socname . ')<br />';
+					print $stagiaire->nom . ' ' . $stagiaire->prenom . ' (' . $stagiaire->socname . ')<BR>';
 				}
 			}
 
@@ -1183,7 +1157,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->creer) {
-		print '<a class="butActionDelete" href="convention.php?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="convention.php?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}

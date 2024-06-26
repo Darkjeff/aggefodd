@@ -44,11 +44,11 @@ $action = GETPOST('action', 'alpha');
 
 /*
  * Actions
- */
+*/
 
 /*
  * View
- */
+*/
 $page_name = "About";
 llxHeader('', $langs->trans($page_name));
 
@@ -61,16 +61,22 @@ $head = agefodd_admin_prepare_head();
 dol_fiche_head($head, 'about', $langs->trans("Module103000Name"), 0, "agefodd@agefodd");
 
 // About page goes here
-require_once __DIR__ . '/../class/techatm.class.php';
-$techATM = new \agefodd\TechATM($db);
+print 'Version : ' . $conf->global->AGF_LAST_VERION_INSTALL;
+print '<BR><a href="' . dol_buildpath('/agefodd/ChangeLog', 1) . '">Change Log</a>';
 
-require_once __DIR__ . '/../core/modules/modAgefodd.class.php';
-$moduleDescriptor = new modAgefodd($db);
+print '<BR><a href="' . dol_buildpath('/agefodd/dev/check_data_integrity.php', 1) . '">Check agefodd data integrity</a>';
 
-print $techATM->getAboutPage($moduleDescriptor);
+print '<BR><BR><BR><BR>--------------------------------';
+print '<BR><a href="http://wiki.atm-consulting.fr/index.php/Agefodd/Documentation_utilisateur" target="_blanck">Lien Documentation Utilisateur Français</a>';
+print '<BR>--------------------------------';
 
-// Page end
-print dol_get_fiche_end();
+
+$buffer .= file_get_contents(dol_buildpath('/agefodd/README.md', 0));
+print Markdown($buffer);
+
+print '<BR>';
+
+print '<a href="' . dol_buildpath('/agefodd/COPYING', 1) . '">License GPL</a>';
 
 llxFooter();
 $db->close();

@@ -42,8 +42,6 @@ require_once '../class/agefodd_session_calendrier.class.php';
 if (! $user->rights->agefodd->lire)
 	accessforbidden();
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $action = GETPOST('action', 'alpha');
 $id = GETPOST('id', 'int');
 $confirm = GETPOST('confirm', 'alpha');
@@ -509,7 +507,7 @@ if (! empty($id)) {
 		}
 
 		print '<form name="form_update" action="' . $_SERVER['PHP_SELF'] . '?action=edit&amp;id=' . $id . '"  method="POST">' . "\n";
-		print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+		print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 		print '<input type="hidden" name="action" value="edit">' . "\n";
 		print '<input type="hidden" name="sessid" value="' . $id . '">' . "\n";
 
@@ -601,7 +599,7 @@ if (! empty($id)) {
 						print strtoupper($formateurs->lines[$i]->lastname) . ' ' . ucfirst($formateurs->lines[$i]->firstname) . '</a>' . "\n";
 
 						if (! empty($conf->global->AGF_USE_FORMATEUR_TYPE)) {
-							print '<br />';
+							print '<BR>';
 							print $formateurs->lines[$i]->trainer_type_label;
 						}
 
@@ -826,11 +824,11 @@ if (! empty($id)) {
 		$nbform = $formateurs->fetch_formateur_per_session($agf->id);
 
 		if ($nbform < 1) {
-			print '<td style="text-decoration: blink;"><br /><br />' . $langs->trans("AgfNobody") . '</td></tr>' . "\n";
+			print '<td style="text-decoration: blink;"><BR><BR>' . $langs->trans("AgfNobody") . '</td></tr>' . "\n";
 			print '<table style="border:0;" width="100%">';
 			print '<tr><td align="right">';
 			print '<form name="newform" action="' . $_SERVER['PHP_SELF'] . '?action=edit&amp;id=' . $id . '"  method="POST">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="edit">' . "\n";
 			print '<input type="hidden" name="newform" value="1">' . "\n";
 			print '<input type="submit" class="butAction" value="' . $langs->trans("AgfFormateurAdd") . '">' . "\n";
@@ -959,8 +957,7 @@ if (! empty($id)) {
 								print '<td  width="20%">' . $langs->trans("AgfPeriodDate") . ' ' . "\n";
 								$form->select_date($calendrier->lines[$j]->date_session, 'date', '', '', '', 'obj_update_' . $j);
 
-                                print '<input type="hidden" name="token" value="'.$newToken.'">';
-                                print '<input type="hidden" name="action" value="edit_calendrier">' . "\n";
+								print '<input type="hidden" name="action" value="edit_calendrier">' . "\n";
 								print '<input type="hidden" name="fk_agefodd_session_formateur" value="' . $formateurs->lines[$i]->opsid . '">' . "\n";
 								print '<input type="hidden" name="periodid" value="' . $calendrier->lines[$j]->stagerowid . '">' . "\n";
 								print '<input type="hidden" name="trainerid" value="' . $formateurs->lines[$i]->formid . '">' . "\n";
@@ -1025,7 +1022,7 @@ if (! empty($id)) {
 						if (! empty($newperiod)) {
 							print '<td align="right">';
 							print '<form name="newperiod" action="' . $_SERVER['PHP_SELF'] . '?action=edit_calendrier&id=' . $id . '"  method="POST">' . "\n";
-							print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+							print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 							print '<input type="hidden" name="action" value="edit_calendrier">' . "\n";
 							print '<input type="hidden" name="newperiod" value="1">' . "\n";
 							print '<input type="submit" class="butAction" value="' . $langs->trans("AgfPeriodAdd") . '">' . "\n";
@@ -1036,8 +1033,7 @@ if (! empty($id)) {
 								print '<tr>';
 								print '<td></td>';
 								print '<td  width="300px">';
-                                print '<input type="hidden" name="token" value="'.$newToken.'">';
-                                print '<input type="hidden" name="action" value="edit_calendrier">' . "\n";
+								print '<input type="hidden" name="action" value="edit_calendrier">' . "\n";
 								print '<input type="hidden" name="sessid" value="' . $agf->id . '">' . "\n";
 								print '<input type="hidden" name="fk_agefodd_session_formateur" value="' . $formateurs->lines[$i]->opsid . '">' . "\n";
 								print '<input type="hidden" name="periodid" value="' . $calendrier->lines[$j]->stagerowid . '">' . "\n";

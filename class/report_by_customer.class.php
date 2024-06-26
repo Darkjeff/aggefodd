@@ -868,7 +868,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 								if (array_key_exists('so.nom', $filter)) {
 									/*print '$filter[so.nom]='.$filter['so.nom'].'<br>';
 									print '$socinvoicestatic->name='.$socinvoicestatic->name.'<br>';
-									print '$facture->socid='.$facture->socid.'<br><br />';
+									print '$facture->socid='.$facture->socid.'<br><BR>';
 									var_dump(strpos(dol_strtoupper($socinvoicestatic->name), dol_strtoupper($filter['so.nom'])));*/
 									if (strpos(dol_strtoupper($socinvoicestatic->name), dol_strtoupper($filter['so.nom'])) !== false) {
 										$output_invoice_soc_nom = true;
@@ -1021,7 +1021,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 								if (array_key_exists('so.nom', $filter)) {
 									/*print '$filter[so.nom]='.$filter['so.nom'].'<br>';
 									print '$socinvoicestatic->name='.$socpropalstatic->name.'<br>';
-									print '$propal->socid='.$propal->socid.'<br><br />';
+									print '$propal->socid='.$propal->socid.'<br><BR>';
 									var_dump(strpos(dol_strtoupper($socpropalstatic->name), dol_strtoupper($filter['so.nom'])));*/
 									if (strpos(dol_strtoupper($socpropalstatic->name), dol_strtoupper($filter['so.nom'])) !== false) {
 										$output_propal_soc_nom = true;
@@ -1072,7 +1072,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 
 							//Check if proposal was no link to invoice already outputed
 							$output_propal_no_invoice_link_outputed = true;
-							//print '<br /><br /><br />$propal->ref='.$propal->ref;
+							//print '<BR><BR><BR>$propal->ref='.$propal->ref;
 							if (!empty($propal->id)) {
 								$result = $propal->fetchObjectLinked($propal->id, $propal->element, '', 'facture');
 								if ($result < 0) {
@@ -1087,20 +1087,20 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 									}
 								}
 							}
-							//print '<br />$output_propal_no_invoiceoutputed='.$output_propal_no_invoice_link_outputed;
+							//print '<BR>$output_propal_no_invoiceoutputed='.$output_propal_no_invoice_link_outputed;
 
 							//Check if proposal was no link to invoice already outputed by an OPCA funding
 							if (!empty($propal->socid) && $output_propal_no_invoice_link_outputed) {
 
 								foreach ($OPCA_array_socid as $trainee_socid => $opca_id) {
-									//print '<br />';
+									//print '<BR>';
 									//print '$opca_id='.$opca_id;
 									//print '$trainee_socid='.$trainee_socid;
 
 									if ($trainee_socid == $propal->socid) {
 
 										foreach ($invoice_found as $invoiceid => $invoicesocid) {
-											//print '<br />';
+											//print '<BR>';
 											//print '$invoiceid='.$invoiceid;
 											//print '$invoicesocid='.$invoicesocid;
 
@@ -1478,7 +1478,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 			}
 		}
 
-		$sql .= " WHERE s.entity IN (" . getEntity('agefodd_session') . ")";
+		$sql .= " WHERE s.entity IN (" . getEntity('agsession') . ")";
 
 		// Manage filter
 		if (count($filter) > 0) {
@@ -1638,7 +1638,7 @@ class ReportByCustomer extends AgefoddExportExcelByCustomer
 			$sql .= " ON so.rowid = salesman.fk_soc";
 		}
 
-		$sql .= " WHERE so.entity IN (" . getEntity('agefodd_session') . ")";
+		$sql .= " WHERE so.entity IN (" . getEntity('agsession') . ")";
 		$sql .= " AND f.rowid NOT IN (SELECT DISTINCT fk_element FROM " . MAIN_DB_PREFIX . "agefodd_session_element as sesselement WHERE sesselement.element_type='invoice')";
 
 		// Manage filter

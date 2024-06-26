@@ -36,6 +36,7 @@ dol_include_once('/agefodd/lib/agefodd.lib.php');
 dol_include_once('/core/lib/company.lib.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 
+// TODO faire étendre pdf_fiche_presence
 class pdf_fiche_presence_societe extends pdf_fiche_presence {
 	var $emetteur; // Objet societe qui emet
 
@@ -134,8 +135,6 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence {
 			$id = $agf;
 			$agf = new Agsession($this->db);
 			$ret = $agf->fetch($id);
-
-			$this->session=$agf;
 		}
 
 		// Definition of $dir and $file
@@ -152,9 +151,7 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence {
 		if (file_exists($dir)) {
 			$this->pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
 			$this->pdf->ref_object = $agf;
-			// le parent utilise $this->agf->status dans des fonctions (printPersonLine)
-			// je préfère valoriser cette variable pour compatibilité
-			$this->agf = $agf;
+
 			if (class_exists('TCPDF')) {
 				$this->pdf->setPrintHeader(false);
 				$this->pdf->setPrintFooter(false);
@@ -184,7 +181,7 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence {
 			$result = $agf_soc->fetch($socid);
 
 			if ($result) {
-				$this->_pagebody($this->pdf->ref_object , $this->outputlangs);
+				$this->_pagebody($this->pdf, $this->pdf->ref_object, $this->outputlangs);
 			}
 
 			$this->pdf->Close();
@@ -326,7 +323,7 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence {
 				/**
 				 * *** Bloc formateur ****
 				 */
-				$this->h_ligne = 10;
+				$this->h_ligne = 7;
 
 				if (!empty($this->formateurs->lines))
 				{
@@ -338,7 +335,7 @@ class pdf_fiche_presence_societe extends pdf_fiche_presence {
 				 */
 
 				// ligne
-				$this->h_ligne = 10;
+				$this->h_ligne = 7;
 				if (is_object($dao) && $conf->global->AGF_ADD_ENTITYNAME_FICHEPRES) {
 					$this->h_ligne = $this->h_ligne + 3;
 				}

@@ -44,9 +44,6 @@ $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
 $idreg = GETPOST('idreg', 'int');
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 /*
  * Actions delete
 */
@@ -173,11 +170,6 @@ dol_fiche_head($head, 'reg_int_tab', $langs->trans("AgfSessPlace"), 0, 'address'
 dol_agefodd_banner_tab($agf_place, 'id');
 print '<div class="underbanner clearboth"></div>';
 
-// advise users who display the tab to use the new feature
-print '<div class="warning">'.$langs->trans('AgfWarningRegIntInPDF').'</div>';
-
-print '<div class="underbanner clearboth"></div>';
-
 /*
  * Action create
 */
@@ -284,7 +276,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->agefodd_place->creer) {
-		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}

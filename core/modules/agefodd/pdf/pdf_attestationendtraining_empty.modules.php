@@ -28,7 +28,6 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
-dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
@@ -154,35 +153,13 @@ class pdf_attestationendtraining_empty extends ModelePDFAgefodd {
 				$tplidx = $pdf->importPage(1);
 			}
 
-			/** SWITCH OBJECT FORMATION - SESSION_CATALOGUE ---------------------------------  */
-			$agf_sessioncal = new SessionCatalogue($this->db); // formation clone
-			$ret = $agf_sessioncal->fetchSessionCatalogue($id); // par default ça fetch le clone
+			// Récuperation des objectifs pedagogique de la formation
+			$agf_op = new Formation($this->db);
+			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
 
-			$agf_session = new Agsession($this->db);
-			$retSession = $agf_session->fetch($id);
-
-			if (empty($ret)) // pas de clone
-			{
-
-				if ($retSession > 0 ){
-
-					$agf_op = new Formation($this->db);
-					$agf_op->fetch($agf_session->fk_formation_catalogue);
-					$agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
-
-				}else{
-					$agf_op = new Formation($this->db); // prevent error on foreach
-					setEventMessage('errorloadSession','errors');
-				}
-
-
-			}else{
-				$agf_op = new SessionCatalogue($this->db);
-				$agf_op->fetch($ret);
-				$agf_op->fetch_objpeda_per_session_catalogue($ret);
-			}
-			/** ---------------------------------  */
-
+			// Récupération de la duree de la formation
+			$agf_duree = new Formation($this->db);
+			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
 
 			// Recuperation des informations du lieu de la session
 			$agf_place = new Agefodd_place($this->db);

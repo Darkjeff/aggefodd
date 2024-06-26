@@ -62,9 +62,6 @@ require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
  * View
  */
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 llxHeader('', $langs->trans("AgefoddSetupDesc"));
 
 $linkback = '<a href="' . DOL_URL_ROOT . '/admin/modules.php?restore_lastsearch_values=1">' . $langs->trans("BackToModuleList") . '</a>';
@@ -109,7 +106,7 @@ else {
 		print '<td align="center">' . yn($extrafields->attribute_unique [$key]) . "</td>\n";
 		print '<td align="center">' . yn($extrafields->attribute_required [$key]) . "</td>\n";
 		print '<td align="right"><a href="' . $_SERVER ["PHP_SELF"] . '?action=edit&attrname=' . $key . '">' . img_edit() . '</a>';
-		print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete".$urlToken."&attrname=$key\">" . img_delete() . "</a></td>\n";
+		print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete&attrname=$key\">" . img_delete() . "</a></td>\n";
 		print "</tr>";
 	}
 

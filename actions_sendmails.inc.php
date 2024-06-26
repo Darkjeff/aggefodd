@@ -345,14 +345,7 @@ if (($action == 'send' || $action == 'relance') && ! $_POST['addfile'] && ! $_PO
 
 			// Send mail (substitutionarray must be done just before this)
 			if (empty($sendcontext)) $sendcontext = 'standard';
-            if (!empty($conf->global->MAIN_MAIL_ADD_INLINE_IMAGES_IF_DATA)) {
-                $upload_dir_tmp = DOL_DATA_ROOT.'/mail/img';
-                $mailfile = new CMailFile($subject,$sendto,$from,$message,$filepath,$mimetype,$filename,$sendtocc,$sendtobcc,$deliveryreceipt,-1,'','',$trackid,'', $sendcontext, '', $upload_dir_tmp);
-            }
-            else
-            {
-                $mailfile = new CMailFile($subject,$sendto,$from,$message,$filepath,$mimetype,$filename,$sendtocc,$sendtobcc,$deliveryreceipt,-1,'','',$trackid,'', $sendcontext);
-            }
+			$mailfile = new CMailFile($subject,$sendto,$from,$message,$filepath,$mimetype,$filename,$sendtocc,$sendtobcc,$deliveryreceipt,-1,'','',$trackid,'', $sendcontext);
 
 			if ($mailfile->error)
 			{

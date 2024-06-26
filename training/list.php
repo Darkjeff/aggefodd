@@ -59,7 +59,6 @@ if (empty($sortfield)) {
 
 if (empty($page) || $page == -1) { $page = 0; }
 
-$option = '';
 
 $offset = $limit * $page;
 $pageprev = $page - 1;
@@ -76,7 +75,6 @@ $search_intitule = GETPOST("search_intitule", 'none');
 $search_ref = GETPOST("search_ref", 'none');
 $search_ref_interne = GETPOST("search_ref_interne", 'none');
 $search_datec = dol_mktime(0, 0, 0, GETPOST('search_datecmonth', 'int'), GETPOST('search_datecday', 'int'), GETPOST('search_datecyear', 'int'));
-
 $search_duree = GETPOST('search_duree', 'none');
 $search_nb_place = GETPOST('search_nb_place', 'none');
 // $search_dated = dol_mktime ( 0, 0, 0, GETPOST ( 'search_datedmonth', 'int' ), GETPOST ( 'search_datedday', 'int' ), GETPOST ( 'search_datedyear',
@@ -96,10 +94,6 @@ if ($search_fk_product == - 1) {
 	$search_fk_product = '';
 }
 
-$search_nb_session = GETPOST('search_nb_session', 'int');
-
-$search_dated = dol_mktime(0, 0, 0, GETPOST('search_datedmonth', 'int'), GETPOST('search_datedday', 'int'), GETPOST('search_datedyear', 'int'));
-
 	// Do we click on purge search criteria ?
 if (GETPOST("button_removefilter_x", 'none')) {
 	$search_intitule = '';
@@ -108,11 +102,10 @@ if (GETPOST("button_removefilter_x", 'none')) {
 	$search_datec = '';
 	$search_duree = "";
 	$search_nb_place = "";
+	// $search_dated = "";
 	$search_id = '';
 	$search_categ = '';
 	$search_fk_product='';
-    $search_dated = '';
-    $search_nb_session = '';
 }
 $contextpage = 'listtraining';
 include DOL_DOCUMENT_ROOT.'/core/actions_changeselectedfields.inc.php';
@@ -151,15 +144,9 @@ $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element, true);
 
 $search_array_options=$extrafields->getOptionalsFromPost($extralabels,'','search_');
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
-	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
-	$extrafields->attribute_list = $extrafields->attributes[$agf->table_element]['list'];
-	$extrafields->attribute_pos = $extrafields->attributes[$agf->table_element]['pos'];
-	$extrafields->attribute_computed = $extrafields->attributes[$agf->table_element]['computed'];
-}
+
 // Extra fields
-if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
+if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
 {
    foreach($extrafields->attribute_label as $key => $val)
    {
@@ -182,7 +169,7 @@ if (! empty($search_ref_interne)) {
 }
 if (! empty($search_datec)) {
 	$filter ['c.datec'] = $db->idate($search_datec);
-    $option .= '&search_datecmonth=' . dol_print_date($search_datec,'%m').'&search_datecday='.dol_print_date($search_datec,'%d').'&search_datecyear='.dol_print_date($search_datec,'%Y');
+	$option .= '&search_datecmonth=' . dol_print_date($search_datec,'%m').'&search_datecday='.dol_print_date($search_datec,'%d').'&search_datecyear='.dol_print_date($search_datec,'%Y');
 }
 if (! empty($search_duree)) {
 	$filter ['c.duree'] = $search_duree;
@@ -211,14 +198,7 @@ if (! empty($search_fk_product)) {
 if (!empty($limit)) {
 	$option .= '&limit=' . $limit;
 }
-if (! empty($search_dated)) {
-    $filter ['lastsession'] = $db->idate($search_dated);
-    $option .= '&search_datedmonth=' . dol_print_date($search_dated,'%m').'&search_datedday='.dol_print_date($search_dated,'%d').'&search_datedyear='.dol_print_date($search_dated,'%Y');
-}
-if (! empty($search_nb_session)) {
-    $filter ['nbsession'] = $search_nb_session;
-    $option .= '&search_nb_session=' . $search_nb_session;
-}
+
 
 foreach ($search_array_options as $key => $val)
 {
@@ -236,12 +216,10 @@ foreach ($search_array_options as $key => $val)
 }
 
 $nbtotalofrecords = 0;
-$TAttributeLabelKeys = array();
-if(!empty($extrafields->attribute_label)) $TAttributeLabelKeys = array_keys($extrafields->attribute_label);
 if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
-	$nbtotalofrecords = $agf->fetch_all($sortorder, $sortfield, 0, 0, $arch, $filter, $TAttributeLabelKeys);
+	$nbtotalofrecords = $agf->fetch_all($sortorder, $sortfield, 0, 0, $arch, $filter, array_keys($extrafields->attribute_label));
 }
-$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $arch, $filter, $TAttributeLabelKeys);
+$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $arch, $filter, array_keys($extrafields->attribute_label));
 
 
 $i = 0;
@@ -317,14 +295,13 @@ if (! empty($arrayfields['c.nb_place']['checked'])){
 	print '</td>';
 }
 if (! empty($arrayfields['a.dated']['checked'])){
-	print '<td class="liste_titre nowraponall">';
-    print $form->select_date ( $search_dated, 'search_dated', 0, 0, 1, 'search_form' );
+	print '<td class="liste_titre">';
+	// print $form->select_date ( $search_dated, 'search_dated', 0, 0, 1, 'search_form' );
 	print '</td>';
 }
 if (! empty($arrayfields['AgfNbreAction']['checked'])){
 	print '<td class="liste_titre">';
-    print '<input type="text" class="flat maxwidth50" name="search_nb_session" value="' . $search_nb_session . '">';
-    print '</td>';
+	print '</td>';
 }
 
 if (! empty($arrayfields['c.fk_product']['checked'])) {
@@ -395,7 +372,7 @@ if (! empty($arrayfields['a.dated']['checked']))		print_liste_field_titre($langs
 if (! empty($arrayfields['AgfNbreAction']['checked']))		print_liste_field_titre($langs->trans("AgfNbreAction"), $_SERVER ['PHP_SELF'], "", "", $option, '', $sortfield, $sortorder);
 if (! empty($arrayfields['c.fk_product']['checked'])) print_liste_field_titre($langs->trans("AgfProductServiceLinked"), $_SERVER ['PHP_SELF'], 'c.fk_product', '', $option, '', $sortfield, $sortorder);
 // Extra fields
-if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
+if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
 {
 	foreach($extrafields->attribute_label as $key => $val)
 	{
@@ -474,7 +451,7 @@ if ($resql > 0) {
 			else print '<td>&nbsp;</td>';
 		}
 		// Extra fields
-		if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
+		if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
 		{
 			foreach($extrafields->attribute_label as $key => $val)
 			{
@@ -485,7 +462,7 @@ if ($resql > 0) {
 					if ($align) print ' align="'.$align.'"';
 					print '>';
 					$tmpkey='options_'.$key;
-					print $extrafields->showOutputField($key, $line->array_options[$tmpkey], '', 'agefodd_formation_catalogue');
+					print $extrafields->showOutputField($key, $line->array_options[$tmpkey], '');
 					print '</td>';
 					if (! $i) $totalarray['nbfield']++;
 					if (! empty($val['isameasure']))

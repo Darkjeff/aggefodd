@@ -29,10 +29,9 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_session_admlevel (
   intitule varchar(500) NOT NULL,
   delais_alerte integer NOT NULL DEFAULT 0,
   delais_alerte_end integer NOT NULL DEFAULT 0,
-  mandatory_file integer NOT NULL DEFAULT 0,
   fk_user_author integer NOT NULL,
   datec datetime NOT NULL,
   fk_user_mod integer NOT NULL,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  tms timestamp NOT NULL,
   trigger_name varchar(150) NULL
 ) ENGINE=InnoDB;

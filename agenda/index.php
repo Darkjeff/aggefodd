@@ -334,14 +334,14 @@ llxHeader('', $langs->trans("Agenda"), $help_url, '',0,0,'','',$param);
 // Show navigation bar
 if (empty($action) || $action=='show_month')
 {
-	if (floatval(DOL_VERSION) < 6.0) {
+	if (DOL_VERSION < 6.0) {
 		$nav ="<a href=\"?year=".$prev_year."&amp;month=".$prev_month.$param."\">".img_previous($langs->trans("Previous"))."</a>\n";
 	} else {
 		$nav ="<a href=\"?year=".$prev_year."&amp;month=".$prev_month.$param."\"><i class=\"fa fa-chevron-left\"></i></a> &nbsp;\n";
 	}
 	$nav .= " <span id=\"month_name\">" . dol_print_date(dol_mktime(0, 0, 0, $month, 1, $year), "%b %Y");
 	$nav .= " </span>\n";
-	if (floatval(DOL_VERSION) < 6.0) {
+	if (DOL_VERSION < 6.0) {
 	    $nav.="<a href=\"?year=".$next_year."&amp;month=".$next_month.$param."\">".img_next($langs->trans("Next"))."</a>\n";
 	} else {
 		$nav.=" &nbsp; <a href=\"?year=".$next_year."&amp;month=".$next_month.$param."\"><i class=\"fa fa-chevron-right\"></i></a>\n";
@@ -351,14 +351,14 @@ if (empty($action) || $action=='show_month')
 }
 if ($action=='show_week')
 {
-	if (floatval(DOL_VERSION) < 6.0) {
+	if (DOL_VERSION < 6.0) {
    		$nav ="<a href=\"?year=".$prev_year."&amp;month=".$prev_month."&amp;day=".$prev_day.$param."\">".img_previous($langs->trans("Previous"))."</a>\n";
 	} else {
 		$nav ="<a href=\"?year=".$prev_year."&amp;month=".$prev_month."&amp;day=".$prev_day.$param."\"><i class=\"fa fa-chevron-left\" title=\"".dol_escape_htmltag($langs->trans("Previous"))."\"></i></a> &nbsp;\n";
 	}
     $nav.=" <span id=\"month_name\">".dol_print_date(dol_mktime(0,0,0,$first_month,$first_day,$first_year),"%Y").", ".$langs->trans("Week")." ".$week;
 	$nav .= " </span>\n";
-	if (floatval(DOL_VERSION) < 6.0) {
+	if (DOL_VERSION < 6.0) {
     	$nav.="<a href=\"?year=".$next_year."&amp;month=".$next_month."&amp;day=".$next_day.$param."\">".img_next($langs->trans("Next"))."</a>\n";
 	} else {
 		$nav.=" &nbsp; <a href=\"?year=".$next_year."&amp;month=".$next_month."&amp;day=".$next_day.$param."\"><i class=\"fa fa-chevron-right\" title=\"".dol_escape_htmltag($langs->trans("Next"))."\"></i></a>\n";
@@ -369,14 +369,14 @@ if ($action=='show_week')
 if ($action=='show_day')
 {
 
-	if (floatval(DOL_VERSION) < 6.0) {
+	if (DOL_VERSION < 6.0) {
    		$nav ="<a href=\"?year=".$prev_year."&amp;month=".$prev_month."&amp;day=".$prev_day.$param."\">".img_previous($langs->trans("Previous"))."</a>\n";
 	} else {
 		$nav ="<a href=\"?year=".$prev_year."&amp;month=".$prev_month."&amp;day=".$prev_day.$param."\"><i class=\"fa fa-chevron-left\"></i></a> &nbsp;\n";
 	}
 	$nav .= " <span id=\"month_name\">" . dol_print_date(dol_mktime(0, 0, 0, $month, $day, $year), "daytextshort");
 	$nav .= " </span>\n";
-	if (floatval(DOL_VERSION) < 6.0) {
+	if (DOL_VERSION < 6.0) {
    		$nav.="<a href=\"?year=".$next_year."&amp;month=".$next_month."&amp;day=".$next_day.$param."\">".img_next($langs->trans("Next"))."</a>\n";
 	} else {
 		$nav.=" &nbsp; <a href=\"?year=".$next_year."&amp;month=".$next_month."&amp;day=".$next_day.$param."\"><i class=\"fa fa-chevron-right\"></i></a>\n";
@@ -461,7 +461,7 @@ if (! empty($filter_trainee)) {
 	$sql .= " INNER JOIN " . MAIN_DB_PREFIX . 'agefodd_session_stagiaire as trainee_session ON agf.rowid = trainee_session.fk_session_agefodd ';
 }
 
-$sql .= ' WHERE agf.entity IN (' . getEntity('agefodd_base') . ')';
+$sql .= ' WHERE agf.entity IN (' . getEntity('agefodd') . ')';
 $sql .= ' AND a.elementtype=\'agefodd_agsession\'';
 if ($action == 'show_day') {
 	$sql .= " AND (";
@@ -597,17 +597,8 @@ if ($resql)
 		$event->location = $obj->location;
         $event->transparency=$obj->transparency;
 
-
-		if ($event->societe == null ){
-			$event->societe = new stdClass();
-		}
 		$event->societe->id = $obj->fk_soc;
-
-		if ($event->contact == null ){
-			$event->contact = new stdClass();
-		}
 		$event->contact->id = $obj->fk_contact;
-
 
 		// Defined date_start_in_calendar and date_end_in_calendar property
 		// They are date start and end of action but modified to not be outside calendar view.
@@ -698,7 +689,7 @@ if (empty($action) || $action == 'show_month') // View by month
 	$newparam = preg_replace('/viewcal=[0-9]+&?/i', '', $newparam);
 	$newparam = preg_replace('/type=trainer/i', '', $newparam);
 	$newparam .= '&viewcal=1';
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
 		echo '<table width="100%" class="nocellnopadd cal_month">';
 	} else {
 		echo '<table width="100%" class="noborder nocellnopadd cal_pannel cal_month">';
@@ -761,6 +752,12 @@ if (empty($action) || $action == 'show_month') // View by month
 		echo " </tr>\n";
 	}
 	echo "</table>\n";
+    echo '<form id="move_event" action="" method="POST"><input type="hidden" name="action" value="mupdate">';
+    echo '<input type="hidden" name="backtopage" value="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'?'.dol_escape_htmltag($_SERVER['QUERY_STRING']).'">';
+    echo '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+    echo '<input type="hidden" name="newdate" id="newdate">' ;
+    echo '</form>';
+
 }
 elseif ($action == 'show_week') // View by week
 {
@@ -772,7 +769,7 @@ elseif ($action == 'show_week') // View by week
 	$newparam = preg_replace('/year=[0-9]+&?/i', '', $newparam);
 	$newparam = preg_replace('/viewweek=[0-9]+&?/i', '', $newparam);
 	$newparam .= '&viewweek=1';
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
 		echo '<table width="100%" class="nocellnopadd cal_month">';
 	} else {
 		echo '<table width="100%" class="noborder nocellnopadd cal_pannel cal_month">';
@@ -811,6 +808,11 @@ elseif ($action == 'show_week') // View by week
 	echo " </tr>\n";
 
 	echo "</table>\n";
+    echo '<form id="move_event" action="" method="POST"><input type="hidden" name="action" value="mupdate">';
+    echo '<input type="hidden" name="backtopage" value="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'?'.dol_escape_htmltag($_SERVER['QUERY_STRING']).'">';
+    echo '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+    echo '<input type="hidden" name="newdate" id="newdate">' ;
+    echo '</form>';
 }
 else    // View by day
 {
@@ -828,7 +830,7 @@ else    // View by day
 
 	$timestamp = dol_mktime(12, 0, 0, $month, $day, $year);
 	$arraytimestamp = dol_getdate($timestamp);
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
     	echo '<table width="100%" class="nocellnopadd cal_month">';
 	} else {
 		echo '<table width="100%" class="noborder nocellnopadd cal_pannel cal_month">';
@@ -874,7 +876,7 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
 
 	if (is_null($colorindexused)) $colorindexused = array();
 
-    if (floatval(DOL_VERSION)< 6.0) {
+    if (DOL_VERSION < 6.0) {
     	print "\n".'<div id="dayevent_'.sprintf("%04d",$year).sprintf("%02d",$month).sprintf("%02d",$day).'" class="dayevent">';
     } else {
     	$dateint = sprintf("%04d",$year).sprintf("%02d",$month).sprintf("%02d",$day);
@@ -884,13 +886,13 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
 
     // Line with title of day
 	$curtime = dol_mktime(0, 0, 0, $month, $day, $year);
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
 	    print '<table class="nobordernopadding" width="100%">'."\n";
 	} else {
 		print '<div id="dayevent_'.$dateint.'" class="dayevent tagtable centpercent nobordernopadding">'."\n";
 	}
 
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
 		print '<tr><td align="left" class="nowrap">';
 	} else {
 		print '<div class="tagtr"><div class="nowrap float">';
@@ -902,7 +904,7 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
     if ($showinfo) print dol_print_date($curtime,'daytext');
     else print dol_print_date($curtime,'%d');
 	print '</a>';
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
 		print '</td><td align="right" class="nowrap">';
 	} else {
 		print '</div><div class="floatright nowrap">';
@@ -917,14 +919,14 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
 		print img_picto($langs->trans("NewAction"), 'edit_add.png');
 		print '</a>';
 	}
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
 	    print '</td></tr>'."\n";
 	} else {
 		print '</div></div>'."\n";
 	}
 
     // Line with td contains all div of each events
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
 		print '<tr height="'.$minheight.'"><td valign="top" colspan="2" class="sortable" style="padding-bottom: 2px;">';
 		print '<div style="width: 100%; position: relative;">';
 	} else {
@@ -1079,7 +1081,7 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
                     //print ' position: absolute; top: 40px; width: 50%;';
                     //print '"';
                     print '>';
-                    if (floatval(DOL_VERSION)< 6.0) {
+                    if (DOL_VERSION < 6.0) {
 	                    print '<ul class="cal_event" style="'.$h.'">';	// always 1 li per ul, 1 ul per event
 						print '<li class="cal_event" style="'.$h.'">';
 						print '<table class="cal_event'.(empty($event->transparency)?'':' cal_event_busy').'" style="'.$h;
@@ -1092,7 +1094,7 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
                     //if (! empty($event->transparency)) print 'background: #'.$color.'; background: -webkit-gradient(linear, left top, left bottom, from(#'.$color.'), to(#'.dol_color_minus($color,1).'));';
                     //else print 'background-color: transparent !important; background: none; border: 1px solid #bbb;';
 
-                    if (floatval(DOL_VERSION)< 6.0) {
+                    if (DOL_VERSION < 6.0) {
                     	print ' -moz-border-radius:4px;" width="100%"><tr>';
                     	print '<td class="'.($nowrapontd?'nowrap ':'').'cal_event'.($event->type_code == 'BIRTHDAY'?' cal_event_birthday':'').'">';
                     } else {
@@ -1174,7 +1176,7 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
 										setEventMessage($agf->error, 'errors');
 									}
 
-									$event->libelle .= '<br />';
+									$event->libelle .= '<BR>';
 									if (is_array($agf_trainer->lines) && count($agf_trainer->lines) > 0) {
 										$event->libelle .= '&nbsp;' . $langs->trans('AgfFormateur') . ':';
 										foreach ( $agf_trainer->lines as $line ) {
@@ -1290,11 +1292,11 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
 							print $langs->trans("Product") . ': ' . $product->getNomUrl(1);
 						}
 						print '&nbsp;' . $langs->trans('AgfDuree') . ':' . $agf->duree_session;
-						print '<br />';
+						print '<BR>';
 						print '&nbsp;' . $langs->trans('AgfParticipants') . ':' . $agf->nb_stagiaire;
 						print '&nbsp;' . $langs->trans('AgfSessionCommercial') . ':' . $agf->commercialname;
 
-						print '<br />';
+						print '<BR>';
 
 						if (is_array($agf_trainer->lines) && count($agf_trainer->lines) > 0) {
 							print '&nbsp;' . $langs->trans('AgfFormateur') . ':';
@@ -1304,7 +1306,7 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
 						}
 					}
 					print '</td></tr></table>';
-					if (floatval(DOL_VERSION)< 6.0) {
+					if (DOL_VERSION < 6.0) {
                     	print '</li>';
                     	print '</ul>';
 					}
@@ -1349,7 +1351,7 @@ function show_day_events($db, $day, $month, $year, $monthshown, $style, &$eventa
 		print '</script>' . "\n";
 	}
 
-	if (floatval(DOL_VERSION)< 6.0) {
+	if (DOL_VERSION < 6.0) {
     	print '</div>';
 		print '</td></tr></table>';
 	} else {

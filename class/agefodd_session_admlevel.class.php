@@ -39,7 +39,6 @@ class Agefodd_session_admlevel extends CommonObject {
 	public $intitule;
 	public $delais_alerte;
 	public $delais_alerte_end;
-	public $mandatory_file;
 	public $fk_user_author;
 	public $datec = '';
 	public $fk_user_mod;
@@ -82,8 +81,6 @@ class Agefodd_session_admlevel extends CommonObject {
 			$this->delais_alerte = trim($this->delais_alerte);
 		if (isset($this->trigger_name))
 			$this->trigger_name = trim($this->trigger_name);
-        if (isset($this->mandatory_file))
-            $this->mandatory_file = trim($this->mandatory_file);
 
 			// Insert request
 		$sql = "INSERT INTO " . MAIN_DB_PREFIX . "agefodd_session_admlevel(";
@@ -94,7 +91,6 @@ class Agefodd_session_admlevel extends CommonObject {
 		$sql .= "intitule,";
 		$sql .= "delais_alerte,";
 		$sql .= "delais_alerte_end,";
-		$sql .= "mandatory_file,";
 		$sql .= "fk_user_author,";
 		$sql .= "fk_user_mod,";
 		$sql .= "trigger_name,";
@@ -108,7 +104,6 @@ class Agefodd_session_admlevel extends CommonObject {
 		$sql .= " " . (! isset($this->intitule) ? 'NULL' : "'" . $this->db->escape($this->intitule) . "'") . ",";
 		$sql .= " " . (! isset($this->delais_alerte) ? '0' : "'" . $this->delais_alerte . "'") . ",";
 		$sql .= " " . (! isset($this->delais_alerte_end) ? 'NULL' : "'" . $this->delais_alerte_end . "'") . ",";
-		$sql .= " " . (! isset($this->mandatory_file) ? '0' : "'" . $this->mandatory_file . "'") . ",";
 		$sql .= " " . $user->id . ",";
 		$sql .= " " . $user->id . ",";
 		$sql .= " " . (! isset($this->trigger_name) ? 'NULL' : "'" . $this->trigger_name . "'") . ",";
@@ -167,7 +162,6 @@ class Agefodd_session_admlevel extends CommonObject {
 		$sql .= " t.intitule,";
 		$sql .= " t.delais_alerte,";
 		$sql .= " t.delais_alerte_end,";
-		$sql .= " t.mandatory_file,";
 		$sql .= " t.fk_user_author,";
 		$sql .= " t.datec,";
 		$sql .= " t.fk_user_mod,";
@@ -192,7 +186,6 @@ class Agefodd_session_admlevel extends CommonObject {
 				$this->trigger_name = $obj->trigger_name;
 				$this->delais_alerte = $obj->delais_alerte;
 				$this->delais_alerte_end = $obj->delais_alerte_end;
-				$this->mandatory_file = $obj->mandatory_file;
 				$this->fk_user_author = $obj->fk_user_author;
 				$this->datec = $this->db->jdate($obj->datec);
 				$this->fk_user_mod = $obj->fk_user_mod;
@@ -221,7 +214,6 @@ class Agefodd_session_admlevel extends CommonObject {
 		$sql .= " t.intitule,";
 		$sql .= " t.delais_alerte,";
 		$sql .= " t.delais_alerte_end,";
-		$sql .= " t.mandatory_file,";
 		$sql .= " t.fk_user_author,";
 		$sql .= " t.datec,";
 		$sql .= " t.fk_user_mod,";
@@ -249,7 +241,6 @@ class Agefodd_session_admlevel extends CommonObject {
 				$line->intitule = $obj->intitule;
 				$line->alerte = $obj->delais_alerte;
 				$line->alerte_end = $obj->delais_alerte_end;
-				$line->mandatory_file = $obj->mandatory_file;
 				$line->trigger_name = $obj->trigger_name;
 
 				$this->lines[$i] = $line;
@@ -282,7 +273,6 @@ class Agefodd_session_admlevel extends CommonObject {
 		$sql .= " t.intitule,";
 		$sql .= " t.delais_alerte,";
 		$sql .= " t.delais_alerte_end,";
-		$sql .= " t.mandatory_file,";
 		$sql .= " t.fk_user_author,";
 		$sql .= " t.datec,";
 		$sql .= " t.fk_user_mod,";
@@ -312,7 +302,6 @@ class Agefodd_session_admlevel extends CommonObject {
 				$line->intitule = $obj->intitule;
 				$line->alerte = $obj->delais_alerte;
 				$line->alerte_end = $obj->delais_alerte_end;
-				$line->mandatory_file = $obj->mandatory_file;
 				$line->trigger_name = $obj->trigger_name;
 
 				$TNested[$i] = array(
@@ -358,8 +347,6 @@ class Agefodd_session_admlevel extends CommonObject {
 			$this->delais_alerte_end = trim($this->delais_alerte_end);
 		if (isset($this->trigger_name))
 			$this->trigger_name = trim($this->trigger_name);
-        if (isset($this->mandatory_file))
-            $this->mandatory_file = trim($this->mandatory_file);
 
 			// Check parameters
 			// Put here code to add control on parameters values
@@ -372,9 +359,8 @@ class Agefodd_session_admlevel extends CommonObject {
 		$sql .= " indice=" . (isset($this->indice) ? $this->indice : "null") . ",";
 		$sql .= " intitule=" . (isset($this->intitule) ? "'" . $this->db->escape($this->intitule) . "'" : "null") . ",";
 		$sql .= " trigger_name=" . (isset($this->trigger_name) ? "'" . $this->db->escape($this->trigger_name) . "'" : "null") . ",";
-		$sql .= " delais_alerte=" . (isset($this->delais_alerte) ? $this->db->escape($this->delais_alerte) : "0") . ",";
-		$sql .= " delais_alerte_end=" . (isset($this->delais_alerte_end) ? $this->db->escape($this->delais_alerte_end) : "null") . ",";
-		$sql .= " mandatory_file=" . (!empty($this->mandatory_file) ? $this->db->escape($this->mandatory_file) : "0") . ",";
+		$sql .= " delais_alerte=" . (isset($this->delais_alerte) ? $this->delais_alerte : "0") . ",";
+		$sql .= " delais_alerte_end=" . (isset($this->delais_alerte_end) ? $this->delais_alerte_end : "null") . ",";
 		$sql .= " fk_user_mod=" . $user->id;
 		$sql .= " WHERE rowid=" . $this->id;
 
@@ -700,7 +686,6 @@ class AgfSessionAdmlvlLine {
 	public $intitule;
 	public $alerte;
 	public $alerte_end;
-	public $mandatory_file;
 	public $trigger_name;
 	public function __construct() {
 		return 1;

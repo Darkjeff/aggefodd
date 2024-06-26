@@ -41,8 +41,6 @@ require_once ('../class/html.formagefodd.class.php');
 if (! $user->rights->agefodd->lire)
 	accessforbidden();
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $id = GETPOST('id', 'int');
 $action = GETPOST('action', 'alpha');
 
@@ -151,7 +149,7 @@ if ($id) {
 
 		if ($user->rights->agefodd->modifier) {
 			print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '?id=' . $agf->id . '" method="post">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="addcursus">' . "\n";
 
 			print '<table class="noborder" width="100%">';

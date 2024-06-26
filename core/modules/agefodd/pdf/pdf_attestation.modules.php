@@ -26,7 +26,6 @@
 dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
-dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
@@ -145,33 +144,14 @@ class pdf_attestation extends ModelePDFAgefodd {
 				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_L);
 				$tplidx = $pdf->importPage(1);
 			}
-			/** SWITCH OBJECT FORMATION - SESSION_CATALOGUE ---------------------------------  */
-			$agf_op = new SessionCatalogue($this->db); // formation clone
-			$ret = $agf_op->fetchSessionCatalogue($id); // par default ça fetch le clone
 
-			$agf_session = new Agsession($this->db);
-			$retSession = $agf_session->fetch($id);
+			// Récuperation des objectifs pedagogique de la formation
+			$agf_op = new Formation($this->db);
+			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
 
-			if (empty($ret)) // pas de clone
-			{
-				if ($retSession > 0 ){
-
-					$agf_op = new Formation($this->db);
-					$agf_op->fetch($agf_session->fk_formation_catalogue);
-					$agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
-
-				}else{
-					$agf_op = new Formation($this->db); // prevent error on foreach
-					setEventMessage('errorloadSession','errors');
-				}
-
-
-			}else{
-				$agf_op->fetch_objpeda_per_session_catalogue($ret);
-			}
-			/** ---------------------------------  */
-
-
+			// Récupération de la duree de la formation
+			$agf_duree = new Formation($this->db);
+			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
 
 			// Recuperation des stagiaires participant à la formation
 			$agf2 = new Agefodd_session_stagiaire($this->db);

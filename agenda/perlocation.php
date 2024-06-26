@@ -375,7 +375,7 @@ if (! empty($filter_trainee)) {
 }
 
 $sql.= '
-	WHERE a.entity IN (' . getEntity('agefodd_session') . ')
+	WHERE a.entity IN (' . getEntity('agsession') . ')
 	AND a.elementtype="agefodd_agsession"';
 
 if (!empty($filter_session_status))
@@ -508,9 +508,7 @@ if ($resql) {
 		$event->trainerid = $obj->trainerid;
 
 		$event->socid = $obj->fk_soc;
-		if(intval(DOL_VERSION) < 13) $event->contactid = $obj->fk_contact;
-		else $event->contact_id = $obj->fk_contact;
-
+		$event->contactid = $obj->fk_contact;
 		// $event->societe->id=$obj->fk_soc; // deprecated
 		// $event->contact->id=$obj->fk_contact; // deprecated
 
@@ -659,8 +657,7 @@ if (!empty($conf->global->AGF_USE_SITE_IN_AGENDA)) {
 			$event->trainerid = $obj->trainerid;
 
 			$event->socid = $obj->fk_soc;
-			if(intval(DOL_VERSION) < 13) $event->contactid = $obj->fk_contact;
-			else $event->contact_id = $obj->fk_contact;
+			$event->contactid = $obj->fk_contact;
 			// $event->societe->id=$obj->fk_soc; // deprecated
 			// $event->contact->id=$obj->fk_contact; // deprecated
 
@@ -763,6 +760,12 @@ $newparam = preg_replace('/year=[0-9]+&?/i', '', $newparam);
 $newparam = preg_replace('/viewweek=[0-9]+&?/i', '', $newparam);
 $newparam = preg_replace('/showbirthday_=/i', 'showbirthday=', $newparam); // Restore correct parameter
 $newparam .= '&viewweek=1';
+
+echo '<form id="move_event" action="" method="POST"><input type="hidden" name="action" value="mupdate">';
+echo '<input type="hidden" name="backtopage" value="' . $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'] . '">';
+echo '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+echo '<input type="hidden" name="newdate" id="newdate">';
+echo '</form>';
 
 // Line header with list of days
 
@@ -1008,9 +1011,7 @@ function show_day_events2($lieu, $day, $month, $year, $monthshown, $style, &$eve
 						if ($event->sessionstatus == 'NOT')
 							$color = 'ff6666';
 						if ($event->sessionstatus == 'ARCH')
-						    $color = 'c0c0c0';
-					    if ($event->sessionstatus == 'ONGOING')
-					        $color = 'ff6c00';
+							$color = 'c0c0c0';
 					} else {
 						$color = 'c0c0c0';
 					}

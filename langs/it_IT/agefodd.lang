@@ -593,6 +593,7 @@ AgfCalendarFromTemplate=From template
 AgfPDFTextColor=Text color of PDF
 AgfPDFHeadColor=Header and lines color of PDF
 AgfPDFFootColor=Footer color of PDF
+Settings=Settings Agefodd
 AgfFichePresenceEmpty=Empty timecard
 AgfFichePresenceTrainee=Timecard by trainee
 AgfFichePresenceTraineeLandscape=Timecard in landscape format

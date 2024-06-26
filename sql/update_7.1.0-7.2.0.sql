@@ -1,5 +1,0 @@
-ALTER TABLE llx_agefodd_session_trainee_path_img_signature_calendrier ADD COLUMN person_type varchar(7) AFTER fk_stagiaire;
-ALTER TABLE llx_agefodd_session_trainee_path_img_signature_calendrier CHANGE fk_stagiaire fk_person integer NOT NULL;
-ALTER TABLE llx_agefodd_session_trainee_path_img_signature_calendrier MODIFY COLUMN ip varchar(255) NOT NULL;
-ALTER TABLE llx_agefodd_session_trainee_path_img_signature_calendrier MODIFY COLUMN navigateur varchar(255) NOT NULL;
-ALTER TABLE llx_agefodd_session_trainee_path_img_signature_calendrier ADD COLUMN path varchar(255);

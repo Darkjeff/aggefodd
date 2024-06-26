@@ -30,5 +30,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_formation_catalogue_modules (
   fk_user_author integer NOT NULL,
   datec datetime NOT NULL,
   fk_user_mod integer NOT NULL,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  tms timestamp
 ) ENGINE=InnoDB;

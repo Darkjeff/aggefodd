@@ -1,2 +1,0 @@
-ALTER TABLE llx_agefodd_session DROP FOREIGN KEY llx_agefodd_formation_catalogue_ibfk_1;
-ALTER TABLE llx_agefodd_session ADD CONSTRAINT llx_agefodd_formation_catalogue_ibfk_1 FOREIGN KEY (fk_formation_catalogue) REFERENCES llx_agefodd_formation_catalogue (rowid);

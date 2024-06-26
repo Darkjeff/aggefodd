@@ -29,7 +29,7 @@ if (! $res)
 	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
-'<input type="submit" class="butAction" value=" &#128427; ' . $langs->trans("AgfModSave") .'"></input>';
+
 require_once ('../class/agsession.class.php');
 require_once ('../class/agefodd_sessadm.class.php');
 require_once ('../class/agefodd_session_admlevel.class.php');
@@ -56,8 +56,6 @@ $hookmanager->initHooks(array(
 ));
 
 $langs->load('bills');
-
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
@@ -224,6 +222,7 @@ if ($action == 'confirm_delete_period' && $confirm == "yes" && !empty($user->rig
 	$agf = new Agefodd_sesscalendar($db);
 	$result = $agf->fetch($modperiod);
 	if ($result > 0) {
+
 		$result = $agf->remove($modperiod);
 		if ($result > 0) {
 
@@ -672,7 +671,7 @@ if ($id) {
 			print '<span id="period"></span>';
 
 			print '<form name="obj_update" action="' . $_SERVER['PHP_SELF'] . '?id=' . $id . '"  method="POST">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="setdates">' . "\n";
 			print '<input type="hidden" name="sessid" value="' . $agf->id . '">' . "\n";
 			print '<strong>' . $langs->trans('AgfUpdatesCalendarDates') . '</strong>';
@@ -680,7 +679,7 @@ if ($id) {
 			print '<tr><td>' . $langs->trans("AgfDateDebut") . '</td><td>';
 			$form->select_date($agf->dated, 'dad', '', '', '', 'update');
 			print '</td>';
-			print '<td rowspan="2"><input type="submit" class="butAction" value=" &#128427; ' . $langs->trans("AgfModSave") .'"/></td></tr>';
+			print '<td rowspan="2"><input type="image" src="' . dol_buildpath('/agefodd/img/save.png', 1) . '" border="0" align="absmiddle" name="setdates" alt="' . $langs->trans("AgfModSave") . '"></td></tr>';
 
 			print '<tr id="caldateend"><td>' . $langs->trans("AgfDateFin") . '</td><td>';
 			$form->select_date($agf->datef, 'daf', '', '', '', 'update');
@@ -725,7 +724,7 @@ if ($id) {
 
 			print '<div class="" id="formdateall">';
 			print '<form name="obj_update" action="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '"  method="POST">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="edit">' . "\n";
 			print '<input type="hidden" name="sessid" value="' . $agf->id . '">' . "\n";
 			print load_fiche_titre($langs->trans('AgfCalendarDates'), '', '', 0, 0, '', $massactionbutton);
@@ -777,7 +776,7 @@ if ($id) {
 					if (!empty($user->rights->agefodd->modifier))
 					{
 						print '<td class="linecoledit center">';
-						print '<input type="submit" name="period_update_x" class="butAction" value=" &#128427; ' . $langs->trans("AgfModSave") .'"/>';
+						print '<input type="image" src="' . dol_buildpath('/agefodd/img/save.png', 1) . '" border="0" align="absmiddle" name="period_update" alt="' . $langs->trans("AgfModSave") . '">';
 						print '<input type="hidden" name="modperiod" value="' . $calendrier->lines[$i]->id . '">';
 						print '<input type="hidden" name="period_update" value="1">';
 						print '</td>';
@@ -846,7 +845,7 @@ if ($id) {
 			print load_fiche_titre($langs->trans('AgfCalendarFromTemplate'), '', '');
 
 			print '<form name="obj_update" action="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '"  method="POST">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="edit">' . "\n";
 			print '<input type="hidden" name="sessid" value="' . $agf->id . '">' . "\n";
 
@@ -926,7 +925,7 @@ if ($id) {
 			print load_fiche_titre($langs->trans('AgfNewPeriodDayToDate'), '', '');
 
 			print '<form name="obj_update" action="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '"  method="POST">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="edit">' . "\n";
 			print '<input type="hidden" name="sessid" value="' . $agf->id . '">' . "\n";
 
@@ -994,7 +993,7 @@ if ($id) {
 
 
 			print '<form name="obj_update" action="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '"  method="POST">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="edit">' . "\n";
 			print '<input type="hidden" name="sessid" value="' . $agf->id . '">' . "\n";
 

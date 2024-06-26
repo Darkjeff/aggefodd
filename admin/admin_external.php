@@ -41,8 +41,6 @@ $langs->load("admin");
 $langs->load('agefodd@agefodd');
 $langs->load('agfexternalaccess@agefodd');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 if (! $user->rights->agefodd->admin && ! $user->admin)
     accessforbidden();
 
@@ -67,11 +65,6 @@ if ($action == 'setvarother') {
         $res = dolibarr_set_const($db, 'AGF_EA_ECLATE_HEURES_PAR_TYPE', $heuresEclatee, 'chaine', 0, '', $conf->entity);
         if ($res < 0) $error++;
 
-        // Vue éclatée des heures participant sur la liste des sessions
-        $TrainerInvoices = GETPOST('AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES', 'int');
-        $res = dolibarr_set_const($db, 'AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES', $TrainerInvoices, 'chaine', 0, '', $conf->entity);
-        if ($res < 0) $error++;
-
         // Ferme la popin (modal) de visualisation d’un créneau lors de la sauvegarde
         $closeSessionSlotPopin = GETPOST('AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT', 'none');
         $res = dolibarr_set_const($db, 'AGF_EA_CLOSE_MODAL_AFTER_UPDATE_SESSION_SLOT', $closeSessionSlotPopin, 'chaine', 0, '', $conf->entity);
@@ -93,12 +86,6 @@ if ($action == 'setvarother') {
 
 
     $confKey = 'AGF_SEND_CREATE_CRENEAU_TO_TRAINEE_MAILMODEL';
-	$mailmodel = GETPOST($confKey, 'alpha');
-	$res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
-	if (! $res > 0)
-		$error ++;
-
-	$confKey = 'AGF_SEND_CERTIFICATE_COMPLETION_TO_TRAINEE_MAILMODEL';
 	$mailmodel = GETPOST($confKey, 'alpha');
 	$res = dolibarr_set_const($db, $confKey, $mailmodel, 'chaine', 0, '', $conf->entity);
 	if (! $res > 0)
@@ -146,24 +133,6 @@ if ($action == 'setvarother') {
     $res = dolibarr_set_const($db, 'AGF_EA_ECLATE_HEURES_EXCLUES', $heuresEclateeExclues, 'chaine', 0, '', $conf->entity);
     if ($res < 0) $error++;
 
-
-    // Configuration de la liste des stagiaires d'une session
-    $champsStagiaires = serialize(GETPOST('AGF_EA_TRAINEE_FIELDS', 'none'));
-    $res = dolibarr_set_const($db, 'AGF_EA_TRAINEE_FIELDS', $champsStagiaires, 'chaine', 0, '', $conf->entity);
-    if ($res < 0) $error++;
-
-
-    // Vue éclatée des heures participant sur la liste des sessions
-    $ServiceForHours = GETPOST('AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES', 'int');
-    $res = dolibarr_set_const($db, 'AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES', $ServiceForHours, 'chaine', 0, '', $conf->entity);
-    if ($res < 0) $error++;
-
-
-    // Vue éclatée des heures participant sur la liste des sessions
-	$ServiceForMisc = GETPOST('AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES', 'int');
-    $res = dolibarr_set_const($db, 'AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES', $ServiceForMisc, 'chaine', 0, '', $conf->entity);
-    if ($res < 0) $error++;
-
     if (! $error) {
         setEventMessage($langs->trans("SetupSaved"), 'mesgs');
     } else {
@@ -203,7 +172,7 @@ if ($conf->use_javascript_ajax) {
 
 
 print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" enctype="multipart/form-data" >';
-print '<input type="hidden" name="token" value="' . $newToken . '">';
+print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 print '<input type="hidden" name="action" value="setvarother">';
 
 print '<table class="noborder" width="100%">';
@@ -293,54 +262,6 @@ if(!empty($conf->externalaccess->enabled))
     print '<td></td>';
     print '</tr>';
 
-
-    // Permettre aux formateur de créer des factures fournisseur
-    print '<tr  class="oddeven" ><td>' . $langs->trans("AgfTrainersCanCreateSupplierInvoices") . '</td>';
-    print '<td align="left">';
-    if ($conf->use_javascript_ajax) {
-        print ajax_constantonoff('AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES');
-    } else {
-        $arrval = array (
-            '0' => $langs->trans("No"),
-            '1' => $langs->trans("Yes")
-        );
-        print $form->selectarray("AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES", $arrval, $conf->global->AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES);
-    }
-    print '</td>';
-    print '<td></td>';
-    print '</tr>';
-
-	// Permettre aux formateur de créer des factures fournisseur par session
-	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfTrainersCanCreateSupplierInvoicesForASession") . '</td>';
-	print '<td align="left">';
-	if ($conf->use_javascript_ajax) {
-		print ajax_constantonoff('AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES_FOR_A_SESSION');
-	} else {
-		$arrval = array (
-			'0' => $langs->trans("No"),
-			'1' => $langs->trans("Yes")
-		);
-		print $form->selectarray("AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES_FOR_A_SESSION", $arrval, $conf->global->AGF_TRAINERS_CAN_CREATE_SUPPLIERINVOICES_FOR_A_SESSION);
-	}
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
-
-    // Service utilisé pour la facturation horaire dans les factures formateur
-	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfServiceForHoursInTrainersInvoices") . '</td>';
-	print '<td align="left">';
-	print $form->select_produits($conf->global->AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES,"AGF_SERVICE_FOR_HOURS_IN_TRAINERSINVOICES", 1, 0);
-    print '</td>';
-    print '<td></td>';
-	print '</tr>';
-
-	// Service utilisé pour la facturation diverse dans les factures formateur
-	print '<tr  class="oddeven" ><td>' . $langs->trans("AgfServiceForMiscInTrainersInvoices") . '</td>';
-	print '<td align="left">';
-	print $form->select_produits($conf->global->AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES,"AGF_SERVICE_FOR_MISC_IN_TRAINERSINVOICES", 1, 0);
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
 
     // status à exclure des heures éclatées
     print '<tr  class="oddeven" ><td>' . $langs->trans("AgfHeuresDeclareesEclateesStatusExclus") . '</td>';
@@ -452,44 +373,6 @@ if(!empty($conf->externalaccess->enabled))
     print '</td>';
     print '<td></td>';
     print '</tr>';
-
-    // Option de configuration du type de créneau par défaut si il contient un participant
-    print '<tr  class="oddeven"><td>' . $langs->trans("AgfSelectTraineeFieldsToDisplay") . '</td>';
-    print '<td align="left">';
-
-	print '<link rel="stylesheet" href="../includes/multiselect/css/ui.multiselect.css" />';
-	print '<script type="text/javascript" src="../includes/jquery/js/jquery.min.js"></script>';
-	print '<script type="text/javascript" src="../includes/jquery/js/jquery-ui.min.js"></script>';
-	print '<script type="text/javascript" src="../includes/multiselect/js/ui.multiselect.js"></script>';
-
-	$TTraineeFields = getTraineeAvailableFields();
-
-	$config = unserialize($conf->global->AGF_EA_TRAINEE_FIELDS);
-
-	if (!empty($config))
-	{
-		foreach ($config as $field)
-		{
-			$trad = $TTraineeFields[$field];
-			unset($TTraineeFields[$field]);
-			$TTraineeFields[$field] = $trad;
-		}
-	}
-
-	print $form->multiselectarray('AGF_EA_TRAINEE_FIELDS', $TTraineeFields, $config);
-
-	print "<script>
-			$(document).ready(function(){
-    			$('#AGF_EA_TRAINEE_FIELDS').multiselect({sortable: true, searchable: false})
-    			$('.connected-list').css('height', '')
-    			$('.ui-multiselect').next().remove();
-			});
-    		</script>";
-    print '</td>';
-    print '<td></td>';
-    print '</tr>';
-
-
 }
 
 print '</table>';
@@ -562,15 +445,6 @@ print '<tr  class="oddeven"><td>' . $langs->trans("AgfSendCreateCreneauxToTraine
 print '<td align="left">';
 
 print $formMail->selectarray('AGF_SEND_CREATE_CRENEAU_TO_TRAINEE_MAILMODEL', $modelmail_array, $conf->global->AGF_SEND_CREATE_CRENEAU_TO_TRAINEE_MAILMODEL, 1);
-
-print '</td>';
-print '<td></td>';
-print '</tr>';
-
-print '<tr  class="oddeven"><td>' . $langs->trans("AgfMailToSendCertificateCompletion") . '<br/><em><small>(' . $langs->trans('AgfMailToSendTrainee').')</small></em></td>';
-print '<td align="left">';
-
-print $formMail->selectarray('AGF_SEND_CERTIFICATE_COMPLETION_TO_TRAINEE_MAILMODEL', $modelmail_array, $conf->global->AGF_SEND_CERTIFICATE_COMPLETION_TO_TRAINEE_MAILMODEL, 1);
 
 print '</td>';
 print '<td></td>';

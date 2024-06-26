@@ -44,7 +44,7 @@ $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 
 $search_date_start= dol_mktime(0, 0, 0, GETPOST('search_date_startmonth', 'int'), GETPOST('search_date_startday', 'int'), GETPOST('search_date_startyear', 'int'));
-$search_date_end= dol_mktime(23, 59, 59, GETPOST('search_date_endmonth', 'int'), GETPOST('search_date_endday', 'int'), GETPOST('search_date_endyear', 'int'));
+$search_date_end= dol_mktime(0, 0, 0, GETPOST('search_date_endmonth', 'int'), GETPOST('search_date_endday', 'int'), GETPOST('search_date_endyear', 'int'));
 
 $modelexport = GETPOST('modelexport', 'alpha');
 $lang_id = GETPOST('lang_id', 'none');
@@ -55,7 +55,7 @@ $langs->load("exports");
 
 
 llxHeader('', $langs->trans('AgfMenuReportBPF'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/bpf';
+$upload_dir = $conf->agefodd->dir_output . '/report/bpf/';
 
 
 $form = new Form($db);
@@ -95,7 +95,8 @@ if ($action == 'builddoc') {
 
 		// $report_by_cust->file = $upload_dir . 'reportbycust-' . dol_print_date(dol_now(), 'dayhourlog') . '.xlsx';
 		$file_sub_title = $report_bpf->getSubTitlFileName($filter);
-		$report_bpf->file = $upload_dir . '/reportbpf-' . $file_sub_title . '.xlsx';
+		$report_bpf->file = $upload_dir . 'reportbpf-' . $file_sub_title . '.xlsx';
+
 		$result = $report_bpf->write_file($filter);
 		if ($result < 0) {
 			setEventMessage($report_bpf->error, 'errors');
@@ -104,7 +105,7 @@ if ($action == 'builddoc') {
 		} else {
 			setEventMessage($langs->trans("FileSuccessfullyBuilt"));
 		}
-		if (count($report_bpf->warnings) > 0) {
+		if (count($report_bpf->warnings)>0) {
 			setEventMessage($langs->trans("AgfReportBPFDataInconsistency"), 'errors');
 			setEventMessages(null,$report_bpf->warnings, 'warnings');
 		}

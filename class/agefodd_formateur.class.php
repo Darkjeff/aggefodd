@@ -153,15 +153,13 @@ class Agefodd_teacher extends CommonObject {
 	 */
 	public function fetchByUser($user) {
 		global $conf;
-
+		
 		$error = 0;
-
-		$user_contactid = (intval(DOL_VERSION) < 13) ? $user->contactid : $user->contact_id;
-
+		
 		$sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'agefodd_formateur';
 		$sql.= ' WHERE (fk_user = '.$user->id.' AND type_trainer = \'user\')';
-		if (!empty($user_contactid)) $sql.= ' OR (fk_socpeople = '.$user_contactid.' AND type_trainer = \'socpeople\')';
-		$sql .=' AND entity IN ('. getEntity('agefodd_base').')';
+		if (!empty($user->contactid)) $sql.= ' OR (fk_socpeople = '.$user->contactid.' AND type_trainer = \'socpeople\')';
+		$sql.= ' AND entity = '.$conf->entity;
 		$resql = $this->db->query($sql);
 		if ($resql) {
 			if ($this->db->num_rows($resql)) {
@@ -174,7 +172,7 @@ class Agefodd_teacher extends CommonObject {
 			$this->errors[] = "Error " . $this->db->lasterror();
 			$error++;
 		}
-
+		
 		if (empty($error)) {
 			return 1;
 		} else {
@@ -185,7 +183,7 @@ class Agefodd_teacher extends CommonObject {
 			return - 1 * $error;
 		}
 	}
-
+	
 	/**
 	 * Load object in memory from database
 	 *
@@ -195,7 +193,7 @@ class Agefodd_teacher extends CommonObject {
 	 */
 	public function fetch($id, $arch = 0) {
 		global $mysoc;
-
+		
 		$error = 0;
 
 		$sql = "SELECT";
@@ -207,10 +205,10 @@ class Agefodd_teacher extends CommonObject {
 		$sql .= " ,s.address as s_address, s.zip as s_zip, s.town as s_town";
 		$sql .= " ,s.fk_soc as soctrainerid";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formateur as f";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople as s ON f.fk_socpeople = s.rowid";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON f.fk_user = u.rowid";
-		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople as s ON (u.fk_socpeople = s.rowid OR f.fk_socpeople = s.rowid)";
 		$sql .= " WHERE f.rowid = " . $id;
-		$sql .= " AND f.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+		$sql .= " AND f.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 
 		dol_syslog(get_class($this) . "::fetch ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -236,11 +234,6 @@ class Agefodd_teacher extends CommonObject {
 					$this->zip = $mysoc->zip;
 					$this->town = $mysoc->town;
 					$this->thirdparty=$mysoc;
-					if (!empty($obj->soctrainerid)) {
-						$soctrainer= new Societe($this->db);
-						$soctrainer->fetch($obj->soctrainerid);
-						$this->thirdparty=$soctrainer;
-					}
 				}
 				// trainer is Dolibarr contact
 				elseif ($this->type_trainer == $this->type_trainer_def[1]) {
@@ -366,7 +359,7 @@ class Agefodd_teacher extends CommonObject {
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formateur as f";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople as s ON f.fk_socpeople = s.rowid";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON f.fk_user = u.rowid";
-		$sql .= " WHERE f.entity IN (" . getEntity('agefodd_base') . ")";
+		$sql .= " WHERE f.entity IN (" . getEntity('agefodd') . ")";
 		if ($arch == 0 || $arch == 1) {
 			$sql .= " AND f.archive = " . $arch;
 		}
@@ -617,34 +610,19 @@ class Agefodd_teacher extends CommonObject {
 	 * @return int <0 if KO, >0 if OK
 	 */
 	public function remove($id) {
-
-        global $langs;
-
-        $sql = "SELECT count(rowid) as nb FROM ".MAIN_DB_PREFIX."agefodd_session_formateur WHERE fk_agefodd_formateur = ". (int) $id;
-        $resql = $this->db->query($sql);
-
-        if ($resql)
-        {
-            $obj = $this->db->fetch_object($resql);
-            if ($obj->nb > 0) {
-                $this->error = $langs->trans('AgfUsedInSessions');
-                return -500;
-            }
-        }
-
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "agefodd_formateur";
-		$sql .= " WHERE rowid = " . (int) $id;
+		$sql .= " WHERE rowid = " . $id;
 
 		dol_syslog(get_class($this) . "::remove ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 
-		if (!$resql) {
-            $this->error = $this->db->lasterror();
-            return - 1;
-        }
-
-        return 1;
-    }
+		if ($resql) {
+			return 1;
+		} else {
+			$this->error = $this->db->lasterror();
+			return - 1;
+		}
+	}
 
 	/**
 	 *

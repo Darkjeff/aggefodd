@@ -30,16 +30,12 @@ if (! $res)
 if (! $res)
 	die("Include of main fails");
 
-require_once (__DIR__ . '/../class/agefodd_sessadm.class.php');
-require_once (__DIR__ . '/../class/agefodd_session_admlevel.class.php');
-require_once (__DIR__ . '/../class/agsession.class.php');
-require_once (__DIR__ . '/../class/agefodd_training_admlevel.class.php');
-require_once (__DIR__ . '/../class/agefodd_session_admlevel.class.php');
-require_once (__DIR__ . '/../class/html.formagefodd.class.php');
-require_once (__DIR__ . '/../lib/agefodd.lib.php');
+require_once ('../class/agefodd_sessadm.class.php');
+require_once ('../class/agefodd_session_admlevel.class.php');
+require_once ('../class/agsession.class.php');
+require_once ('../class/html.formagefodd.class.php');
+require_once ('../lib/agefodd.lib.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php');
-require_once (DOL_DOCUMENT_ROOT . '/core/lib/functions.lib.php');
-require_once __DIR__ .'/../lib/retroCompatibility.lib.php';
 
 // Security check
 if (! $user->rights->agefodd->lire)
@@ -49,8 +45,6 @@ $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
 $actid = GETPOST('actid', 'int');
-
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 /*
  * Actions delete
@@ -112,119 +106,24 @@ if ($action == 'confirm_replicateconftraining' && $confirm == 'yes') {
 	}
 }
 
-if($action == 'update_archive' && $user->rights->agefodd->creer) {
-    global $langs, $db;
+if ($action == 'update_archive' && $user->rights->agefodd->creer) {
+	$agf = new Agefodd_sessadm($db);
 
-    $agf_training_admlevel = new Agefodd_training_admlevel($db);
-    $agf_session_admlevel = new Agefodd_session_admlevel($db);
+	$result = $agf->fetch($actid);
+	if ($agf->archive == 1) {
+		$agf->archive = 0;
+	} else {
+		$agf->archive = 1;
+	}
+	$agf->datef = dol_mktime(0, 0, 0, dol_print_date(dol_now(), '%m'), dol_print_date(dol_now(), '%d'), dol_print_date(dol_now(), '%Y'));
+	$result = $agf->update($user);
 
-    $updateReady = false; // par defaut
-
-    $agf = new Agefodd_sessadm($db);
-    $result = $agf->fetch($actid);
-    if(empty($result)) {
-        dol_print_error($db);
-    }
-
-    // Check si le fichier est noté comme obligatoire dans l'admin du module ou bien dans l'onglet tâche administrative d'un recueil
-    $mandatory_file = $agf_training_admlevel->mandatory_file || $agf_session_admlevel->mandatory_file || $agf->mandatory_file;
-
-    // Le fichier est obligatoire sur cette ligne et la ligne n'est pas validée
-    if($mandatory_file && $agf->archive != 1) {
-
-        $TfileTypeAllowed = [
-
-            'txt' => 'text/plain',
-            'csv' => 'text/csv',
-            'xml' => 'application/xml',
-            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-
-            // Adobe
-            'pdf' => 'application/pdf',
-
-            // Images
-            'png' => 'image/png',
-            'jpe' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'jpg' => 'image/jpeg',
-
-            // Open office
-            'odt' => 'application/vnd.oasis.opendocument.text',
-            'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
-
-            // Ms office
-            'doc' => 'application/msword',
-            'rtf' => 'application/rtf',
-            'xls' => 'application/vnd.ms-excel',
-            'ppt' => 'application/vnd.ms-powerpoint'
-        ];
-
-        // Fichier pas encore envoyé
-        if(GETPOST('confirmfilesend', 'int') == 0) {
-            $action = 'add_archive_file_mandatory';
-        } else {
-            if(isset($_FILES['mandatoryfile'])) {
-
-                $mandatoryFileName = $_FILES['mandatoryfile']['name'];
-                if(!empty($_FILES['mandatoryfile']['name'])) {
-                    $mandatoryFileType = mime_content_type($_FILES['mandatoryfile']['tmp_name']);
-                }
-
-                if($mandatoryFileType != '') {
-                    if(in_array($mandatoryFileType, $TfileTypeAllowed)) {
-                        // On le place à la racine de documents/agefodd/idSession si non il apparaît pas dans les fichiers joints
-                        $dest_folder = '/agefodd/'.$id;
-                        if(dol_mkdir($dest_folder, DOL_DATA_ROOT ) < 0) {
-							setEventMessage('ErrorCreateDestinationFolderForX', $mandatoryFileName);
-							$action = 'add_archive_file_mandatory';
-                        } else {
-                            $dest_file = DOL_DATA_ROOT . $dest_folder . '/'. $mandatoryFileName;
-                            if(dol_move_uploaded_file($_FILES['mandatoryfile']['tmp_name'], $dest_file, 1) > 0){
-                                $updateReady = true;
-								$agf->file_name = $mandatoryFileName;
-                            } else {
-								setEventMessage('ErrorSaveFileX', $mandatoryFileName);
-                            }
-                        }
-                    } else {
-                        setEventMessage($langs->trans("ErrorBadFileFormat"), "errors");
-                        $action = 'add_archive_file_mandatory';
-                    }
-                } else {
-                    setEventMessage("FileEmpty", "warnings");
-                    $action = 'add_archive_file_mandatory';
-                }
-            } else {
-                setEventMessage("FileEmpty", "warnings");
-                $action = 'add_archive_file_mandatory';
-            }
-        }
-    } else { // Si le fichier n'est pas obligatoire, on valide direct la ligne
-        $updateReady = true;
-    }
-
-    if($updateReady) {
-        if($agf->archive == 1) {
-            $agf->archive = 0;
-			$agf->file_name = '';
-        }
-        else {
-            $agf->archive = 1;
-        }
-        $agf->datef = dol_mktime(0, 0, 0, dol_print_date(dol_now(), '%m'), dol_print_date(dol_now(), '%d'), dol_print_date(dol_now(), '%Y'));
-
-        $result = $agf->update($user);
-
-        if($result > 0) {
-            Header("Location: ".$_SERVER ['PHP_SELF']."?id=".$id);
-            exit();
-        }
-        else {
-            setEventMessage($agf->error, 'errors');
-        }
-    }
+	if ($result > 0) {
+		Header("Location: " . $_SERVER ['PHP_SELF'] . "?id=" . $id);
+		exit();
+	} else {
+		setEventMessage($agf->error, 'errors');
+	}
 }
 
 if ($action == 'validall' && $user->rights->agefodd->creer) {
@@ -325,42 +224,6 @@ if ($user->rights->agefodd->lire) {
 		dol_fiche_head($head, 'administrative', $langs->trans("AgfSessionDetail"), 0, 'bill');
 
 		$agf = new Agefodd_sessadm($db);
-        $result = $agf->fetch($actid);
-
-        if ($action == 'add_archive_file_mandatory' && $user->rights->agefodd->creer) {
-
-
-            print '<div id="form-import-mandatory-file-dialog-container" style="display: none;" title="'.dol_escape_htmltag($langs->trans('UploadMandatoryFile')).'" >';
-            print     '<form id="form-import-mandatory-file" action="' . $_SERVER['PHP_SELF']. '" method="post" enctype="multipart/form-data">';
-            print '<input type="hidden" name="token" value="'.$newToken.'">';
-            print          '<input type="hidden" name="action" value="update_archive"/>';
-            print          '<input type="hidden" name="id" value="'. $agf_session->id .'"/>';
-            print          '<input type="hidden" name="actid" value="'. $agf->id .'"/>';
-            print          '<input type="hidden" name="confirmfilesend" value="1"/>';
-            print          '<input type="file" name="mandatoryfile" id="mandatoryfile" />';
-            print          '<input type="hidden" name="MAX_FILE_SIZE" value="'.(empty($conf->global->MAIN_UPLOAD_DOC) ? '2048' : intval($conf->global->MAIN_UPLOAD_DOC)*1024).'" /> ';
-            print     '</form>';
-            print '</div>';
-            print '<script>';
-            print '$( function() {';
-            print     '$( "#form-import-mandatory-file-dialog-container" ).dialog({
-              resizable: false,
-              height: "auto",
-              width: 400,
-              modal: true,
-              buttons: {
-                "Importer": function() {
-                  $( this ).dialog( "close" );
-                  $( "#form-import-mandatory-file" ).submit();
-                },
-                Cancel: function() {
-                  $( this ).dialog( "close" );
-                }
-              }
-            });';
-            print '} );';
-            print '</script>';
-        }
 
 		if ($action == 'replicateconftraining' ) {
 		    require_once DOL_DOCUMENT_ROOT.'/core/class/html.formadmin.class.php';
@@ -371,7 +234,7 @@ if ($user->rights->agefodd->lire) {
 		// Creation card
 		if ($action == 'create') {
 			print '<form name="create_confirm" action="administrative.php" method="post">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="create_confirm">' . "\n";
 			print '<input type="hidden" name="id" value="' . $id . '">' . "\n";
 
@@ -420,7 +283,7 @@ if ($user->rights->agefodd->lire) {
 				print $form->formconfirm("administrative.php?id=" . $id . "&actid=" . $actid, $langs->trans("AgfDeleteOps"), $langs->trans("AgfConfirmDeleteAction"), "confirm_delete", '', '', 1);
 			}
 			print '<form name="update" action="administrative.php" method="post">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 			print '<input type="hidden" name="action" value="update">' . "\n";
 			print '<input type="hidden" name="id" value="' . $id . '">' . "\n";
 			print '<input type="hidden" name="actid" value="' . $agf->id . '">' . "\n";
@@ -472,7 +335,6 @@ if ($user->rights->agefodd->lire) {
 			if ($result > 0) {
 
 				$i = 0;
-				$mandatoryFilePending = 0;
 				foreach ( $sess_adm->lines as $line ) {
 
 					if ($line->level_rank == '0' && $i != 0) {
@@ -482,11 +344,8 @@ if ($user->rights->agefodd->lire) {
 					if ($line->level_rank == '0') {
 
 						print '<tr align="center" style="border-style:none">';
-
-                        print '<td colspan="2" style="border-style:none">&nbsp;</td>';
-                        print '<td width="150px" style="border-style:none">' . $langs->trans("AttachedFile") . '</td>';
-                        print '<td width="150px" style="border-style:none">' . $langs->trans("Commentaire") . '</td>';
-                        print '<td width="150px" style="border-style:none">' . $langs->trans("User") . '</td>';
+						print '<td colspan="3" style="border-style:none">&nbsp;</td>';
+						print '<td width="150px" style="border-style:none">' . $langs->trans("User") . '</td>';
 						print '<td width="150px" style="border-style:none">' . $langs->trans("AgfLimitDate") . '</td>';
 						print '<td width="150px" style="border-style:none">' . $langs->trans("AgfDateDebut") . '</td>';
 						print '<td width="150px" style="border-style:none">' . $langs->trans("AgfDateFin") . '</td>';
@@ -524,42 +383,6 @@ if ($user->rights->agefodd->lire) {
 					print '<td style="border-right-style: none;"><a href="' . dol_buildpath('/agefodd/session/administrative.php', 1) . '?action=edit&id=' . $id . '&actid=' . $line->id . '">';
 					print str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $line->level_rank) . $line->intitule . '</a></td>';
 
-
-                    if (! empty($line->mandatory_file) ) {
-                        print '<td class="adminaction center" style="border-left-style: none; width: auto;">';
-						$dest_folder = '/agefodd/'.$id;
-						$relative_file_path = $id.'/'.$line->file_name;
-                        $dest_file = DOL_DATA_ROOT . $dest_folder . '/'. $line->file_name;
-						if(!empty($line->file_name) && file_exists($dest_file)){
-							$urlFile = DOL_MAIN_URL_ROOT .'/document.php'.'?modulepart=agefodd&entity='.$sess_adm->entity.'&file='.urlencode($relative_file_path);
-							print '<a target="_blank" href="' .$urlFile . '">';
-							print $line->file_name;
-							print  '</a>';
-
-							$tmparray = getAdvancedPreviewUrl('agefodd', $relative_file_path, 1, 'entity='.$sess_adm->entity);
-							if ($tmparray && $tmparray['url'])
-							{
-								$linkPreview = '<a href="'.$tmparray['url'].'"'.($tmparray['css'] ? ' class="'.$tmparray['css'].'"' : '').($tmparray['mime'] ? ' mime="'.$tmparray['mime'].'"' : '').($tmparray['target'] ? ' target="'.$tmparray['target'].'"' : '').'>';
-								$linkPreview .= '<i class="fa fa-search-plus paddingright" style="color: gray"></i>';
-								$linkPreview .= '</a>';
-								print '&nbsp;'.$linkPreview;
-							}
-						}
-						elseif(!empty($line->file_name)){
-							print '<span class="classfortooltip" title="'.dol_escape_htmltag($langs->trans('FileXDeleted', $line->file_name)). '" style="text-decoration: line-through; font-weight:bold; color: #dc5d00;">'
-								. '<span class="fa fa-warning"></span>&nbsp;'
-								.$line->file_name
-								.'</span>';
-						}
-
-
-
-
-
-                    } else {
-						print '<td style="border-left: 0px; width:auto;">&nbsp;</td>';
-					}
-
 					// Affichage éventuelle des notes
 					if (! empty($line->notes)) {
 						print '<td class="adminaction" style="border-left-style: none; width: auto; text-align: right" valign="top">';
@@ -593,31 +416,17 @@ if ($user->rights->agefodd->lire) {
 						if ($line->archive) {
 							$txtalt = $langs->trans("AgfTerminatedNoPoint");
 							$src_state = dol_buildpath('/agefodd/img/ok.png', 1);
-                            $htmlState = '<img alt="' . $txtalt . '" src="' . $src_state . '"/>';
 						} else {
-
-                            $txtalt = $langs->trans("AgfTerminatedPoint");
-                            $src_state = dol_buildpath('/agefodd/img/next.png', 1);
-                            $htmlState = '<img style="vertical-align: middle;" alt="' . $txtalt . '" src="' . $src_state . '"/>';
-
-                            if($line->mandatory_file){
-								$mandatoryFilePending++;
-                                $htmlState = '<i class="icon-mandatory-file  fa fa-file-upload"></i>&nbsp;'.$htmlState; // todo tooltip
-                            }
+							$txtalt = $langs->trans("AgfTerminatedPoint");
+							$src_state = dol_buildpath('/agefodd/img/next.png', 1);
 						}
 
 						print '<td align="center" valign="top">';
 						if ($user->rights->agefodd->modifier) {
-							print '<a href="' . $_SERVER ['PHP_SELF'] . '?action=update_archive&id=' . $id . '&token=' . $newToken . '&actid=' . $line->id . '">'
-                                .$htmlState
-                                .'</a>';
+							print '<a href="' . $_SERVER ['PHP_SELF'] . '?action=update_archive&id=' . $id . '&actid=' . $line->id . '"><img alt="' . $txtalt . '" src="' . $src_state . '"/></a>';
 						}
 						print '</td>';
 					} else {
-						if (!$line->archive && $line->mandatory_file){
-							$mandatoryFilePending++;
-						}
-
 						print '<td colspan="4"></td>';
 					}
 					print '</tr>';
@@ -655,18 +464,8 @@ print '<div class="tabsAction">';
 
 if ($action != 'create' && $action != 'edit' && $action != 'update') {
 	if ($user->rights->agefodd->creer) {
-
-		$validAllRight = true;
-		$btnParams = array();
-		if(!empty($mandatoryFilePending)){
-			$validAllRight = false;
-			$btnParams = array('attr' =>array('class'=>'classfortooltip', 'title' => $langs->trans('CantValidateMandatoryFilePending', $mandatoryFilePending)));
-		}
-		print dolGetButtonAction($langs->trans('AgfAllValide'), '', 'default', $_SERVER ['PHP_SELF'] . '?action=validall&id=' . $id , 'validate-all-admin-task', $validAllRight, $btnParams);
-
-        if(!empty($conf->global->AGF_CREATE_ADMINISTRATIVE_TASK_FROM_ADMINISTRATIVE_TASKS_PAGE)) {
-            print '<a class="butAction" href="' . $_SERVER ['PHP_SELF'] . '?action=create&id=' . $id . '">' . $langs->trans('Create') . '</a>';
-        }
+		print '<a class="butAction" href="' . $_SERVER ['PHP_SELF'] . '?action=validall&id=' . $id . '">' . $langs->trans('AgfAllValide') . '</a>';
+		print '<a class="butAction" href="' . $_SERVER ['PHP_SELF'] . '?action=create&id=' . $id . '">' . $langs->trans('Create') . '</a>';
 		print '<a class="butAction" href="' . $_SERVER ['PHP_SELF'] . '?action=replicateconftraining&id=' . $id . '" title="' . $langs->trans('AgfReplaceByTrainingLevelHelp') . '">' . $langs->trans('AgfReplaceByTrainingLevel') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';

@@ -26,8 +26,8 @@
 
 CREATE TABLE IF NOT EXISTS llx_agefodd_certificate_type (
   rowid integer NOT NULL auto_increment PRIMARY KEY,
-  intitule varchar(80) NOT NULL default '',
-  sort smallint NOT NULL default 0,
+  intitule varchar(80) NOT NULL,
+  sort smallint NOT NULL,
   active integer NULL,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  tms timestamp NOT NULL
 ) ENGINE=InnoDB;

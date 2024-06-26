@@ -43,8 +43,6 @@ class Agefodd_sessadm extends CommonObject {
 	public $intitule;
 	public $delais_alerte;
 	public $delais_alerte_end;
-	public $mandatory_file = 0;
-	public $file_name;
 	public $dated;
 	public $datef;
 	public $datea;
@@ -54,10 +52,6 @@ class Agefodd_sessadm extends CommonObject {
 	public $fk_user_mod;
 	public $tms = '';
 	public $archive;
-
-    /**
-     * @var AgfSessAdm[]
-     */
 	public $lines = array ();
 	public $trigger_name;
 
@@ -88,8 +82,6 @@ class Agefodd_sessadm extends CommonObject {
 		$this->intitule = $this->db->escape(trim($this->intitule));
 		$this->indice = trim($this->indice);
 		$this->notes = $this->db->escape(trim($this->notes));
-		$this->mandatory_file = $this->db->escape($this->mandatory_file);
-		$this->file_name = $this->db->escape($this->file_name);
 		$this->fk_user_author = trim($this->fk_user_author);
 		$this->trigger_name = trim($this->trigger_name);
 		// Check parameters
@@ -99,8 +91,6 @@ class Agefodd_sessadm extends CommonObject {
 		$sql = "INSERT INTO " . MAIN_DB_PREFIX . "agefodd_session_adminsitu (";
 		$sql .= "fk_agefodd_session_admlevel, fk_agefodd_session, intitule, delais_alerte";
 		$sql .= ", delais_alerte_end";
-		$sql .= ", mandatory_file";
-		$sql .= ", file_name";
 		$sql .= ",indice, level_rank, fk_parent_level, dated, datef, datea, notes,archive,fk_user_author,fk_user_mod, datec";
 		$sql .= ",trigger_name";
 		$sql .= ") VALUES (";
@@ -109,9 +99,7 @@ class Agefodd_sessadm extends CommonObject {
 		$sql .= "'" . $this->intitule . "', ";
 		$sql .= $this->delais_alerte . ", ";
 		$sql .= intval($this->delais_alerte_end) . ", ";
-        $sql .= " " . (! isset($this->mandatory_file) ? '0' : "'" . $this->mandatory_file . "'") . ",";
-        $sql .= " " . (! isset($this->file_name) ? '' : "'" . $this->file_name . "'") . ",";
-        $sql .= $this->indice . ", ";
+		$sql .= $this->indice . ", ";
 		$sql .= $this->level_rank . ", ";
 		$sql .= $this->fk_parent_level . ", ";
 		$sql .= " " . (! isset($this->dated) || dol_strlen($this->dated) == 0 ? 'NULL' : "'" . $this->db->idate($this->dated) . "'") . ",";
@@ -178,8 +166,8 @@ class Agefodd_sessadm extends CommonObject {
 		$this->dated = trim($this->dated);
 		$this->datef = trim($this->datef);
 		$this->datea = trim($this->datea);
-		$this->notes = trim($this->notes);
-        $this->trigger_name = trim($this->trigger_name);
+		$this->notes = $this->db->escape(trim($this->notes));
+		$this->trigger_name = $this->db->escape(trim($this->trigger_name));
 		// Check parameters
 		// Put here code to add control on parameters values
 
@@ -193,10 +181,8 @@ class Agefodd_sessadm extends CommonObject {
 		$sql .= " datef=" . (! isset($this->datef) || dol_strlen($this->datef) == 0 ? 'NULL' : "'" . $this->db->idate($this->datef) . "'") . ",";
 		$sql .= " datea=" . (! isset($this->datea) || dol_strlen($this->datea) == 0 ? 'NULL' : "'" . $this->db->idate($this->datea) . "'") . ",";
 		$sql .= " fk_user_mod=" . $user->id . ",";
-		$sql .= " notes='" . $this->db->escape($this->notes) . "',";
-        $sql .= " mandatory_file=" . (!empty($this->mandatory_file) ? $this->db->escape($this->mandatory_file) : "0") . ",";
-        $sql .= " file_name='" . $this->db->escape($this->file_name) . "',";
-        $sql .= " archive=" . $this->archive . ",";
+		$sql .= " notes='" . $this->notes . "',";
+		$sql .= " archive=" . $this->archive . ",";
 		$sql .= " level_rank=" . $this->level_rank . ",";
 		$sql .= " trigger_name=" . (isset($this->trigger_name) ? "'" . $this->db->escape($this->trigger_name) . "'" : "null") . ",";
 		$sql .= " fk_parent_level=" . $this->fk_parent_level;
@@ -252,8 +238,6 @@ class Agefodd_sessadm extends CommonObject {
 		$sql .= " s.level_rank, s.fk_parent_level, s.indice, s.dated, s.datea, s.datef, s.notes, s.delais_alerte, s.archive";
 		$sql .= ',s.fk_user_mod,s.trigger_name';
 		$sql .= ',s.delais_alerte_end';
-		$sql .= ',s.mandatory_file';
-		$sql .= ',s.file_name';
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_adminsitu as s";
 		$sql .= " WHERE s.rowid = '" . $id . "'";
 
@@ -271,9 +255,7 @@ class Agefodd_sessadm extends CommonObject {
 				$this->fk_parent_level = $obj->fk_parent_level;
 				$this->delais_alerte = $obj->delais_alerte;
 				$this->delais_alerte_end = $obj->delais_alerte_end;
-                $this->mandatory_file = $obj->mandatory_file;
-                $this->file_name = $obj->file_name;
-                $this->dated = $this->db->jdate($obj->dated);
+				$this->dated = $this->db->jdate($obj->dated);
 				$this->datef = $this->db->jdate($obj->datef);
 				$this->datea = $this->db->jdate($obj->datea);
 				$this->notes = $obj->notes;
@@ -290,7 +272,6 @@ class Agefodd_sessadm extends CommonObject {
 		}
 	}
 
-
 	/**
 	 * Load action into memory per session
 	 *
@@ -299,12 +280,10 @@ class Agefodd_sessadm extends CommonObject {
 	 */
 	public function fetch_all($sess_id) {
 		$sql = "SELECT";
-		$sql .= " s.rowid, s.fk_agefodd_session_admlevel, s.fk_agefodd_session, s.intitule, s.delais_alerte_end, s.mandatory_file,";
+		$sql .= " s.rowid, s.fk_agefodd_session_admlevel, s.fk_agefodd_session, s.intitule, s.delais_alerte_end,";
 		$sql .= " s.level_rank, s.fk_parent_level, s.indice, s.dated, s.datea, s.datef, s.notes, s.delais_alerte, s.archive";
 		$sql .= ',s.fk_user_mod,s.trigger_name';
 		$sql .= ', s.delais_alerte_end';
-		$sql .= ', s.mandatory_file';
-		$sql .= ', s.file_name';
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_adminsitu as s";
 		$sql .= " WHERE s.fk_agefodd_session = " . $sess_id;
 		$sql .= " ORDER BY s.indice";
@@ -337,8 +316,6 @@ class Agefodd_sessadm extends CommonObject {
 				$line->archive = $obj->archive;
 				$line->trigger_name = $obj->trigger_name;
 				$line->fk_user_mod = $obj->fk_user_mod;
-				$line->mandatory_file = $obj->mandatory_file;
-				$line->file_name = $obj->file_name;
 
 				$this->lines[$i] = $line;
 
@@ -645,21 +622,6 @@ class AgfSessAdm {
 	public $archive;
 	public $trigger_name;
 	public $fk_user_mod;
-
-    /**
-     * 1 si le fichier est obligatoire, 0 si non
-     * @var int
-     */
-    public $mandatory_file;
-
-    /**
-     * Nom du fichier uploadé
-     * @var text
-     */
-    public $file_name;
-
-
-
 	public function __construct() {
 		return 1;
 	}

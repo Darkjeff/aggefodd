@@ -60,8 +60,7 @@ class box_agefodd_lastsession extends ModeleBoxes {
 	function loadBox() {
 		global $conf, $user, $langs, $db;
 
-		if(!empty($max)) $this->max = $max;
-		else $this->max = 0;
+		$this->max = $max;
 
 		dol_include_once('/agefodd/class/agefodd_index.class.php');
 		include_once DOL_DOCUMENT_ROOT . "/core/lib/date.lib.php";
@@ -107,9 +106,9 @@ class box_agefodd_lastsession extends ModeleBoxes {
 	 * @param array $head with properties of box title
 	 * @param array $contents with properties of box lines
 	 * @param integer $nooutput nooutput
-	 * @return string
+	 * @return void
 	 */
 	function showBox($head = null, $contents = null, $nooutput = 0) {
-		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
+		parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

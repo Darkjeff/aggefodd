@@ -75,7 +75,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportCAVentilated'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/ca_ventilated';
+$upload_dir = $conf->agefodd->dir_output . '/report/ca_ventilated/';
 if (!is_dir($upload_dir)) dol_mkdir($upload_dir);
 
 $agf = new Agsession($db);
@@ -114,7 +114,7 @@ if (! empty($search_parent)) {
 	$filter['so.parent|sorequester.parent'] = $search_parent;
 }
 
-if (! empty($search_sale) && $search_sale > 0) {
+if (! empty($search_sale)) {
 	$filter['sale.fk_user'] = $search_sale;
 }
 
@@ -141,7 +141,7 @@ if ($action == 'builddoc') {
 
 		//$report_by_cust->file = $upload_dir . 'reportbycust-' . dol_print_date(dol_now(), 'dayhourlog') . '.xlsx';
 		$file_sub_title=$report_ca->getSubTitlFileName($filter);
-		$report_ca->file = $upload_dir . '/reportcaventilated-' . $file_sub_title . '.xlsx';
+		$report_ca->file = $upload_dir . 'reportcaventilated-' . $file_sub_title . '.xlsx';
 
 
 		$result = $report_ca->write_file($filter);
@@ -183,17 +183,9 @@ print '<tr>';
 print '<td>' . $langs->trans('DateInvoice').'</td>';
 print '<td>';
 print $langs->trans('From').' ';
-if(method_exists($form, 'selectDate')) {
-	print $form->selectDate($date_start, "date_start", 0,0,1);
-} else {
-	print $form->select_date($date_start, "date_start", 0,0,1);
-}
+print $form->selectDate($date_start, "date_start", 0,0,1);
 print $langs->trans('to').' ';
-if(method_exists($form, 'selectDate')) {
-	print $form->selectDate($date_end, "date_end", 0,0,1);
-} else {
-	print $form->select_date($date_end, "date_end", 0,0,1);
-}
+print $form->selectDate($date_end, "date_end", 0,0,1);
 print '</td>';
 print '</tr>';
 
@@ -217,7 +209,8 @@ print '<td>' . $langs->trans('ParentCompany') . '</td>';
 $extrafields = new ExtraFields($db);
 $extrafields->fetch_name_optionals_label('thirdparty');
 if (is_array($extrafields->attributes['societe']) && array_key_exists('ts_maison',$extrafields->attributes['societe']['type'])) {
-	$filter= (float) DOL_VERSION >= 18.0 ? '( (extra.ts_maison:=:1) )' :  'extra.ts_maison=1';
+
+	$filter='extra.ts_maison=1';
 } else {
 	$filter='';
 }

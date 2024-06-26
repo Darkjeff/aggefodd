@@ -65,7 +65,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportCalendarByCustomer'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/calendarbycust';
+$upload_dir = $conf->agefodd->dir_output . '/report/calendarbycust/';
 
 $agf = new Agsession($db);
 
@@ -113,7 +113,7 @@ if ($action == 'builddoc') {
         	if (empty($session_dt_end)) $filter['sesscal.date_session']['end'] = dol_now();
 
         	$file_sub_title=$report_calendar_by_cust->getSubTitlFileName($filter);
-        	$report_calendar_by_cust->file = $upload_dir . '/reportcalendarbycust-' . $file_sub_title . '.xlsx';
+        	$report_calendar_by_cust->file = $upload_dir . 'reportcalendarbycust-' . $file_sub_title . '.xlsx';
 
         	$result = $report_calendar_by_cust->write_file($filter);
         	if ($result < 0) {

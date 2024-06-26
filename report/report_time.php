@@ -65,7 +65,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportTime'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/time';
+$upload_dir = $conf->agefodd->dir_output . '/report/time/';
 
 $agf = new Agsession($db);
 
@@ -109,7 +109,7 @@ if ($action == 'builddoc') {
 		$report_time = new ReportTime($db, $outputlangs);
 		$report_time->type_report=$type_report;
 		$file_sub_title=$report_time->getSubTitlFileName($filter);
-		$report_time->file = $upload_dir . '/reporttime-' . $file_sub_title . '.xlsx';
+		$report_time->file = $upload_dir . 'reporttime-' . $file_sub_title . '.xlsx';
 
 
 		$result = $report_time->write_file($filter);

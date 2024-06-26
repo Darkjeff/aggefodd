@@ -40,8 +40,6 @@ $langs->load("companies");
 $langs->load('other');
 $langs->load('agefodd@agefodd');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $action     = GETPOST('action', 'aZ09')?GETPOST('action', 'aZ09'):'view';				// The action 'add', 'create', 'edit', 'update', 'view', ...
 $confirm    = GETPOST('confirm', 'alpha');												// Result of a confirmation
 $cancel     = GETPOST('cancel', 'alpha');												// We click on a Cancel button
@@ -214,7 +212,7 @@ if ($object->id) {
 
 	print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';
 	if ($optioncss != '') print '<input type="hidden" name="optioncss" value="'.$optioncss.'">';
-	print '<input type="hidden" name="token" value="'.$newToken.'">';
+	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 	print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
 	print '<input type="hidden" name="action" value="list">';
 	print '<input type="hidden" name="sortfield" value="'.$sortfield.'">';

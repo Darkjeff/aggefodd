@@ -48,8 +48,6 @@ if (! $user->rights->agefodd->lire)
 $langs->load('agefodd@agefodd');
 $langs->load('companies');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
@@ -299,7 +297,7 @@ if (! empty($id)) {
 
 	if ($user->rights->agefodd->modifier) {
 		print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '?id=' . $agf->id . '" method="post">' . "\n";
-		print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+		print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 		print '<input type="hidden" name="action" value="addtrainee">' . "\n";
 
 		print '<table class="noborder" width="100%">';

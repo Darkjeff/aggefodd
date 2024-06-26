@@ -40,14 +40,9 @@ $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
 $arch = GETPOST('arch', 'int');
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 // Security check
 if (! $user->rights->agefodd->lire)
 	accessforbidden();
-
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 $hookmanager->initHooks(array(
 	'agefoddsessiontrainer'
@@ -208,7 +203,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print_fiche_titre($langs->trans("AgfFormateurAdd"));
 
 	print '<form name="create_contact" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 	print '<input type="hidden" name="action" value="create_confirm_contact">' . "\n";
 
 	print '<div class="warning">' . $langs->trans("AgfFormateurAddContactHelp");
@@ -247,7 +242,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print '<br>';
 
 	print '<form name="create_user" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 	print '<input type="hidden" name="action" value="create_confirm_user">' . "\n";
 
 	print '<div class="warning">' . $langs->trans("AgfFormateurAddUserHelp");
@@ -321,7 +316,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			}
 
 			print '<form name="create_contact" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-			print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 			if ($action == 'editcategory') {
 				print '<input type="hidden" name="action" value="updatecat">' . "\n";
 			}
@@ -438,7 +433,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			        print '</td></tr>';
 			    }
 			} elseif ($agf->type_trainer == $agf->type_trainer_def[0]) {
-			    if (!empty($user->rights->user->creer)) {
+			    if ($user->rights->user->creer) {
 			        require_once DOL_DOCUMENT_ROOT.'/user/class/user.class.php';
 			        $u = new User($db);
 			        $u->fetch($agf->fk_user);
@@ -481,13 +476,13 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact' && $actio
 
     $href = '';
     if ($agf->type_trainer == 'socpeople'){
-        if(floatval(DOL_VERSION)> 3.6){
+        if(DOL_VERSION > 3.6){
             $href = dol_buildpath('/contact/card.php?id='.$agf->spid, 1).'&action=edit';
         } else {
             $href = dol_buildpath('/contact/fiche.php?id='.$agf->spid, 1).'&action=edit';
         }
     } else {
-        if(floatval(DOL_VERSION) > 3.6){
+        if(DOL_VERSION > 3.6){
             $href = dol_buildpath('/user/card.php?id='.$agf->fk_user, 1).'&action=edit';
         } else {
             $href = dol_buildpath('/user/fiche.php?id='.$agf->fk_user, 1).'&action=edit';
@@ -496,13 +491,13 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact' && $actio
 
 	if ($user->rights->agefodd->creer) {
 	    print '<a class="butAction" href="' . $href . '">' . $langs->trans('Modify') . '</a>';
-		print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 	    print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}
 
-	if (!empty($user->rights->agefodd->modifier) && empty($user->rights->agefodd->session->trainer)) {
+	if ($user->rights->agefodd->modifier && ! $user->rights->agefodd->session->trainer) {
 		if ($agf->archive == 0) {
 			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=archive&id=' . $id . '">' . $langs->trans('AgfArchiver') . '</a>';
 		} else {

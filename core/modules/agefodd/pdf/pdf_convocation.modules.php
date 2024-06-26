@@ -393,101 +393,8 @@ class pdf_convocation extends ModelePDFAgefodd {
 					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
 					$this->str = $agf_place->cp . ' ' . $agf_place->ville;
 					$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-					$posY = $pdf->GetY() + 8;
-
-
-					//Modif JEFF 26/06/2024
-					/** Formateur */
-					// récupération des formateurs de la session
-					if (!empty($agf->id)) {
-						dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
-						$formateurs = new Agefodd_session_formateur($this->db);
-						$nbform =$formateurs->fetch_formateur_per_session($agf->id);
-						if ($nbform < 0) {
-							$this->errors[] = $outputlangs->trans('AgfErrorUnableToFetchTrainer');
-							return -1;
-						}
-						if (!empty($formateurs->lines)) {
-							$pdf->SetXY($posX, $posY);
-							$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
-							if ($nbform>1) {
-								$this->str = ' ' . $outputlangs->transnoentities('Formateur(s)') . ' ';
-							} else {
-								$this->str = ' ' . $outputlangs->transnoentities('Formateur') . ' ';
-							}
-
-							$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-							$posY = $pdf->GetY() + 3;
-
-
-							foreach ($formateurs->lines as $formateur) {
-								$pdf->SetXY($posX + 10, $posY);
-								$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
-								$this->str = $line->lastname.' '.$line->firstname;
-								if (!empty($line->phone)) {
-									$this->str .= '('.$line->phone.')';
-								}
-								$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-								$posY = $pdf->GetY() + 2;
-							}
-						}
-					}
-					//FIN Modif JEFF 26/06/2024
-
-
-					$posY = $pdf->GetY() + 30;
-
-					/**
-					 * Mentor Référents
-					 */
-					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->default_font_size + 1);
-					$pdf->SetXY($posX, $posY);
-					$this->str = $outputlangs->transnoentities('AgfMentorList');
-					$pdf->MultiCell(0, 3, $outputlangs->convToOutputCharset($this->str), 0, 'L');
-					$posY = $pdf->GetY();
-					$pdf->SetDrawColor($this->colorLine[0], $this->colorLine[1], $this->colorLine[2]);
-					$pdf->Line($this->marge_gauche + 0.5, $posY, $this->page_largeur - $this->marge_droite, $posY);
-					$posY = $pdf->GetY() + $this->espace_apres_corps_text + 2;
-
-					if (!empty($conf->global->AGF_DEFAULT_MENTOR_ADMIN)){
-						$u = new User($this->db);
-						$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_ADMIN));
-						if ($res){
-							$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
-							$this->str = ucfirst($langs->transnoentities('MentorAdmin') ." : " . $u->civility_code .' '.  $u->firstname . " " . $u->lastname);
-							$pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '' );
-							$posY = $pdf->GetY() + 0.5;
-						}
-					}
-
-					if (!empty($conf->global->AGF_DEFAULT_MENTOR_PEDAGO)){
-						$pdf->SetXY($posX, $posY);
-						$u = new User($this->db);
-						$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_PEDAGO));
-						if ($res) {
-							$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
-							$this->str = ucfirst($langs->transnoentities('MentorPedago') . " : " . $u->civility_code . ' ' . $u->firstname . " " . $u->lastname);
-							$pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '');
-							$posY = $pdf->GetY() + 0.5;
-						}
-					}
-
-					if (!empty($conf->global->AGF_DEFAULT_MENTOR_HANDICAP)){
-						$pdf->SetXY($posX, $posY);
-						$u = new User($this->db);
-						$res = $u->fetch(intval($conf->global->AGF_DEFAULT_MENTOR_HANDICAP));
-						if ($res) {
-							$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->default_font_size);
-							$this->str = ucfirst($langs->transnoentities('MentorHandicap') . " : " . $u->civility_code . ' ' . $u->firstname . " " . $u->lastname);
-							$pdf->MultiCell(0, 5, $outputlangs->convToOutputCharset($this->str), 0, 'L', '', '2', '', '', '', '');
-						}
-					}
-					/**
-					 * Fin Mentor Réferents
-					 */
-
-
 					$posY = $pdf->GetY() + 10;
+
 					$pdf->SetXY($posX, $posY);
 					$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
 					$this->str = $outputlangs->transnoentities('AgfPDFConvocation7');
@@ -546,21 +453,6 @@ class pdf_convocation extends ModelePDFAgefodd {
 								$pdf->AddPage();
 								$tplIdxconseil = $pdf->importPage($iconseil);
 								$pdf->useTemplate($tplIdxconseil);
-							}
-						}
-
-						// add Rules of procedure to convocation if it exists and if merge conf is enabled
-						$dirRegInt = $conf->agefodd->multidir_output[$conf->entity].'/place/'.$agf->fk_session_place;
-						$listFiles = dol_dir_list($dirRegInt, 'files', 0, '^reglement_(.*)\.pdf$');
-						$infile = $dirRegInt. '/' . $listFiles[0]['name'];
-						if (is_file($infile)) {
-							$countreg = $pdf->setSourceFile($infile);
-							// import all page
-							for($ireg = 1; $ireg <= $countreg; $ireg ++) {
-								// New page
-								$pdf->AddPage();
-								$tplIdxreg = $pdf->importPage($ireg);
-								$pdf->useTemplate($tplIdxreg);
 							}
 						}
 					}

@@ -34,7 +34,7 @@ class Agefodd_contact extends CommonObject {
 	public $entity;
 	public $spid;
 	public $lines = array ();
-
+	
 	/**
 	 * Constructor
 	 *
@@ -44,7 +44,7 @@ class Agefodd_contact extends CommonObject {
 		$this->db = $db;
 		return 1;
 	}
-
+	
 	/**
 	 * Create object into database
 	 *
@@ -55,12 +55,12 @@ class Agefodd_contact extends CommonObject {
 	public function create($user, $notrigger = 0) {
 		global $conf, $langs;
 		$error = 0;
-
+		
 		// Clean parameters
-
+		
 		// Check parameters
 		// Put here code to add control on parameters value
-
+		
 		// Insert request
 		$sql = "INSERT INTO " . MAIN_DB_PREFIX . "agefodd_contact(";
 		$sql .= "fk_socpeople, fk_user_author,fk_user_mod, entity, datec";
@@ -71,9 +71,9 @@ class Agefodd_contact extends CommonObject {
 		$sql .= ' ' . $conf->entity . ',';
 		$sql .= "'" . $this->db->idate(dol_now()) . "'";
 		$sql .= ")";
-
+		
 		$this->db->begin();
-
+		
 		dol_syslog(get_class($this) . "::create", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if (! $resql) {
@@ -85,7 +85,7 @@ class Agefodd_contact extends CommonObject {
 			if (! $notrigger) {
 				// Uncomment this and change MYOBJECT to your own tag if you
 				// want this action call a trigger.
-
+				
 				// // Call triggers
 				// include_once(DOL_DOCUMENT_ROOT . "/interfaces.class.php");
 				// $interface=new Interfaces($this->db);
@@ -94,7 +94,7 @@ class Agefodd_contact extends CommonObject {
 				// // End call triggers
 			}
 		}
-
+		
 		// Commit or rollback
 		if ($error) {
 			foreach ( $this->errors as $errmsg ) {
@@ -108,7 +108,7 @@ class Agefodd_contact extends CommonObject {
 			return $this->id;
 		}
 	}
-
+	
 	/**
 	 * Load object in memory from database
 	 *
@@ -127,8 +127,8 @@ class Agefodd_contact extends CommonObject {
 		} else {
 			$sql .= " WHERE c.rowid = " . $id;
 		}
-		$sql .= " AND c.entity IN (" . getEntity('agefodd_base'/*'agsession'*/) . ")";
-
+		$sql .= " AND c.entity IN (" . getEntity('agefodd'/*'agsession'*/) . ")";
+		
 		dol_syslog(get_class($this) . "::fetch ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
@@ -154,7 +154,7 @@ class Agefodd_contact extends CommonObject {
 			return - 1;
 		}
 	}
-
+	
 	/**
 	 * Load object in memory from database
 	 *
@@ -173,27 +173,27 @@ class Agefodd_contact extends CommonObject {
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_contact as c";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople as s ON c.fk_socpeople = s.rowid";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as soc ON soc.rowid = s.fk_soc";
-		$sql .= " WHERE c.entity IN (" . getEntity('agefodd_base'/*'agsession'*/) . ")";
+		$sql .= " WHERE c.entity IN (" . getEntity('agefodd'/*'agsession'*/) . ")";
 		if ($arch == 0 || $arch == 1)
 			$sql .= " AND c.archive = " . $arch;
 		$sql .= " ORDER BY " . $sortfield . " " . $sortorder . " ";
 		if (! empty($limit)) {
 			$sql .= $this->db->plimit($limit + 1, $offset);
 		}
-
+		
 		dol_syslog(get_class($this) . "::fetch_all ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
 			$this->lines = array ();
 			$num = $this->db->num_rows($resql);
 			$i = 0;
-
+			
 			if ($num) {
 				while ( $i < $num ) {
 					$obj = $this->db->fetch_object($resql);
-
+					
 					$line = new AgfContactLine();
-
+					
 					$line->id = $obj->rowid;
 					$line->ref = $obj->rowid; // Use for next prev ref
 					$this->entity = $obj->entity;
@@ -208,9 +208,9 @@ class Agefodd_contact extends CommonObject {
 					$line->phone_mobile = $obj->phone_mobile;
 					$line->fk_socpeople = $obj->fk_socpeople;
 					$line->archive = $obj->archive;
-
+					
 					$this->lines[$i] = $line;
-
+					
 					$i ++;
 				}
 			}
@@ -222,7 +222,7 @@ class Agefodd_contact extends CommonObject {
 			return - 1;
 		}
 	}
-
+	
 	/**
 	 * Give information on the object
 	 *
@@ -234,7 +234,7 @@ class Agefodd_contact extends CommonObject {
 		$sql .= " c.rowid, c.entity, c.datec, c.tms, c.fk_user_mod, c.fk_user_author";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_contact as c";
 		$sql .= " WHERE c.rowid = " . $id;
-
+		
 		dol_syslog(get_class($this) . "::fetch ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
@@ -248,7 +248,7 @@ class Agefodd_contact extends CommonObject {
 				$this->user_creation = $obj->fk_user_author;
 			}
 			$this->db->free($resql);
-
+			
 			return 1;
 		} else {
 			$this->error = "Error " . $this->db->lasterror();
@@ -256,7 +256,7 @@ class Agefodd_contact extends CommonObject {
 			return - 1;
 		}
 	}
-
+	
 	/**
 	 * Update object into database
 	 *
@@ -267,12 +267,12 @@ class Agefodd_contact extends CommonObject {
 	public function update($user, $notrigger = 0) {
 		global $conf, $langs;
 		$error = 0;
-
+		
 		// Clean parameters
-
+		
 		// Check parameters
 		// Put here code to add control on parameters values
-
+		
 		// Update request
 		if (! isset($this->archive))
 			$this->archive = 0;
@@ -280,9 +280,9 @@ class Agefodd_contact extends CommonObject {
 		$sql .= " fk_user_mod=" . $user->id . ",";
 		$sql .= " archive=" . $this->archive . " ";
 		$sql .= " WHERE rowid = " . $this->id;
-
+		
 		$this->db->begin();
-
+		
 		dol_syslog(get_class($this) . "::update ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if (! $resql) {
@@ -293,7 +293,7 @@ class Agefodd_contact extends CommonObject {
 			if (! $notrigger) {
 				// Uncomment this and change MYOBJECT to your own tag if you
 				// want this action call a trigger.
-
+				
 				// // Call triggers
 				// include_once(DOL_DOCUMENT_ROOT . "/interfaces.class.php");
 				// $interface=new Interfaces($this->db);
@@ -302,7 +302,7 @@ class Agefodd_contact extends CommonObject {
 				// // End call triggers
 			}
 		}
-
+		
 		// Commit or rollback
 		if ($error) {
 			foreach ( $this->errors as $errmsg ) {
@@ -316,7 +316,7 @@ class Agefodd_contact extends CommonObject {
 			return 1;
 		}
 	}
-
+	
 	/**
 	 * Delete object in database
 	 *
@@ -326,12 +326,12 @@ class Agefodd_contact extends CommonObject {
 	public function remove($id) {
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "agefodd_contact";
 		$sql .= " WHERE rowid = " . $id;
-
+		
 		$this->db->begin();
-
+		
 		dol_syslog(get_class($this) . "::remove", LOG_DEBUG);
 		$resql = $this->db->query($sql);
-
+		
 		if ($resql) {
 			$this->db->commit();
 			return 1;

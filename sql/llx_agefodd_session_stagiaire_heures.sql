@@ -25,6 +25,6 @@ CREATE TABLE llx_agefodd_session_stagiaire_heures(
 	heures float NOT NULL,
     fk_user_author integer NOT NULL,
 	datec DATETIME NOT NULL,
-	tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	tms TIMESTAMP NOT NULL,
 	import_key VARCHAR(14)
 ) ENGINE=innodb;

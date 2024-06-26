@@ -50,9 +50,7 @@ foreach ( $tmptype2label as $key => $val )
 
 $action = GETPOST('action', 'alpha');
 $attrname = GETPOST('attrname', 'alpha');
-$TAllowedElement = array('agefodd_formation_catalogue', 'agefodd_session_catalogue');
-$elementtype = GETPOST('elementtype', 'alpha'); // Must be the $table_element of the class that manage extrafield
-if (!in_array($elementtype, $TAllowedElement)) $elementtype = 'agefodd_formation_catalogue';
+$elementtype = 'agefodd_formation_catalogue'; // Must be the $table_element of the class that manage extrafield
 
 /*
  * Actions
@@ -60,13 +58,9 @@ if (!in_array($elementtype, $TAllowedElement)) $elementtype = 'agefodd_formation
 
 require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
 
-
 /*
  * View
  */
-
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
 
 llxHeader('', $langs->trans("AgefoddSetupDesc"));
 
@@ -110,7 +104,7 @@ if (file_exists(DOL_DOCUMENT_ROOT.'/core/tpl/admin_extrafields_view.tpl.php')) {
 		print '<td align="center">' . yn($extrafields->attribute_unique [$key]) . "</td>\n";
 		print '<td align="center">' . yn($extrafields->attribute_required [$key]) . "</td>\n";
 		print '<td align="right"><a href="' . $_SERVER ["PHP_SELF"] . '?action=edit&attrname=' . $key . '">' . img_edit() . '</a>';
-		print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete".$urlToken."&attrname=$key\">" . img_delete() . "</a></td>\n";
+		print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete&attrname=$key\">" . img_delete() . "</a></td>\n";
 		print "</tr>";
 	}
 
@@ -149,94 +143,6 @@ if ($action == 'edit' && ! empty($attrname)) {
 
 	require DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_edit.tpl.php';
 }
-
-
-?>
-
-<script type="application/javascript">
-	$(document).ready(function(){
-		var done = false;
-
-		<?php
-
-		$elementtype_to_send = ($elementtype == 'agefodd_formation_catalogue') ? 'agefodd_session_catalogue' : 'agefodd_formation_catalogue';
-
-		if ($action == 'create' || $action == 'edit')
-		{
-			?>
-			let form = $('div.fiche > form');
-
-			if (form.length)
-			{
-				form.append($('<input type="hidden" name="elementtype" value="<?php echo $elementtype_to_send; ?>">'));
-
-				form.on('submit', function(e){
-					if (!done)
-					{
-						e.preventDefault();
-						done = true;
-
-						var data = objectifyForm(form.serializeArray());
-
-						// console.log(data);
-						$.ajax({
-							url: '<?php echo $_SERVER['PHP_SELF']; ?>',
-							type: form.attr('method'),
-							data: data
-						}).done(function(html) {
-							$('input[name="elementtype"]').remove();
-							form.submit();
-						});
-					}
-				});
-
-			}
-
-			<?php
-		}
-		?>
-
-		console.log($('.fa-trash'));
-		$('.fa-trash').on('click', function(e) {
-			if (!done)
-			{
-				e.preventDefault();
-				done = true;
-
-				$self = $(this);
-				$parent = $(this).parent();
-				$url = $parent.attr('href')+'&elementtype=<?php echo $elementtype_to_send; ?>';
-
-				$.ajax({
-					url: $url,
-					type: 'get'
-				}).done(function(html) {
-					$self.click();
-				});
-			}
-		});
-
-		//serialize data function
-		function objectifyForm(formArray) {
-			var returnArray = {};
-			for (var i = 0; i < formArray.length; i++) {
-				let name = formArray[i]['name'];
-				if (name.endsWith('[]')) {
-					name = name.replace(/..$/, ''); // suppprime les 2 derniers caractères
-					if (!returnArray.hasOwnProperty(name)) returnArray[name] = [];
-					returnArray[name].push(formArray[i]['value']);
-				}
-				else returnArray[name] = formArray[i]['value'];
-
-			}
-			return returnArray;
-		}
-
-	});
-
-</script>
-
-<?php
 
 llxFooter();
 $db->close();

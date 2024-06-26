@@ -35,7 +35,6 @@ require_once '../class/agefodd_sessadm.class.php';
 require_once '../class/agefodd_session_element.class.php';
 require_once '../class/agefodd_session_formateur.class.php';
 require_once '../class/agefodd_formation_catalogue.class.php';
-require_once '../class/agefodd_session_catalogue.class.php';
 require_once '../class/agefodd_convention.class.php';
 require_once '../core/modules/agefodd/modules_agefodd.php';
 require_once '../class/html.formagefodd.class.php';
@@ -53,10 +52,6 @@ $langs->load('orders');
 if (! $user->rights->agefodd->lire) {
 	accessforbidden();
 }
-
-$hookmanager->initHooks(array(
-    'agefoddsessiondocument'
-));
 
 $action = GETPOST('action', 'alpha');
 $id = GETPOST('id', 'int');
@@ -111,7 +106,7 @@ if ($action == 'unlink_confirm' && $confirm == 'yes' && $user->rights->agefodd->
 			$obj_link->fetch($agf->fk_element);
 			if ($obj_link->is_erasable()>0) {
 				if ($user->rights->facture->supprimer) {
-					if (floatval(DOL_VERSION)<= 4.0) {
+					if (DOL_VERSION <= 4.0) {
 						$resultdel = $obj_link->delete();
 					} else {
 						$resultdel = $obj_link->delete($user);
@@ -193,7 +188,7 @@ if (($action == 'create' || $action == 'refresh') && ($user->rights->agefodd->cr
 		$file = 'convention' . '_' . $id . '_' . $socid . '_' . $convention->id . '.pdf';
 	} elseif (! empty($socid)) {
 		$file = $model . '_' . $id . '_' . $socid . '.pdf';
-	} elseif (strpos($model, 'fiche_pedago') !== false && strpos($model, '_recueil') == false) {
+	} elseif (strpos($model, 'fiche_pedago') !== false) {
 		$file = $model . '_' . $idform . '.pdf';
 		$id_tmp = $idform;
 		$cour = $id;
@@ -229,20 +224,12 @@ if (($action == 'create' || $action == 'refresh') && ($user->rights->agefodd->cr
 		$path_external_model = '/referenceletters/core/modules/referenceletters/pdf/pdf_rfltr_agefodd.modules.php';
 		if(strpos($model, 'rfltr_agefodd') !== false) $id_external_model= (int) strtr($model, array('rfltr_agefodd_'=>''));
 	}
-
-	if (strpos($model, 'fiche_pedago') !== false && strpos($model, '_recueil') == false) {
+	if (strpos($model, 'fiche_pedago') !== false) {
 		$agf = new Agsession($db);
 		$agf->fetch($id);
 		$agfTraining = new Formation($db);
 		$agfTraining->fetch($agf->fk_formation_catalogue);
 		$PDALink = $agfTraining->generatePDAByLink();
-	}
-	else if (strpos($model, '_recueil') !== false)
-	{
-		$agfTraining = new SessionCatalogue($db);
-		$agfTraining->fetchSessionCatalogue($id);
-		$PDALink = $agfTraining->generatePDAByLink();
-		$model = 'fiche_pedago';
 	}
 	if (empty($PDALink))
 	{
@@ -371,7 +358,6 @@ $formAgefodd = new FormAgefodd($db);
 if (($action == 'link') && $user->rights->agefodd->creer) {
 	$agf = new Agsession($db);
 	$agf->fetch($id);
-	$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 	$head = session_prepare_head($agf);
 
@@ -401,7 +387,6 @@ if (($action == 'link') && $user->rights->agefodd->creer) {
 		print '<form name="fact_link" action="document.php?action=link_confirm&id=' . $id . '"  method="post">' . "\n";
 		print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 		print '<input type="hidden" name="socid" value="' . $socid . '">' . "\n";
-		print '<input type="hidden" name="token" value="' . $newToken . '">';
 		print '<input type="hidden" name="type" value="' . $type_link . '">' . "\n";
 
 		$var = True;
@@ -611,24 +596,14 @@ if (! empty($id)) {
 		print $langs->trans("AgfCommonDocs") . '<a name="commondoc" id="commondoc"></a></td>' . "\n";
 		print '</tr>' . "\n";
 
-		// AVANT LA FORMATION
 		print '<tr><td colspan=3 style="background-color:#d5baa8;">' . $langs->trans("AgfBeforeTraining") . '</td></tr>' . "\n";
-
-		$sesCatalogue = new SessionCatalogue($db);
-		$ret = $sesCatalogue->fetchSessionCatalogue($id);
-
-		document_line($langs->trans("AgfFichePedagogique"), 'fiche_pedago'.(empty($ret) ? '' : '_recueil'), 0, '', $hookmanager);
+		document_line($langs->trans("AgfFichePedagogique"), 'fiche_pedago');
 		if (! $user->rights->agefodd->session->trainer) {
 			if (!empty($conf->global->AGF_USE_TRAINING_MODULE)) {
-				document_line($langs->trans("AgfFichePedagogiqueModule"), 'fiche_pedago_modules', 0, '', $hookmanager);
+				document_line($langs->trans("AgfFichePedagogiqueModule"), 'fiche_pedago_modules');
 			}
 			if (empty($conf->global->AGF_MERGE_ADVISE_AND_CONVOC)) {
-				document_line($langs->trans("AgfConseilsPratique"), 'conseils', 0, '', $hookmanager);
-				// Show Rules of procedure document line
-				if ($agf->fk_session_place > 0)
-				{
-					document_line($langs->trans("AgfRegInt"), 'reg_int', $agf->fk_session_place, '', $hookmanager);
-				}
+				document_line($langs->trans("AgfConseilsPratique"), 'conseils');
 			}
 		}
 
@@ -637,25 +612,24 @@ if (! empty($id)) {
 		print '<tr><td colspan=3 style="background-color:#d5baa8;">' . $langs->trans("AgfDuringTraining") . '</td></tr>' . "\n";
 
 			if (!$user->rights->agefodd->session->trainer) {
-				document_line($langs->trans("AgfFichePresence"), "fiche_presence", 0, '', $hookmanager);
-				document_line($langs->trans("AgfFichePresenceCompany"), "fiche_presence_societe", 0, '', $hookmanager);
+				document_line($langs->trans("AgfFichePresence"), "fiche_presence");
+				document_line($langs->trans("AgfFichePresenceCompany"), "fiche_presence_societe");
 			}
-			document_line($langs->trans("AgfFichePresenceLandscapeByMonth"), "fiche_presence_landscape_bymonth", 0, '', $hookmanager);
-			document_line($langs->trans("AgfFichePresenceDirect"), "fiche_presence_direct", 0, '', $hookmanager);
-			document_line($langs->trans("AgfFichePresenceDirectCompany"), "fiche_presence_direct_societe", 0, '', $hookmanager);
+			document_line($langs->trans("AgfFichePresenceLandscapeByMonth"), "fiche_presence_landscape_bymonth");
+			document_line($langs->trans("AgfFichePresenceDirect"), "fiche_presence_direct");
+			document_line($langs->trans("AgfFichePresenceDirectCompany"), "fiche_presence_direct_societe");
 			if (!$user->rights->agefodd->session->trainer) {
-				document_line($langs->trans("AgfFichePresenceEmpty"), "fiche_presence_empty", 0, '', $hookmanager);
-				document_line($langs->trans("AgfFichePresenceTrainee"), "fiche_presence_trainee", 0, '', $hookmanager);
-				document_line($langs->trans("AgfFichePresenceTraineeDirect"), "fiche_presence_trainee_direct", 0, '', $hookmanager);
-				document_line($langs->trans("AgfFichePresenceTraineeLandscape"), "fiche_presence_landscape", 0, '', $hookmanager);
-                document_line($langs->trans("AgfFichePresenceTraineeLandscapeEmpty"), "fiche_presence_landscape_empty", 0, '', $hookmanager);
-				document_line($langs->trans("AgfFichePresenceTraineeLandscapeCompany"), "fiche_presence_landscape_societe", 0, '', $hookmanager);
-				document_line($langs->trans("AgfFicheEval"), "fiche_evaluation", 0, '', $hookmanager);
-				document_line($langs->trans("AgfRemiseEval"), "fiche_remise_eval", 0, '', $hookmanager);
-				document_line($langs->trans("AgfAttestationEndTrainingEmpty"), "attestationendtraining_empty", 0, '', $hookmanager);
-				document_line($langs->trans("AgfChevalet"), "chevalet", 0, '', $hookmanager);
+				document_line($langs->trans("AgfFichePresenceEmpty"), "fiche_presence_empty");
+				document_line($langs->trans("AgfFichePresenceTrainee"), "fiche_presence_trainee");
+				document_line($langs->trans("AgfFichePresenceTraineeDirect"), "fiche_presence_trainee_direct");
+				document_line($langs->trans("AgfFichePresenceTraineeLandscape"), "fiche_presence_landscape");
+                document_line($langs->trans("AgfFichePresenceTraineeLandscapeEmpty"), "fiche_presence_landscape_empty");
+				document_line($langs->trans("AgfFichePresenceTraineeLandscapeCompany"), "fiche_presence_landscape_societe");
+				document_line($langs->trans("AgfFicheEval"), "fiche_evaluation");
+				document_line($langs->trans("AgfRemiseEval"), "fiche_remise_eval");
+				document_line($langs->trans("AgfAttestationEndTrainingEmpty"), "attestationendtraining_empty");
+				document_line($langs->trans("AgfChevalet"), "chevalet");
 			}
-
 
 		print '</table>' . "\n";
 
@@ -694,6 +668,7 @@ if (! empty($id)) {
 		print '&nbsp;' . "\n";
 
 		$linecount = count($agf->lines);
+
 		for($i = 0; $i < $linecount; $i ++) {
 			if (! empty($agf->lines[$i]->socid)) {
 				print '<table class="border" width="100%">' . "\n";
@@ -749,7 +724,6 @@ if (! empty($id)) {
 					print '</td>';
 					print '</tr>' . "\n";
 				}
-
 				// For OPCA just dispaly line Invoice
 				if (strpos($agf->lines[$i]->typeline, 'OPCA') === false && $agf->lines[$i]->typeline!='trainee_presta') {
 
@@ -757,32 +731,30 @@ if (! empty($id)) {
 						// Before training session
 						print '<tr><td colspan=3 style="background-color:#d5baa8;">' . $langs->trans("AgfBeforeTraining") . '</td></tr>' . "\n";
 						if (! empty($conf->propal->enabled)) {
-							document_line($langs->trans("Proposal"), "prop", $agf->lines[$i]->socid, '', $hookmanager);
+							document_line($langs->trans("Proposal"), "prop", $agf->lines[$i]->socid);
 						}
 						if (! empty($conf->commande->enabled)) {
-							document_line($langs->trans("AgfBonCommande"), "bc", $agf->lines[$i]->socid, '', $hookmanager);
+							document_line($langs->trans("AgfBonCommande"), "bc", $agf->lines[$i]->socid);
 						}
-						document_line($langs->trans("AgfConvention"), "convention", $agf->lines[$i]->socid, '', $hookmanager);
+						document_line($langs->trans("AgfConvention"), "convention", $agf->lines[$i]->socid);
 					}
-					document_line($langs->trans("AgfPDFConvocation"), 'convocation', $agf->lines[$i]->socid, '', $hookmanager);
+					document_line($langs->trans("AgfPDFConvocation"), 'convocation', $agf->lines[$i]->socid);
 
 					if (! $user->rights->agefodd->session->trainer) {
-						document_line($langs->trans("AgfCourrierConv"), "courrier", $agf->lines[$i]->socid, 'convention', $hookmanager);
-						document_line($langs->trans("AgfCourrierAcceuil"), "courrier", $agf->lines[$i]->socid, 'accueil', $hookmanager);
+						document_line($langs->trans("AgfCourrierConv"), "courrier", $agf->lines[$i]->socid, 'convention');
+						document_line($langs->trans("AgfCourrierAcceuil"), "courrier", $agf->lines[$i]->socid, 'accueil');
 					}
 
 					// After training session
 					print '<tr><td colspan=3 style="background-color:#d5baa8;">' . $langs->trans("AgfAfterTraining") . '</td></tr>' . "\n";
 					if (! $user->rights->agefodd->session->trainer) {
-						document_line($langs->trans("AgfAttestationEndTraining"), "attestationendtraining", $agf->lines[$i]->socid, '', $hookmanager);
+						document_line($langs->trans("AgfAttestationEndTraining"), "attestationendtraining", $agf->lines[$i]->socid);
 					}
-					document_line($langs->trans("AgfAttestationPresenceTraining"), "attestationpresencetraining", $agf->lines[$i]->socid, '', $hookmanager);
+					document_line($langs->trans("AgfAttestationPresenceTraining"), "attestationpresencetraining", $agf->lines[$i]->socid);
 
 					if (! $user->rights->agefodd->session->trainer) {
-						document_line($langs->trans("AgfAttestationPresenceCollective"), "attestationpresencecollective", $agf->lines[$i]->socid, '', $hookmanager);
-						document_line($langs->trans("AgfSendAttestation"), "attestation", $agf->lines[$i]->socid, '', $hookmanager);
-						//TODO Décommenter cette ligne pour ajouter le nouveau champs
-						document_line($langs->trans("AgfCompletionCertication"), "linked_certificate_completion_trainee", $agf->lines[$i]->socid, '', $hookmanager);
+						document_line($langs->trans("AgfAttestationPresenceCollective"), "attestationpresencecollective", $agf->lines[$i]->socid);
+						document_line($langs->trans("AgfSendAttestation"), "attestation", $agf->lines[$i]->socid);
 					}
 
 					$text_fac = $langs->trans("AgfFacture");
@@ -805,28 +777,27 @@ if (! empty($id)) {
 						}*/
 					}
 					if (! $user->rights->agefodd->session->trainer) {
-						document_line($text_fac, "fac", $agf->lines[$i]->socid, '', $hookmanager);
+						document_line($text_fac, "fac", $agf->lines[$i]->socid);
 					}
 
 					if (! $user->rights->agefodd->session->trainer) {
-						document_line($langs->trans("AgfCourrierCloture"), "courrier", $agf->lines[$i]->socid, 'cloture', $hookmanager);
+						document_line($langs->trans("AgfCourrierCloture"), "courrier", $agf->lines[$i]->socid, 'cloture');
 					}
 					if (! $user->rights->agefodd->session->trainer) {
 						if (! empty($conf->global->AGF_MANAGE_CERTIF)) {
-							document_line($langs->trans("AgfPDFCertificateA4"), "certificateA4", $agf->lines[$i]->socid, '', $hookmanager);
-							document_line($langs->trans("AgfPDFCertificateCard"), "certificatecard", $agf->lines [$i]->socid, '', $hookmanager);
+							document_line($langs->trans("AgfPDFCertificateA4"), "certificateA4", $agf->lines[$i]->socid);
+							document_line($langs->trans("AgfPDFCertificateCard"), "certificatecard", $agf->lines [$i]->socid);
 						}
 					}
 				} elseif ($agf->lines[$i]->typeline=='trainee_presta') {
 					if (! $user->rights->agefodd->session->trainer) {
-						document_line($langs->trans("AgfContratPrestation"), "contrat_presta", $agf->lines[$i]->socid, '', $hookmanager);
+						document_line($langs->trans("AgfContratPrestation"), "contrat_presta", $agf->lines[$i]->socid);
 					}
 				} else {
 					if (! $user->rights->agefodd->session->trainer) {
-						document_line($langs->trans("AgfFacture"), "facopca", $agf->lines[$i]->socid, '', $hookmanager);
+						document_line($langs->trans("AgfFacture"), "facopca", $agf->lines[$i]->socid);
 					}
 				}
-
 				print '</table>';
 				if ($i < $linecount)
 					print '&nbsp;' . "\n";
@@ -843,24 +814,17 @@ if (! empty($id)) {
 					print '<a href="' . dol_buildpath('/agefodd/trainer/session.php', 1) . '?id=' . $line->formid . '" name="trainerid' . $line->opsid . '" id="trainerid' . $line->opsid . '">' . $line->lastname . ' ' . $line->fullname . '</a>';
 					print '</td>' . "\n";
 					print '</tr>' . "\n";
-
-					document_line($langs->trans("AgfTrainerMissionLetter"), "mission_trainer", $line->opsid, '', $hookmanager);
+					document_line($langs->trans("AgfTrainerMissionLetter"), "mission_trainer", $line->opsid);
 					$select_models = getSelectAgefoddModels("contrat_trainer", $socid); // Si la chaine est vide, aucun modèle de ce type n'existe
-					if(!empty($select_models)) document_line($langs->trans("AgfContratTrainer"), "contrat_trainer", $line->opsid, '', $hookmanager);
-
+					if(!empty($select_models)) document_line($langs->trans("AgfContratTrainer"), "contrat_trainer", $line->opsid);
 				}
 				print '</table>';
 			}
 		}
 		print '</div></div>' . "\n";
 	} elseif ($result==0) {
-
-		$trad =  $agf->type_session > 0 ? 'AgfThirdparyMandatoryIntra' : 'AgfThirdparyMandatory';
-
-		print '<div style="text-align:center"><br>'.$langs->trans($trad).'</div>';
-		// type_session
-		setEventMessages($langs->trans($trad), null, 'errors');
-
+	    print '<div style="text-align:center"><br>'.$langs->trans('AgfThirdparyMandatory').'</div>';
+		setEventMessages($langs->trans('AgfThirdparyMandatory'), null, 'errors');
 	} else {
 		setEventMessages($agf->error, null, 'errors');
 	}

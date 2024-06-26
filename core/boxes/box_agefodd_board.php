@@ -60,8 +60,7 @@ class box_agefodd_board extends ModeleBoxes {
 	function loadBox() {
 		global $conf, $user, $langs, $db;
 
-		if(!empty($max)) $this->max = $max;
-		else $this->max = 0;
+		$this->max = $max;
 
 		dol_include_once('/agefodd/class/agefodd_index.class.php');
 
@@ -80,7 +79,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
 					//'logo' => img_object($langs->trans("AgfRunningSession"), "generic",'',false,1),
-					'text' => img_object($langs->trans("AgfRunningSession"), "generic").' '.$langs->trans("AgfRunningSession")
+					'text' => img_object($langs->trans("AgfRunningSession"), "generic").$langs->trans("AgfRunningSession")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left"',
@@ -97,7 +96,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfAlertDay"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertDay")
+					'text' => img_object($langs->trans("AgfAlertDay"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertDay")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="red"',
@@ -114,7 +113,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfYDaysBeforeAlert"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfYDaysBeforeAlert")
+					'text' => img_object($langs->trans("AgfYDaysBeforeAlert"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfYDaysBeforeAlert")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="orange"',
@@ -131,7 +130,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfXDaysBeforeAlert"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfXDaysBeforeAlert")
+					'text' => img_object($langs->trans("AgfXDaysBeforeAlert"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfXDaysBeforeAlert")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="ffe27d"',
@@ -148,7 +147,7 @@ class box_agefodd_board extends ModeleBoxes {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfZDaysBeforeAlert"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfZDaysBeforeAlert")
+					'text' => img_object($langs->trans("AgfZDaysBeforeAlert"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfZDaysBeforeAlert")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left" bgcolor="#d5baa8"',
@@ -165,7 +164,7 @@ class box_agefodd_board extends ModeleBoxes {
 		} else {
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfAlertLevel3Short"), "generic").' '.$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertLevel3Short")
+					'text' => img_object($langs->trans("AgfAlertLevel3Short"), "generic").$langs->trans("AgfAdmSuivi").' : '.$langs->trans("AgfAlertLevel3Short")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left"',
@@ -182,9 +181,9 @@ class box_agefodd_board extends ModeleBoxes {
 	 * @param array $head with properties of box title
 	 * @param array $contents with properties of box lines
 	 * @param integer $nooutput nooutput
-	 * @return string
+	 * @return void
 	 */
 	function showBox($head = null, $contents = null, $nooutput = 0) {
-		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
+		parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

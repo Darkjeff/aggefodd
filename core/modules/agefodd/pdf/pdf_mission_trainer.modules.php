@@ -395,15 +395,15 @@ class pdf_mission_trainer extends ModelePDFAgefodd {
 
 				$pdf->SetXY($posX, $posY);
 				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
-				$this->str = $contact_place->getFullName($outputlangs).'<br />';
+				$this->str = $contact_place->getFullName($outputlangs).'<BR>';
 				if (!empty($contact_place->phone_pro)) {
-					$this->str .= '- '.dol_print_phone($contact_place->phone_pro, 'FR').'<br />';
+					$this->str .= '- '.dol_print_phone($contact_place->phone_pro, 'FR').'<BR>';
 				}
 				if (!empty($contact_place->phone_perso)) {
-					$this->str .= '- '.dol_print_phone($contact_place->phone_perso, 'FR').'<br />';
+					$this->str .= '- '.dol_print_phone($contact_place->phone_perso, 'FR').'<BR>';
 				}
 				if (!empty($contact_place->phone_mobile)) {
-					$this->str .= '- '.dol_print_phone($contact_place->phone_perso, 'FR').'<br />';
+					$this->str .= '- '.dol_print_phone($contact_place->phone_perso, 'FR').'<BR>';
 				}
 
 				if (!empty($contact_place->email)) {

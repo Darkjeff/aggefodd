@@ -39,12 +39,12 @@ class mod_agefodd_universal extends ModeleNumRefAgefodd {
 	 * @return string Texte descripif
 	 */
 	function info() {
-		global $conf, $langs, $db;
+		global $conf, $langs;
 
 		$langs->load("agefodd@agefodd");
 		$langs->load("admin");
 
-		$form = new Form($db);
+		$form = new Form($this->db);
 
 		$texte = $langs->trans('GenericNumRefModelDesc') . "<br>\n";
 		$texte .= '<form action="' . $_SERVER ["PHP_SELF"] . '" method="POST">';

@@ -135,53 +135,34 @@ class InterfaceAgefodd {
 		// multicompagny tweak
 		if (is_object($mc))
 		{
-            $to_update = false;
 			/** @var ActionsMulticompany $mc */
-			if(is_array($mc->sharingelements) && !isset($mc->sharingelements['agefodd_base'])){
-				$mc->sharingelements['agefodd_base'] = array('type' => 'element',);
-				$mc->sharingelements['agefodd_session'] = array('type' => 'element',);
-                $to_update = true;
+			if(is_array($mc->sharingelements) && !in_array('agefodd', $mc->sharingelements)){
+		        $mc->sharingelements[] = 'agefodd';
 		    }
 
-			if ($to_update) $mc->setValues($conf);
+		    if(!isset($mc->sharingobjects['agefodd'])){
+		        $mc->sharingobjects['agefodd'] = array('element'=>'agefodd');
+		    }
+
+			$mc->setValues($conf);
 		}
 
 		$ok = 0;
-		// arrive aprés le trigger spé massmail ou envoi mail
-		if ($action == 'ACTION_CREATE') {
-			/**
-			 * @var ActionComm $object
-			 */
-			$trackid = GETPOST('trackid', 'alphanohtml');
-			if(empty($trackid)) $attachs = $_SESSION['listofnames'];
-			else $attachs = $_SESSION['listofnames-'.$trackid];
-			if($attachs && strpos($object->note_private, $langs->transnoentities('AttachedFiles')) === false) {
-				$object->note_private = dol_concatdesc($object->note_private, "\n".$langs->transnoentities('AttachedFiles').': '.$attachs);
-				if (isset($_SESSION['AGFMassActionFileSended'])){
-					$object->note_private .= ", " . $_SESSION['AGFMassActionFileSended'];
-					unset($_SESSION['AGFMassActionFileSended']);
-				}
-
-			}elseif (isset($_SESSION['AGFMassActionFileSended'])){
-				$object->note_private = dol_concatdesc($object->note_private, "\n".$langs->transnoentities('AttachedFiles').': '.$_SESSION['AGFMassActionFileSended']);
-				unset($_SESSION['AGFMassActionFileSended']);
-			}
-			$object->update($user, true);
-		}
 
 		// Users
 		if ($action == 'ACTION_MODIFY') {
 			dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . $user->id . ". id=" . $object->id);
 
 			if ($object->type_code == 'AC_AGF_SESS') {
-                $action = new ActionComm($this->db);
+
+				$action = new ActionComm($this->db);
 				$result = $action->fetch($object->id);
 
 				if ($result != - 1) {
 
 					if ($object->id == $action->id) {
 
-						$agf_cal = new Agefodd_sesscalendar($object->db);
+						$agf_cal = new Agefodd_sesscalendar($this->db);
 						$result = $agf_cal->fetch_by_action($action->id);
 						if ($result > 0) {
 
@@ -209,6 +190,7 @@ class InterfaceAgefodd {
 				}
 			}
 			if ($object->type_code == 'AC_AGF_SESST') {
+
 				$action = new ActionComm($this->db);
 				$result = $action->fetch($object->id);
 
@@ -216,7 +198,7 @@ class InterfaceAgefodd {
 
 					if ($object->id == $action->id) {
 
-						$agf_cal = new Agefoddsessionformateurcalendrier($object->db);
+						$agf_cal = new Agefoddsessionformateurcalendrier($this->db);
 						$result = $agf_cal->fetch_by_action($action->id);
                         if ($result > 0) {
 
@@ -401,27 +383,7 @@ class InterfaceAgefodd {
 
 				$ok = 1;
 			}
-		}elseif ($action == 'CERTIFICAT_SENTBYMAIL') {
-			dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . $user->id . ". id=" . $object->id);
-
-			if ($object->actiontypecode == 'AC_AGF_COMP') {
-
-				dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id);
-				$langs->load("agefodd@agefodd");
-				$langs->load("agenda");
-
-				if (empty($object->actionmsg2))
-					$object->actionmsg2 = $langs->transnoentities("AgfCertificatByEmail", $object->ref);
-				if (empty($object->actionmsg)) {
-					$object->actionmsg = $langs->transnoentities("AgfCertificatByEmail", $object->ref);
-					$object->actionmsg .= "\n" . $langs->transnoentities("Author") . ': ' . $user->login;
-				}
-
-				$ok = 1;
-			}
-		}
-
-		elseif ($action == 'CONSEILS_SENTBYMAIL') {
+		} elseif ($action == 'CONSEILS_SENTBYMAIL') {
 			dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . $user->id . ". id=" . $object->id);
 
 			if ($object->actiontypecode == 'AC_AGF_CONSE') {
@@ -486,7 +448,7 @@ class InterfaceAgefodd {
 		        $langs->load("agenda");
 
 		        if (empty($object->actionmsg2)) {
-		            $object->actionmsg2 = $langs->trans('AgfCertificatByEmail');
+		            $object->actionmsg2 = $langs->trans('ActionATTESTATION_SENTBYMAIL');
 		        }
 		        if (empty($object->actionmsg)) {
 		            $object->actionmsg = $langs->trans('MailSentBy') . ' ' . $object->from . ' ' . $langs->trans('To') . ' ' . $object->send_email . ".\n";
@@ -495,24 +457,6 @@ class InterfaceAgefodd {
 
 		        $ok = 1;
 		    }
-		} elseif ($action == 'CERTIFICATE_COMPLETION_SENTBYMAIL') {
-			dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . $user->id . ". id=" . $object->id);
-
-			if ($object->actiontypecode == 'AC_AGF_COMP') {
-
-				dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id);
-				$langs->load("agefodd@agefodd");
-				$langs->load("agenda");
-				if (empty($object->actionmsg2)) {
-					$object->actionmsg2 = $langs->trans('ActionCERTIFICAT_COMPLETION_SENTBYMAIL');
-				}
-				if (empty($object->actionmsg)) {
-					$object->actionmsg = $langs->trans('MailSentBy') . ' ' . $object->from . ' ' . $langs->trans('To') . ' ' . $object->send_email . ".\n";
-
-				}
-
-				$ok = 1;
-			}
 		}
 
 		// Add entry in event table
@@ -534,8 +478,7 @@ class InterfaceAgefodd {
 			$actioncomm->durationp = 0;
 			$actioncomm->punctual = 1;
 			$actioncomm->percentage = - 1; // Not applicable
-			if(intval(DOL_VERSION) < 13) $actioncomm->contactid = $object->sendtoid;
-			else $actioncomm->contact_id = $object->sendtoid;
+			$actioncomm->contactid = $object->sendtoid;
 			$actioncomm->socid = $object->socid;
 			$actioncomm->author = $user; // User saving action
 			                             // $actioncomm->usertodo = $user; // User affected to action
@@ -954,18 +897,6 @@ class InterfaceAgefodd {
 						}
 						$session_trainee = new Agefodd_session_stagiaire($this->db);
 
-						$invoice = new Facture($this->db);
-						if($object->fk_facture>0){
-							$result = $invoice->fetch($object->fk_facture);
-							if ($result < 0) {
-								$this->error = $invoice->error;
-								dol_syslog("interface_modAgefodd_Agefodd.class.php: " . $this->error, LOG_ERR);
-								return -1;
-							}
-						}
-
-
-
 						//Determine if we are doing update invoice line for thridparty as OPCA in session or just customer
 						// For Intra entreprise you take all trainne
 						$sessionOPCA = new Agefodd_opca($this->db);
@@ -977,13 +908,20 @@ class InterfaceAgefodd {
 						} elseif ($agfsession->type_session == 1) {
 							// For inter entreprise you tkae only trainee link with this OPCA
 
+							$invoice = new Facture($this->db);
+							$result = $invoice->fetch($object->fk_facture);
+							if ($result < 0) {
+								$this->error = $invoice->error;
+								dol_syslog("interface_modAgefodd_Agefodd.class.php: " . $this->error, LOG_ERR);
+								return -1;
+							}
+
 							$result = $sessionOPCA->getOpcaSession($agf_fin->lines[0]->fk_session_agefodd);
 							if ($result < 0) {
 								$this->error = $sessionOPCA->error;
 								dol_syslog("interface_modAgefodd_Agefodd.class.php: " . $this->error, LOG_ERR);
 								return -1;
 							}
-                            // le tiers de ma facture est-il un OPCA de la session que je facture?
 							if (is_array($sessionOPCA->lines) && count($sessionOPCA->lines) > 0) {
 								foreach ($sessionOPCA->lines as $line) {
 									if ($line->fk_soc_OPCA == $invoice->socid) {
@@ -1009,34 +947,29 @@ class InterfaceAgefodd {
 							if ($conf->global->AGF_ADD_TRAINEE_NAME_INTO_DOCPROPODR) {
 								$desc_trainee .= "\n";
 								$num_OPCA_file_array = array();
-								$nbtraineeShown=0;
+								//$nbtrainee=0;
 								foreach ($session_trainee->lines as $line) {
+
 									// Do not output not present or cancelled trainee
 									if ($line->status_in_session != 5 && $line->status_in_session != 6) {
-
 										if ($find_trainee_by_OPCA) {
 											$sessionOPCA->getOpcaForTraineeInSession($line->socid, $agfsession->id, $line->stagerowid);
 										}
-
 										if (!empty($sessionOPCA->num_OPCA_file)) {
 											if (!array_key_exists($sessionOPCA->num_OPCA_file, $num_OPCA_file_array)) {
 												$desc_OPCA .= "\n" . $langs->trans('AgfNumDossier') . ' : ' . $sessionOPCA->num_OPCA_file . ' ' . $langs->trans('AgfInTheNameOf') . ' ' . $line->socname;
 												$num_OPCA_file_array[$sessionOPCA->num_OPCA_file] = $line->socname;
 											}
 										}
-
-										if (empty($conf->global->AGF_FACTURE_SESSION_SHOW_ONLY_TRAINEES_Of_THIRD_PARTY) || $line->socid == $invoice->socid) {
-                                            // si on a la conf cachée AGF_FACTURE_SESSION_SHOW_ONLY_TRAINEES_Of_THIRD_PARTY
-                                            // et que le stagiaire  n'est pas en mode "OPCA" ($find_trainee_by_OPCA), afficher uniquement les
-                                            // stagiaires dont le tiers est celui de la facture
-                                            $nbtraineeShown++;
+										//if ($line->socid==$invoice->socid) {
+											//$nbtrainee++;
 											$desc_trainee .= dol_strtoupper($line->nom) . ' ' . $line->prenom . "\n";
-										}
+										//}
 									}
 								}
 							}
 
-							$desc_trainee_head = "\n" . $nbtraineeShown . ' ';
+							$desc_trainee_head = "\n" . $nbtrainee . ' ';
 							if ($nbtrainee > 1) {
 								$desc_trainee_head .= $langs->trans('AgfParticipants');
 							} else {
@@ -1301,10 +1234,7 @@ class InterfaceAgefodd {
 		}
 		elseif ($action == 'USER_MODIFY')
         {
-        	if(intval(DOL_VERSION) < 13) $user_contactid = $object->contactid;
-        	else $user_contactid = $object->contact_id;
-
-            if ((empty($user_contactid) && GETPOST('contactid', 'none') > 0) || (!empty($user_contactid) && GETPOST('contactid', 'none') == 0))
+            if ((empty($object->contactid) && GETPOST('contactid', 'none') > 0) || (!empty($object->contactid) && GETPOST('contactid', 'none') == 0))
             {
                 dol_include_once('agefodd/class/agefodd_formateur.class.php');
                 // Nous avons peut être un formateur de déclaré avec cet utilisateur, puis il est changé en tant que contact externe
@@ -1313,7 +1243,7 @@ class InterfaceAgefodd {
                 if (!empty($formateur->id))
                 {
                     // Cas 1 : utilisateur interne qui passe à externe
-                    if (empty($user_contactid))
+                    if (empty($object->contactid))
                     {
                         $formateur->type_trainer = 'socpeople';
                         $formateur->fk_socpeople = GETPOST('contactid', 'none');
@@ -1330,11 +1260,7 @@ class InterfaceAgefodd {
                 }
             }
         }
-		elseif ($action == 'externalAccessInitController'){
-			/** @var Context $object  */
-			$defaultControllersPath = __DIR__ . '/../../externalaccess/controllers/';
-			$object->addControllerDefinition('agfbill', $defaultControllersPath.'bill.controller.php', 'BillController');
-		}
+
 		return 0;
     }
 }

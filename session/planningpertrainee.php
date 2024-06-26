@@ -18,7 +18,6 @@ require_once ('../lib/agefodd.lib.php');
 if (! $user->rights->agefodd->lire) {
     accessforbidden();
 }
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 // Initialize technical object to manage hooks of page. Note that conf->hooks_modules contains array of hook context
 $hookmanager->initHooks(array(
@@ -248,7 +247,7 @@ if($res > 0)
 
         print '<div class="" id="formPlannifTrainee">';
         print '<form name="obj_update" action="'.$_SERVER['PHP_SELF'].'?action=edit&id='.$id.'"  method="POST">'."\n";
-        print '<input type="hidden" name="token" value="'.$newToken.'">'."\n";
+        print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">'."\n";
         print '<input type="hidden" name="action" value="edit">'."\n";
         print '<input type="hidden" name="sessid" value="'.$agf->id.'">'."\n";
         print '<input type="hidden" name="traineeid" value="'.$idTrainee_session.'">'."\n";
@@ -287,7 +286,6 @@ if($res > 0)
 	    }
         print '<th class="liste_titre_hoursr_'.$idTrainee_session.'" style="font-weight: bold;">'.$langs->trans('AgfHoursR').' ('.$heureRTotal.$picto.')</th>';
         print '<th class="liste_titre_hoursrest_'.$idTrainee_session.'" style="font-weight: bold;">'.$langs->trans('AgfHoursRest').' ('.$heureRestTotal.')</th>';
-        print '<th class="liste_titre_hoursrest_'.$idTrainee_session.'" style="font-weight: bold;">'.$langs->trans('AgfTrainer').'</th>';
         print '<th class="linecoldelete center">&nbsp;</th>';
         print '</tr>';
 
@@ -348,9 +346,6 @@ if($res > 0)
             //Heures restantes
             print '<td>'.$heureRest.'</td>';
 
-            print '<td>'.$TtrainerName[$line->fk_agefodd_session_formateur].'</td>';
-
-
             print '<td class = "linecoldelete center"><a href='.$_SERVER['PHP_SELF'].'?action=edit&id='.$id.'&idPlanningHoursToRemove='.$line->rowid.'>'. img_picto($langs->trans("Delete"), 'delete') . '</a></td>';
 
             print '</tr>';
@@ -358,28 +353,21 @@ if($res > 0)
         }
 
         print '<tr class="pair nodrag nodrop nohoverpair liste_titre_create" >';
-        print '<td class="fieldrequired">'.$formAgefodd->select_calendrier_type('', 'code_c_session_calendrier_type').'</td>';
-        print '<td class="fieldrequired">' . ' <input size = "25px" name="heurep" placeholder="'.dol_escape_htmltag($langs->trans("AgfAddScheduledHours")).'";</input></td>';
-		print '<td></td>';
-		print '<td>';
+        print '<td></td>';
+        print '<td class="fieldrequired">'.$langs->trans('AgfCalendarType').' '.$formAgefodd->select_calendrier_type('', 'code_c_session_calendrier_type').'</td>';
+        print '<td class="fieldrequired">'.$langs->trans('AgfAddScheduledHours').' <input  name="heurep">&nbsp;</input></td>';
 	    if (! empty($conf->global->AGF_DOL_TRAINER_AGENDA)) {
-		    print '<td>' . $formAgefodd->selectSessionTrainer($id, '', 'trainerid') . '</td>';
+		    print '<td>' . $langs->trans('AgfTrainer') . ' ' . $formAgefodd->selectSessionTrainer($id, '', 'trainerid') . '</td>';
 	    } else {
 	    	print '<td></td>';
 	    }
-		print '<td>';
-
-		print '<input type="submit" class="butAction" name="addHours" value="'.$langs->trans('AgfNewHoursP').'">';
-
-		print '</td>';
-
-
-		print '</td>';
+        print '<td class="linecoldelete center">&nbsp;</td>';
         print '</tr>';
         print '</table>';
 
         print '<div class="tabsAction">';
         print '<div class="inline-block divButAction">';
+        print '<input type="submit" class="butAction" name="addHours" value="'.$langs->trans('AgfNewHoursP').'">';
         print '</div>';
         print '</div>';
 

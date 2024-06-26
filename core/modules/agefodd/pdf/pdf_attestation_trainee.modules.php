@@ -27,7 +27,6 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
-dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire.class.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php');
@@ -43,51 +42,6 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 	protected $colorheaderBg;
 	protected $colorheaderText;
 	protected $colorLine;
-
-	public $orientation = 'L';
-
-	public $defaultFontSize = 12;
-	/**
-	 * @var array $styles  Tableau associatif contenant des tableaux (indexés par nom), ces tableaux sont associatifs
-	 *                     aussi et définissent des styles de paragraphe (marges…) ou de page (logos, footer, etc.)
-	 */
-	public $styles = array();
-
-	/** @var int[] $frameOffset  Pour chaque page: espace laissé libre pour l'encadré de page */
-	public $frameOffset = array();
-
-	/**
-	 * @var int $stampOverlapTolerance Tolérance au chevauchement sur le tampon
-	 *                                 (on autorise à dépasser de quelques millimètres
-	 *                                 car il y a souvent un peu d'espace entre le
-	 *                                 "Fait à…" et le nom du responsable)
-	 */
-	public $stampOverlapTolerance = 15;
-
-	// La taille du tampon sera réduite si besoin, en préservant le ratio d'aspect
-	/** @var int $stampMaxWidth Largeur maxi du tampon / signature */
-	public $stampMaxWidth = 60;
-	/** @var int $stampMaxHeight Hauteur maxi du tampon / signature */
-	public $stampMaxHeight = 35;
-	/** @var int $stampRightOffset Espacement entre la marge droite et le tampon */
-	public $stampRightOffset = 10;
-	/** @var int $stampBottomOffset Espacement entre la marge basse et le tampon */
-	public $stampBottomOffset = 0;
-
-	// La taille des logos sera réduite si besoin, en préservant le ratio d'aspect
-	/** @var int $logoMaxWidth Largeur maxi des logos*/
-	public $logoMaxWidth = 40;
-	/** @var int $logoMaxHeight Hauteur maxi des logos */
-	public $logoMaxHeight = 30;
-	/**
-	 * @var array $usedPageStyles  Tableau qui associe à un no. de page son style pour
-	 *                             connaître les caractéristiques de chaque page.
-	 */
-	public $usedPageStyles = array();
-	/**
-	 * @var TCPDF $pdf
-	 */
-	public $pdf;
 
 	/**
 	 * \brief		Constructor
@@ -125,58 +79,6 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 		$this->colorheaderText = agf_hex2rgb($conf->global->AGF_HEADER_COLOR_TEXT);
 		$this->colorLine = agf_hex2rgb($conf->global->AGF_COLOR_LINE);
 
-		/*
-		Ces styles prédéfinis ici ne sont pas du CSS même si le concept s'en inspire.
-
-		Ce sont des styles de paragraphes utilisés par la méthode
-		printHTML(), ils permettent de compléter lorsque le moteur de rendu
-		HTML de TCPDF ne prend pas en charge certaines fonctionnalités (comme
-		les marges gauche / droite ou le padding).
-
-		Les styles commençant par "page-" sont des styles de pages qui permettent
-		d'activer automatiquement des fonctionnalités (logos, tampons…) à l'ajout
-		d'une nouvelle page en utilisant $this->newPage().
-		*/
-		$this->styles = array(
-			'title' => array('font-size' => 20, 'color' => $this->colorhead, 'text-align' => 'C'),
-			'default' => array(
-				'font-family'    => pdf_getPDFFont($langs),
-				'font-size'      => $this->defaultFontSize,
-				'color'          => $this->colortext,
-				'text-align'     => '',
-				'margin-left'    => 0,
-				'margin-top'     => 0,
-				'margin-bottom'  => 0,
-				'margin-right'   => 0,
-				'padding-left'   => 5,
-				'padding-top'    => 5,
-				'padding-bottom' => 5,
-				'padding-right'  => 5,
-			),
-			'center' => array('text-align' => 'C'),
-			'trainingModuleTitle' => array('text-align' => 'C', 'font-size' => 20),
-			'bulletList' => array(
-					'margin-left'    => 20,
-					'margin-top'     => 0,
-					'margin-right'   => 20,
-					'margin-bottom'  => 0,
-					'padding-left'   => 0,
-					'padding-top'    => 0,
-					'padding-right'  => 0,
-					'padding-bottom' => 0,
-			),
-			'page-default' => array(
-				'use-header'        => true,
-				'use-footer'        => true,
-				'use-company-logo'  => false,
-				'use-company-stamp' => false,
-				'use-client-logo'   => false,
-				'use-frame'         => false,
-				'use-tpl'           => true,
-				'orientation'       => $this->orientation,
-			),
-		);
-
 		// Get source company
 		$this->emetteur = $mysoc;
 		if (! $this->emetteur->country_code)
@@ -184,13 +86,11 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 	}
 
 	/**
-	 * @param Agsession|int $agf   Si $agf est un entier, il représente l'ID d'une session (qui sera chargée sur $agf)
-	 * @param Translate $outputlangs  Objet langs pour la génération (permet de générer le doc dans une langue
-	 *                                différente de la langue de l'interface Dolibarr)
-	 * @param string $file         Nom du fichier (avec extension mais sans chemin d'accès)
-	 * @param int $session_trainee_id  ID du stagiaire
-	 * @return int  1=OK, 0=KO
-	 * @throws Exception
+	 * \brief Fonction generant le document sur le disque
+	 * \param agf		Objet document a generer (ou id si ancienne methode)
+	 * outputlangs	Lang object for output language
+	 * file		Name of file to generate
+	 * \return int 1=ok, 0=ko
 	 */
 	function write_file($agf, $outputlangs, $file, $session_trainee_id) {
 		global $user, $langs, $conf, $mysoc;
@@ -203,94 +103,6 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 			$agf = new Agsession($this->db);
 			$ret = $agf->fetch($id);
 		}
-
-		/**
-		 * Printe une série insécable de paragraphes HTML. Si la série ne tient pas entièrement sur la page courante,
-		 * on rollback et on retourne false. Sinon on commit.
-		 *
-		 * Nombre variable d'arguments. Un argument peut être:
-		 * - un array décrivant un style (s'appliquera aux paragraphes suivants)
-		 * - un nom de style présent dans $this->styles (s'appliquera aux paragraphes suivants)
-		 * - une instruction 'RESET:Y' pour revenir sur la même ligne que le paragraphe précédent
-		 * - une chaîne HTML à afficher en tant que paragraphe
-		 *
-		 * @param string|array $args  Séquence: soit un style, soit un 'RESET:Y', soit un paragraphe HTML
-		 * @return bool  True si le bloc entier tient sur la page
-		 */
-		$funcPrintNonBreakBlock = function (...$args) use (&$css, $outputlangs) {
-			$this->pdf->startTransaction();
-			$style = 'default';
-			$lastY = $this->pdf->GetY();
-			foreach ($args as $block) {
-				if (is_array($block) || strlen($block) < 40 && isset($this->styles[$block])) {
-					$style = $block;
-				} elseif ($block === 'RESET:Y') {
-					$this->pdf->SetY($lastY);
-				} else {
-					$lastY = $this->pdf->GetY();
-					$html = $css /*. "$lastY  "*/ . $this->applyTplSubst($block, $outputlangs);
-					if (! $this->printHTML($html, $style, false)) {
-						$this->pdf->rollbackTransaction(true);
-						return false;
-					}
-				}
-			}
-			$this->pdf->commitTransaction();
-			return true;
-		};
-
-		/**
-		 * Chaque bloc est insécable, mais on autorise des sauts de page entre deux blocs
-		 *
-		 * @param ...$args
-		 * @return bool
-		 */
-		$funcPrintBlocks = function (...$args) use (&$css, &$funcNewPage, $outputlangs) {
-			$style = 'default';
-			$pageStyle = 'page-default';
-			$allowBreakInside = false;
-			$lastY = $this->pdf->GetY();
-			foreach ($args as $block) {
-				if (is_array($block) || strlen($block) < 40 && isset($this->styles[$block])) {
-					// les styles de pages commencent par "page-"
-					if (strpos($block, 'page-') === 0) $pageStyle = $block;
-					// les autres styles n'ont pas de préfixe
-					else $style = $block;
-				} elseif ($block === 'RESET:Y') {
-					$this->pdf->SetY($lastY);
-				} elseif ($block === 'BREAK:ALLOW') {
-					$allowBreakInside = true;
-				} elseif ($block === 'BREAK:DISALLOW') {
-					$allowBreakInside = false;
-				} elseif ($block === 'BREAK:FORCE') {
-					$funcNewPage($pageStyle);
-				} elseif (empty($block)) {
-					continue;
-				} else {
-					$this->pdf->startTransaction();
-					$lastY = $this->pdf->GetY();
-					$html = $css /*. "$lastY  "*/ . $this->applyTplSubst($block, $outputlangs);
-					if (! $this->printHTML($html, $style, $allowBreakInside)) {
-						$this->pdf->rollbackTransaction(true);
-						return false;
-					}
-				}
-			}
-			$this->pdf->commitTransaction();
-			return true;
-		};
-
-		/**
-		 * Partial de la méthode newPage pour éviter de répéter les arguments invariables
-		 *
-		 * Ajoute le footer sur la page courante puis crée une nouvelle page et ajoute son header.
-		 * @param array|string $style  Style de page ou nom de style de page défini sur $this->styles
-		 *                             permet d'ajouter en auto sur la page le header / footer / logo…
-		 * @return void
-		 */
-		$funcNewPage = function ($style = null) use ($agf, $outputlangs, &$tplidx) {
-			$this->newPage($agf, $outputlangs, $tplidx, $style);
-		};
 
 		$agf_session_trainee = new Agefodd_session_stagiaire($this->db);
 		$agf_session_trainee->fetch($session_trainee_id);
@@ -309,597 +121,294 @@ class pdf_attestation_trainee extends ModelePDFAgefodd {
 			}
 		}
 
-		if (! file_exists($dir)) {
+		if (file_exists($dir)) {
+			$pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
+
+			$pdf->Open();
+			$pagenb = 0;
+
+			if (class_exists('TCPDF')) {
+				$pdf->setPrintHeader(false);
+				$pdf->setPrintFooter(false);
+			}
+
+			$pdf->SetTitle($outputlangs->convToOutputCharset($agf->ref));
+			$pdf->SetSubject($outputlangs->transnoentities("AgfPDFAttestationTrainee"));
+			$pdf->SetCreator("Dolibarr " . DOL_VERSION . ' (Agefodd module)');
+			$pdf->SetAuthor($outputlangs->convToOutputCharset($user->fullname));
+			$pdf->SetKeyWords($outputlangs->convToOutputCharset($agf->ref) . " " . $outputlangs->transnoentities("Document"));
+			if ($conf->global->MAIN_DISABLE_PDF_COMPRESSION)
+				$pdf->SetCompression(false);
+
+			$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
+			$pdf->SetAutoPageBreak(1, 0);
+
+			// Set path to the background PDF File
+			if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_L))
+			{
+				$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_L);
+				$tplidx = $pdf->importPage(1);
+			}
+
+			// Récuperation des objectifs pedagogique de la formation
+			$agf_op = new Formation($this->db);
+			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
+
+			// Récupération de la duree de la formation
+			$agf_duree = new Formation($this->db);
+			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
+
+			// New page
+			$pdf->AddPage();
+			if (! empty($tplidx)) $pdf->useTemplate($tplidx);
+
+			$pagenb ++;
+			$this->_pagehead($pdf, $agf, 1, $outputlangs);
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 9);
+			$pdf->MultiCell(0, 3, '', 0, 'J'); // Set interline to 3
+
+			if (empty($tplidx)) {
+				// On met en place le cadre
+				$pdf->SetDrawColor($this->colorLine [0], $this->colorLine [1], $this->colorLine [2]);
+				$ep_line1 = 1;
+				$pdf->SetLineWidth($ep_line1);
+				// Haut
+				$pdf->Line($this->marge_gauche, $this->marge_haute, $this->page_largeur - $this->marge_droite, $this->marge_haute);
+				// Droite
+				$pdf->Line($this->page_largeur - $this->marge_droite, $this->marge_haute, $this->page_largeur - $this->marge_droite, $this->page_hauteur - $this->marge_basse);
+				// Bas
+				$pdf->Line($this->marge_gauche, $this->page_hauteur - $this->marge_basse, $this->page_largeur - $this->marge_gauche, $this->page_hauteur - $this->marge_basse);
+				// Gauche
+				$pdf->Line($this->marge_gauche, $this->marge_haute, $this->marge_gauche, $this->page_hauteur - $this->marge_basse);
+
+				$pdf->SetLineWidth(0.3);
+				$decallage = 1.2;
+				// Haut
+				$pdf->Line($this->marge_gauche + $decallage, $this->marge_haute + $decallage, $this->page_largeur - $this->marge_droite - $decallage, $this->marge_haute + $decallage);
+				// Droite
+				$pdf->Line($this->page_largeur - $this->marge_droite - $decallage, $this->marge_haute + $decallage, $this->page_largeur - $this->marge_droite - $decallage, $this->page_hauteur - $this->marge_basse - $decallage);
+				// Bas
+				$pdf->Line($this->marge_gauche + $decallage, $this->page_hauteur - $this->marge_basse - $decallage, $this->page_largeur - $this->marge_gauche - $decallage, $this->page_hauteur - $this->marge_basse - $decallage);
+				// Gauche
+				$pdf->Line($this->marge_gauche + $decallage, $this->marge_haute + $decallage, $this->marge_gauche + $decallage, $this->page_hauteur - $this->marge_basse - $decallage);
+			}
+			// Logo en haut à gauche
+			$logo = $conf->mycompany->dir_output . '/logos/' . $this->emetteur->logo;
+			$width_logo = pdf_getWidthForLogo($logo);
+			// Logo en haut à gauche
+			if ($this->emetteur->logo) {
+				if (is_readable($logo))
+					$pdf->Image($logo, $this->marge_gauche + 3, $this->marge_haute + 3, 40);
+			}
+
+			// Affichage du logo commanditaire (optionnel)
+			if ($conf->global->AGF_USE_LOGO_CLIENT) {
+				$staticsoc = new Societe($this->db);
+				$staticsoc->fetch($agf->socid);
+				$dir = $conf->societe->multidir_output [$staticsoc->entity] . '/' . $staticsoc->id . '/logos/';
+				if (! empty($staticsoc->logo)) {
+					$logo_client = $dir . $staticsoc->logo;
+					if (file_exists($logo_client) && is_readable($logo_client)){
+						$heightlogo = pdf_getHeightForLogo($logo_client);
+						$pdf->Image($logo_client, $this->page_largeur - $this->marge_gauche - $this->marge_droite - ( $width_logo * 1.5), $this->marge_haute, $heightlogo);
+					}
+
+				}
+			}
+
+			$newY = $this->marge_haute + 30;
+			$pdf->SetXY($this->marge_gauche + 1, $newY);
+			$pdf->SetTextColor($this->colorhead [0], $this->colorhead [1], $this->colorhead [2]);
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', 20);
+			$pdf->Cell(0, 0, $outputlangs->transnoentities('AgfPDFAttestation1'), 0, 0, 'C', 0);
+
+			$newY = $newY + 10;
+			$pdf->SetXY($this->marge_gauche + 1, $newY);
+			$pdf->SetTextColor($this->colortext [0], $this->colortext [1], $this->colortext [2]);
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
+
+			$contact_static = new Contact($this->db);
+			$contact_static->civility_id = $agf_trainee->civilite;
+
+			$this->str1 = $outputlangs->transnoentities('AgfPDFAttestation2') . " " . ucfirst(strtolower($contact_static->getCivilityLabel())) . ' ';
+			$this->width1 = $pdf->GetStringWidth($this->str1);
+
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 16);
+			$this->str2 = $outputlangs->transnoentities($agf_trainee->prenom . ' ' . $agf_trainee->nom);
+			$this->width2 = $pdf->GetStringWidth($this->str2);
+
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
+			$this->debut_cell = ($this->marge_gauche + 1) + ($this->milieu - (($this->width1 + $this->width2) / 2));
+			$newY = $newY + 10;
+			$pdf->SetXY($this->debut_cell, $newY);
+			$pdf->Cell($this->width1, 0, $this->str1, 0, 0, 'C', 0);
+			$pdf->SetXY($pdf->GetX(), $newY - 1.5);
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 16);
+			$pdf->Cell($this->width2, - 3, $this->str2, 0, 0, 'C', 0);
+
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
+			$newY = $newY + 6;
+			$pdf->SetXY($this->marge_gauche + 1, $newY);
+			$this->str = ' ' . $outputlangs->transnoentities('AgfPDFAttestation3');
+			$pdf->Cell(0, 0, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C', 0);
+
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 18);
+			$newY = $newY + 10;
+			$pdf->SetXY($this->marge_gauche + 1, $newY);
+			$pdf->Cell(0, 0, $outputlangs->transnoentities('« ' . $agf->intitule_custo . ' »'), 0, 0, 'C', 0);
+
+			$this->str = $outputlangs->transnoentities('AgfPDFAttestation4') . " ";
+			$this->str .= $agf->libSessionDate();
+
+			if (! empty($conf->global->AGF_USE_REAL_HOURS)) {
+				dol_include_once('/agefodd/class/agefodd_session_stagiaire_heures.class.php');
+				$agfssh = new Agefoddsessionstagiaireheures($this->db);
+				$duree_session=$agfssh->heures_stagiaire($agf->id, $agf_session_trainee->fk_stagiaire);
+			} else {
+				$duree_session=$agf->duree_session;
+			}
+
+			$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFAttestation5') . " " . $duree_session . $outputlangs->transnoentities('AgfPDFAttestation6');
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
+			$newY = $newY + 10;
+			$pdf->SetXY($this->marge_gauche + 1, $newY);
+			$pdf->Cell(0, 0, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C', 0);
+
+			$newY = $pdf->GetY();
+			// Bloc objectifs pedagogiques
+			if (count($agf_op->lines) > 0) {
+
+				$this->str = $outputlangs->transnoentities('AgfPDFAttestation7');
+				$newY = $newY + 10;
+				$pdf->SetXY($this->marge_gauche + 1, $newY);
+				$pdf->Cell(0, 0, $outputlangs->convToOutputCharset($this->str), 0, 1, 'C', 0);
+
+				$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', 12);
+				$hauteur = 0;
+				for($y = 0; $y < count($agf_op->lines); $y ++) {
+					$newY = $pdf->GetY() + 1;
+					$pdf->SetXY($this->marge_gauche + 62, $pdf->GetY());
+					$width = 160;
+					$StringWidth = $pdf->GetStringWidth($agf_op->lines [$y]->intitule);
+					if ($StringWidth > $width)
+						$nblines = ceil($StringWidth / $width);
+					else
+						$nblines = 1;
+					$hauteur = $nblines * 5;
+					$pdf->Cell(10, 5, $agf_op->lines [$y]->priorite . '. ', 0, 0, 'R', 0);
+					$pdf->MultiCell($width, 0, $outputlangs->transnoentities($agf_op->lines [$y]->intitule), 0, 'L', 0);
+				}
+			}
+
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 11);
+			$newY = $newY + 20;
+			$pdf->SetXY($this->marge_gauche + 1, $newY);
+			$this->str = $outputlangs->transnoentities('AgfPDFAttestation8') . " " . $mysoc->name . ",";
+			$pdf->Cell(0, 0, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C', 0);
+
+			$newY = $newY + 20;
+			$pdf->SetXY($this->marge_gauche + 1, $newY);
+			$this->str = $outputlangs->transnoentities('AgfPDFConv20') . " " . $mysoc->town . ", " . $outputlangs->transnoentities('AgfPDFFichePres8');
+			$pdf->Cell(80, 0, $outputlangs->convToOutputCharset($this->str), 0, 0, 'R', 0);
+
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
+			$this->str = date("d/m/Y");
+			$this->str = dol_print_date($agf->datef);
+			$this->width = $pdf->GetStringWidth($this->str);
+			$pdf->Cell($this->width, 0, $this->str, 0, 0, 'L', 0);
+
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
+			$this->str = $conf->global->AGF_ORGANISME_REPRESENTANT;
+			$pdf->Cell(100, 0, $this->str, 0, 0, 'R', 0);
+
+			// Incrustation image tampon
+			if ($conf->global->AGF_INFO_TAMPON) {
+				$dir = $conf->agefodd->dir_output . '/images/';
+				$img_tampon = $dir . $conf->global->AGF_INFO_TAMPON;
+				if (file_exists($img_tampon))
+					$pdf->Image($img_tampon, $this->page_largeur - $this->marge_gauche - $this->marge_droite - 85, $newY + 5, 50);
+			}
+
+			// Pied de page $pdf->SetFont(pdf_getPDFFont($outputlangs),'', 10);
+			$this->_pagefoot($pdf, $agf, $outputlangs);
+
+			// Mise en place du copyright
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 8);
+			$this->str = $outputlangs->transnoentities('copyright ' . date("Y") . ' - ' . $mysoc->name);
+			$this->width = $pdf->GetStringWidth($this->str);
+			// alignement du bord droit du container avec le haut de la page
+			$baseline_ecart = $this->page_hauteur - $this->marge_haute - $this->marge_basse - $this->width;
+			$baseline_angle = (M_PI / 2); // angle droit
+			$baseline_x = $this->page_largeur - $this->marge_gauche - 12;
+			$baseline_y = $baseline_ecart + 30;
+			$baseline_width = $this->width;
+
+			$pdf->Close();
+			$pdf->Output($file, 'F');
+			if (! empty($conf->global->MAIN_UMASK))
+				@chmod($file, octdec($conf->global->MAIN_UMASK));
+
+
+			// Add pdfgeneration hook
+			if (! is_object($hookmanager))
+			{
+				include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
+				$hookmanager=new HookManager($this->db);
+			}
+			$hookmanager->initHooks(array('pdfgeneration'));
+			$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
+			global $action;
+			$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
+
+
+			return 1; // Pas d'erreur
+		} else {
 			$this->error = $langs->trans("ErrorConstantNotDefined", "AGF_OUTPUTDIR");
 			return 0;
 		}
-
-		$this->pdf = $pdf = pdf_getInstance($this->format, $this->unit, $this->orientation);
-
-		$pdf->Open();
-
-		if (class_exists('TCPDF')) {
-			$pdf->setPrintHeader(false);
-			$pdf->setPrintFooter(false);
-		}
-
-		$pdf->SetTitle($outputlangs->convToOutputCharset($agf->ref));
-		$pdf->SetSubject($outputlangs->transnoentities("AgfPDFAttestationTrainee"));
-		$pdf->SetCreator("Dolibarr " . DOL_VERSION . ' (Agefodd module)');
-		$pdf->SetAuthor($outputlangs->convToOutputCharset($user->fullname));
-		$pdf->SetKeyWords($outputlangs->convToOutputCharset($agf->ref) . " " . $outputlangs->transnoentities("Document"));
-		if ($conf->global->MAIN_DISABLE_PDF_COMPRESSION)
-			$pdf->SetCompression(false);
-
-
-		// Set path to the background PDF File
-		if (empty($conf->global->MAIN_DISABLE_FPDI) && ! empty($conf->global->AGF_ADD_PDF_BACKGROUND_L))
-		{
-			$pagecount = $pdf->setSourceFile($conf->agefodd->dir_output . '/background/' . $conf->global->AGF_ADD_PDF_BACKGROUND_L);
-			$tplidx = $pdf->importPage(1);
-		}
-
-
-		/** SWITCH OBJECT FORMATION - SESSION_CATALOGUE ---------------------------------  */
-		$agf_sessioncal = new SessionCatalogue($this->db); // formation clone
-		$ret = $agf_sessioncal->fetchSessionCatalogue($id); // par default ça fetch le clone
-
-		$agf_session = new Agsession($this->db);
-		$retSession = $agf_session->fetch($id);
-
-		if (empty($ret)) // pas de clone
-		{
-
-			if ($retSession > 0 ){
-
-				$agf_op = new Formation($this->db);
-				$agf_op->fetch($agf_session->fk_formation_catalogue);
-				$agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
-
-			}else{
-				$agf_op = new Formation($this->db); // prevent error on foreach
-				setEventMessage('errorloadSession','errors');
-			}
-
-
-		}else{
-			$agf_op = new SessionCatalogue($this->db);
-			$agf_op->fetch($ret);
-			$agf_op->fetch_objpeda_per_session_catalogue($ret);
-		}
-		/** ---------------------------------  */
-
-
-		// New page
-		$funcNewPage(array(
-			'use-header'        => true,
-			'use-footer'        => true,
-			'use-company-logo'  => true,
-			'use-company-stamp' => true,
-			'use-client-logo'   => true,
-			'use-frame'         => true,
-			'use-tpl'           => true,
-		));
-
-		$defaultFont = pdf_getPDFFont($outputlangs);
-
-		// Récupération des variables: nom prénom
-		$contact_static = new Contact($this->db);
-		$contact_static->civility_id = $agf_trainee->civilite;
-		$traineeCivility = ucfirst(strtolower($contact_static->getCivilityLabel()));
-		$traineeName = $agf_trainee->prenom . ' ' . $agf_trainee->nom;
-
-		// Récupération des variables: duree_session
-		if (! empty($conf->global->AGF_USE_REAL_HOURS)) {
-			dol_include_once('/agefodd/class/agefodd_session_stagiaire_heures.class.php');
-			$agfssh = new Agefoddsessionstagiaireheures($this->db);
-			$duree_session=$agfssh->heures_stagiaire($agf->id, $agf_session_trainee->fk_stagiaire);
-		} else {
-			$duree_session=$agf->duree_session;
-		}
-
-		$session_dates = $agf->libSessionDate();
-
-
-		// Récupération des variables: Liste des objectifs de la formation (HTML)
-		$goalsList = '';
-		if (count($agf_op->lines)) {
-			$goalsList .= '<ol>' . "\n";
-			foreach ($agf_op->lines as $line) {
-				$goalsList .= '    <li><i>' . $line->intitule . '</i></li>' . "\n";
-			}
-			$goalsList .= '</ol>' . "\n";
-		}
-
-
-		/**
-		 * styles CSS définis dans le template destinés au rendu HTML par TCPDF
-		 * @var string $css
-		 */
-		$defaultColor = 'rgb(' . implode(',', $this->colortext) . ')';
-		$titleColor = 'rgb(' . implode(',', $this->colorhead) . ')';
-		include __DIR__ . '/htmltpl/pdf_attestation_trainee.tpl.php';
-
-
-		$titres = /** @lang HTML */
-			// 'Attestation de formation'
-			'<p class="centered title">{AgfPDFAttestation1}</p>'
-			// 'Ce document atteste que XXXX a effectivement suivi […] le module intitulé:
-			. '<p class="centered ">'
-			. '             {AgfPDFAttestation2} '.$traineeCivility.' <span class="big">'.$traineeName.'</span>'
-			. '             <br/> {AgfPDFAttestation3}'
-			. '</p>'
-			// « blablabla »
-			. '<p class="centered intitule-forma">« ' . $agf->intitule_custo . ' »</p>'
-			// 'Cette formation s'est déroulée du XX au XX (pour un total de X h effectives)'
-			. '<p class="centered ">'
-			. '             {AgfPDFAttestation4} '.$session_dates
-			.'              {AgfPDFAttestation5} '.$duree_session.' {AgfPDFAttestation6}'
-			. '</p>';
-
-		// Modèle 1: on essaye de tout faire tenir sur la première page, y compris les objectifs pédagogiques
-		$res = $funcPrintNonBreakBlock(
-			// Titres:
-			//     "Attestation de formation",
-			//     "Ce document atteste que … a effectivement suivi … le module de formation intitulé …",
-			//     "Cette formation s'est déroulée du… au … pour un total de …h effectives"
-			$titres,
-
-			// Objectifs pédagogiques:
-			//   'À l'issue de cette formation, le participant est arrivé aux objectifs suivants:'
-			'bulletList', // style spécial (car tcpdf ne décale pas les puces quand il y a du padding -> chevauchement)
-			($goalsList ? '<p class="centered">{AgfPDFAttestation7}</p>' . $goalsList : ''),
-
-			// 'Avec les félicitations du pôle formation de … '
-			'default',
-			'<p class="centered">{AgfPDFAttestation8} ' . $mysoc->name . '</p>',
-
-			// 'Fait à … le … '
-			'<p>{AgfPDFConv20} ' . $mysoc->town . ', {AgfPDFFichePres8}, ' . date("d/m/Y") . '</p>',
-
-			// Prénom Nom du représentant de l'organisme de formation (sur la même ligne que le précédent)
-			'RESET:Y', // s'affiche sur la même ligne que "Fait à … le …"
-			'<p class="align-right">' . $conf->global->AGF_ORGANISME_REPRESENTANT . '</p>'
-		);
-
-		if ($res) {
-		} else {
-			// Les objectifs pédagogiques ne tiennent pas sur la page 1 -> Modèle alternatif
-			//      = objectifs pédagogiques sur la/les pages suivantes (texte légèrement différent)
-			$funcPrintNonBreakBlock(
-				// Titres:
-				//     "Attestation de formation",
-				//     "Ce document atteste que … a effectivement suivi … le module de formation intitulé …",
-				//     "Cette formation s'est déroulée du… au … pour un total de …h effectives"
-				$titres,
-
-				// 'À l'issue de cette formation, le participant est arrivé aux objectifs détaillés ci-après.'
-				$goalsList ? '<p class="centered">{AgfPDFAttestationGoalsTitleShort}</p>' : '',
-
-				// 'Avec les félicitations du pôle formation de … '
-				'default',
-				'<p class="centered">{AgfPDFAttestation8} ' . $mysoc->name . '</p>',
-
-				// 'Fait à … le … '
-				'<p>{AgfPDFConv20} ' . $mysoc->town . ', {AgfPDFFichePres8}, ' . date("d/m/Y") . '</p>',
-
-				// Prénom Nom du représentant de l'organisme de formation (sur la même ligne que le précédent)
-				'RESET:Y',
-				'<p class="align-right">' . $conf->global->AGF_ORGANISME_REPRESENTANT . '</p>'
-			);
-
-			// saut de page puis objectifs pédagogiques
-			$AgfPDFAttestationGoalsTitleFull = $outputlangs->transnoentities(
-				'AgfPDFAttestationGoalsTitleFull',
-				$agf->intitule_custo,
-				$traineeCivility . ' ' . $traineeName
-			);
-			if ($goalsList) {
-				$funcPrintBlocks(
-				// 'À l'issue du module de formation intitulé %s, le participant %s est arrivé aux objectifs suivants :'
-					'BREAK:FORCE', // saut de page obligatoire
-					'<p>' . $AgfPDFAttestationGoalsTitleFull . '</p>',
-
-					// objectifs (on autorise les sauts de page à l'intérieur du paragraphe)
-					'BREAK:ALLOW',
-					'bulletList', // style spécial liste à puce car TCPDF ne décale pas les puces quand il y a du padding
-					$goalsList
-				);
-			}
-		}
-
-		// Mise en place du copyright
-		$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 8);
-		$this->str = $outputlangs->transnoentities('copyright ' . date("Y") . ' - ' . $mysoc->name);
-		$this->width = $pdf->GetStringWidth($this->str);
-		// alignement du bord droit du container avec le haut de la page
-		$baseline_ecart = $this->page_hauteur - $this->marge_haute - $this->marge_basse - $this->width;
-		$baseline_angle = (M_PI / 2); // angle droit
-		$baseline_x = $this->page_largeur - $this->marge_gauche - 12;
-		$baseline_y = $baseline_ecart + 30;
-		$baseline_width = $this->width;
-
-		$pdf->Close();
-		$pdf->Output($file, 'F');
-		if (! empty($conf->global->MAIN_UMASK))
-			@chmod($file, octdec($conf->global->MAIN_UMASK));
-
-
-		// Add pdfgeneration hook
-		if (! is_object($hookmanager))
-		{
-			include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
-			$hookmanager=new HookManager($this->db);
-		}
-		$hookmanager->initHooks(array('pdfgeneration'));
-		$parameters=array('file'=>$file,'object'=>$agf,'outputlangs'=>$outputlangs);
-		global $action;
-		$reshook=$hookmanager->executeHooks('afterPDFCreation',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
-
-
-		return 1; // Pas d'erreur
+		$this->error = $langs->trans("ErrorUnknown");
+		return 0; // Erreur par defaut
 	}
 
 	/**
-	 * En-tête de page (ne pas changer la signature de la méthode car définie sur classe parente)
-	 * @param TCPDF $pdf
-	 * @param Object $object
-	 * @param bool $showaddress
-	 * @param Translate $outputlangs
-	 * @return void
+	 * \brief Show header of page
+	 * \param pdf Object PDF
+	 * \param object Object invoice
+	 * \param showaddress 0=no, 1=yes
+	 * \param outputlangs		Object lang for output
 	 */
-	function _pagehead(&$pdf, $object, $showaddress, $outputlangs) {
+	function _pagehead(&$pdf, $object, $showaddress = 1, $outputlangs) {
 		global $conf, $langs;
 
 		$outputlangs->load("main");
 
-		$this->setAutoPageBreak(false);
-		pdf_pagehead($pdf, $outputlangs, $this->page_hauteur);
-		$this->setAutoPageBreak(true);
+		pdf_pagehead($pdf, $outputlangs, $pdf->page_hauteur);
 	}
 
 	/**
-	 * Pied de page (ne pas changer la signature de la méthode car définie sur classe parente)
-	 * @param TCPDF $pdf
-	 * @param Object $object  Not used
-	 * @param Translate $outputlangs
-	 * @return int
+	 * \brief		Show footer of page
+	 * \param		pdf PDF factory
+	 * \param		object			Object invoice
+	 * \param		outputlang		Object lang for output
+	 * \remarks	Need this->emetteur object
 	 */
-	function _pagefoot($pdf, $object, $outputlangs) {
+	function _pagefoot(&$pdf, $object, $outputlangs) {
 		global $conf, $langs, $mysoc;
-		$this->setAutoPageBreak(false);
 
-		if (!empty($conf->global->AGF_HIDE_DOC_FOOTER)) return $this->marge_basse;
-
-		$pdf->SetDrawColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
-		$pdf->SetTextColor($this->colorfooter[0], $this->colorfooter[1], $this->colorfooter[2]);
-		$this->str = $mysoc->name;
-		$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot12') . ' ';
-		if (! empty($conf->global->AGF_ORGANISME_PREF)) {
-			$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot10') . ' ' . $conf->global->AGF_ORGANISME_PREF;
-		}
-		if (! empty($conf->global->AGF_ORGANISME_NUM)) {
-			$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot11',$conf->global->AGF_ORGANISME_NUM);
-		}
-
-		$pdf->SetXY($this->marge_gauche + 1, $this->page_hauteur - $this->marge_basse);
-		$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', 8);
-		$pdf->SetTextColor($this->colorfooter [0], $this->colorfooter [1], $this->colorfooter [2]);
-		$pdf->Cell(0, 6, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C', 0);
-
-		$this->setAutoPageBreak(true);
-		// resetcolor
-		$pdf->SetTextColor($this->colorheaderText[0], $this->colorheaderText[1], $this->colorheaderText[2]);
-		return $this->marge_basse;
-	}
-
-	/**
-	 * Ajoute le footer sur la page courante puis crée une nouvelle page et ajoute son header.
-	 * @param Agsession $agf         Passé au footer mais pas utilisé
-	 * @param Translate $outputlangs Les traductions
-	 * @param int $tplidx            Template de page (optionnel) présent dans $pdf->tpls
-	 * @param array|string $style  Style de page ou nom de style de page défini sur $this->styles
-	 *                             permet d'ajouter en auto sur la page le header / footer / logo…
-	 * @return void
-	 */
-	function newPage(&$agf, $outputlangs, $tplidx = null, $style = null) {
-		/** @var Conf $conf */
-		global $conf;
-		$pdf = $this->pdf;
-
-		// les logos (le mien et celui du client) doivent tenir dans 40×30mm
-		$logoMaxWidth = $this->logoMaxWidth;
-		$logoMaxHeight = $this->logoMaxHeight;
-
-		// le tampon doit tenir dans 60×40mm
-		$stampMaxWidth = $this->stampMaxWidth;
-		$stampMaxHeight = $this->stampMaxHeight;
-		$stampRightOffset = $this->stampRightOffset;
-		$stampBottomOffset = $this->stampBottomOffset;
-		$finalY = $this->marge_haute;
-		if (!is_array($style)) {
-			$style = (isset($this->styles[$style])) ? $this->styles[$style] : array();
-		}
-		// on complète le style avec le style par défaut
-		$style += $this->styles['page-default'];
-
-		if ($pdf->GetPage()) $this->_pagefoot($pdf, $agf, $outputlangs);
-		$pdf->AddPage($style['orientation']);
-		// on sauvegarde le style de chaque page
-		$this->usedPageStyles[$pdf->GetPage()] = $style;
-		$this->frameOffset[$pdf->GetPage()] = 0;
-		if (! empty($tplidx) && !empty($style['use-tpl'])) {
-			$pdf->useTemplate($tplidx);
-		} elseif ($style['use-frame']) {
-			// Cadre double autour de la page
-
-			// encadré extérieur (épais)
-			$pdf->SetLineWidth(1);
-			$pdf->SetDrawColorArray($this->colorLine);
-			$left = $this->marge_gauche;
-			$top = $this->marge_haute;
-			$right = $this->page_largeur - $this->marge_droite;
-			$bottom = $this->page_hauteur - $this->marge_basse;
-			$pdf->Rect($left, $top, $right - $left, $bottom - $top, 'D', array('all' => true));
-
-			// encadré intérieur (moins épais)
-			$pdf->SetLineWidth(0.3);
-			$curFrameOffset = 1.2; // c'était en dur, je l'ai laissé
-			$left += $curFrameOffset;
-			$top += $curFrameOffset;
-			$right -= $curFrameOffset;
-			$bottom -= $curFrameOffset;
-			$pdf->Rect($left, $top, $right - $left, $bottom - $top, 'D', array('all' => true));
-
-			// sauvegarde de l'offset pour la page
-			$this->frameOffset[$pdf->GetPage()] = $curFrameOffset + 1;
-		}
-		$this->setAutoPageBreak(false);
-		$this->setMargins();
-
-		// Logo de l'organisme de formation en haut à gauche
-		if (!empty($style['use-company-logo'])) {
-			$logo = $conf->mycompany->dir_output . '/logos/' . $this->emetteur->logo;
-			// Logo en haut à gauche
-			if ($this->emetteur->logo) {
-				if (is_readable($logo)) {
-					$pdf->Image(
-						$logo,
-						0, // géré par le paramètre palign = 'L' (left)
-						$this->marge_haute + $this->getFrameOffset(),
-						$logoMaxWidth,
-						$logoMaxHeight,
-						'',
-						'',
-						'N',
-						false,
-						300,
-						'L',
-						false,
-						false,
-						0,
-						true,
-						false,
-						false,
-						false,
-						array()
-					);
-				}
+		if (empty($conf->global->AGF_HIDE_DOC_FOOTER)) {
+			$this->str = $mysoc->name;
+			$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot12') . ' ';
+			if (! empty($conf->global->AGF_ORGANISME_PREF)) {
+				$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot10') . ' ' . $conf->global->AGF_ORGANISME_PREF;
 			}
-			$finalY = max($finalY, $pdf->GetY());
-		}
-
-		// Logo client (optionnel) en haut à droite
-		if (!empty($style['use-client-logo']) && !empty($conf->global->AGF_USE_LOGO_CLIENT)) {
-			$staticsoc = new Societe($this->db);
-			$staticsoc->fetch($agf->socid);
-			$dir = $conf->societe->multidir_output [$staticsoc->entity] . '/' . $staticsoc->id . '/logos/';
-			if (! empty($staticsoc->logo)) {
-				$logo_client = $dir . $staticsoc->logo;
-				if (is_readable($logo_client)){
-					$pdf->Image(
-						$logo_client,
-						0, // géré par le paramètre palign = 'L' (left)
-						$this->marge_haute + $this->getFrameOffset(),
-						$logoMaxWidth,
-						$logoMaxHeight,
-						'',
-						'',
-						'N',
-						false,
-						300,
-						'R',
-						false,
-						false,
-						0,
-						true,
-						false,
-						false,
-						false,
-						array()
-					);
-				}
+			if (! empty($conf->global->AGF_ORGANISME_NUM)) {
+				$this->str .= ' ' . $outputlangs->transnoentities('AgfPDFFoot11',$conf->global->AGF_ORGANISME_NUM);
 			}
-			$finalY = max($finalY, $pdf->GetY());
+
+			$pdf->SetXY($this->marge_gauche + 1, $this->page_hauteur - $this->marge_basse);
+			$pdf->SetFont(pdf_getPDFFont($outputlangs), 'I', 8);
+			$pdf->SetTextColor($this->colorfooter [0], $this->colorfooter [1], $this->colorfooter [2]);
+			$pdf->Cell(0, 6, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C', 0);
 		}
-
-		// Tampon de l'organisme de formation en bas à droite
-		if (!empty($style['use-company-stamp']) && !empty($conf->global->AGF_INFO_TAMPON)) {
-			$dir = $conf->agefodd->dir_output . '/images/';
-			$stampImg = $dir . $conf->global->AGF_INFO_TAMPON;
-			if (is_readable($stampImg)) {
-				$stampHeight = min($stampMaxHeight, pdf_getHeightForLogo($stampImg));
-				$pdf->Image(
-					$stampImg,
-					$this->page_largeur - ($this->marge_gauche + $this->marge_droite + $this->getFrameOffset() * 2 + $stampMaxWidth + $stampRightOffset),
-					$this->page_hauteur - ($this->marge_basse + $this->getFrameOffset() + $stampMaxHeight + $stampBottomOffset),
-					$stampMaxWidth,
-					$stampMaxHeight,
-					'',
-					'',
-					'',
-					false,
-					300,
-					'',
-					false,
-					false,
-					0,
-					true,
-					false,
-					false,
-					false,
-					array()
-				);
-			}
-		}
-
-		// en-tête de page
-		if (!empty($style['use-header'])) {
-			$this->_pagehead($pdf, $agf, 1, $outputlangs);
-		}
-
-		// pied de page
-		if (!empty($style['use-footer'])) {
-			$this->_pagefoot($pdf, $agf, $outputlangs);
-		}
-
-		// setAutoPageBreak est déjà appelé par le header et le footer mais si aucun des deux
-		// n'est utilisé, on doit quand même remettre autopagebreak
-		if (empty($style['use-header']) && empty($style['use-footer'])) {
-			$this->setAutoPageBreak(true);
-		}
-
-		// repositionnement curseur en haut à gauche pour le contenu
-		$pdf->SetXY($this->marge_gauche, $finalY);
 	}
-
-	/**
-	 * Exemple:
-	 *   $funcApplyTplSubst('{FirstName}: ' . $prenomStagiaire . '<br/>{Surname}: ' . $nomStagiaire);
-	 * Retournera (si les clés de trad FirstName et Surname existent):
-	 *   Prénom: John<br/>Nom: Doe
-	 *
-	 * @param string $tpl  Template HTML avec substitution des clés de traduction entre accolades
-	 * @param Translate $langs
-	 * @return string
-	 */
-	function applyTplSubst($tpl, $langs) {
-		return preg_replace_callback(
-			'/{([^}]+)}/',
-			function ($m) use ($langs) {
-				return (isset($langs->tab_translate[$m[1]])) ? $langs->transnoentities($m[1]) : $m[0];
-			},
-			$tpl
-		);
-	}
-
-	/**
-	 * Si le curseur Y dépasse de la page (ou même s'il mord sur la marge basse)
-	 *   -> retourne false pour permettre un rollback mais ne fait pas le rollback lui-même (charge au contexte
-	 *      appelant de le faire si nécessaire, ça permet de démarrer la transaction )
-	 * Sinon, retourne true.
-	 * @param string $html
-	 * @param array|string  $style  Soit un style nommé (présent dans $this->styles), soit un style custom: array
-	 *                              d'attributs de style gérés.
-	 * @return bool  True si réussit à tout faire tenir (ou si $allowBreakInside est true), False sinon
-	 */
-	function printHTML($html, $style, $allowBreakInside=false) {
-		$pdf = $this->pdf;
-		if (!is_array($style)) {
-			$style = (isset($this->styles[$style])) ? $this->styles[$style] : array();
-		}
-		// on complète le style avec le style par défaut
-		$style += $this->styles['default'];
-		// police du style
-		$pdf->SetFont($style['font-family'], '', $style['font-size']);
-		// couleur du style
-		$pdf->SetTextColor(...$style['color']);
-
-		$curentCellPaddinds = array_values($pdf->getCellPaddings());
-		// set cell padding with column content definition
-		$pdf->setCellPaddings(
-			$style['padding-left'],
-			$style['padding-top'],
-			$style['padding-right'],
-			$style['padding-bottom']
-		);
-
-		$cellWidth = $this->page_largeur;
-		$cellWidth -= $this->marge_gauche + $style['margin-left'];
-		$cellWidth -= $this->marge_droite + $style['margin-right'];
-
-		$this->setAutoPageBreak($allowBreakInside);
-		$pdf->writeHTMLCell(
-			$cellWidth,  // largeur de la "cellule" printée
-			0,       // hauteur minimum de la "cellule" printée
-			$this->marge_gauche + $style['margin-left'], // coin haut-gauche X de la "cellule"
-			$pdf->GetY() + $style['margin-top'],         // coin haut-gauche Y de la "cellule"
-			$html,  // HTML
-			0,      // border
-			1,      // ln
-			false,  // fill
-			true,  // reseth
-			$style['text-align'], // alignement: pris sur le style
-			true    // autopadding
-		);
-
-		// restore cell padding
-		$pdf->setCellPaddings(...$curentCellPaddinds);
-
-		// on avance le curseur Y en fonction du margin-bottom défini par le style et on reset le curseur X
-		$pdf->SetXY($this->marge_gauche, $pdf->GetY() + $style['margin-bottom']);
-
-		$this->setAutoPageBreak(true);
-		// si on mord sur la marge ou qu'on dépasse de la page, on retourne false (ce qui permettra un rollback)
-		if ($pdf->GetY() >= $pdf->getPageHeight() - $this->getBreakMargin()) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * @param bool $auto
-	 * @return void
-	 */
-	function setAutoPageBreak($auto = true) {
-		$this->pdf->SetAutoPageBreak($auto, $this->getBreakMargin());
-	}
-
-	function setMargins($pageNum = null) {
-		if ($pageNum === null) $pageNum = $this->pdf->GetPage();
-		$frameOffset = $this->getFrameOffset($pageNum);
-		$this->pdf->SetMargins(
-			$this->marge_gauche + $frameOffset,
-			$this->marge_haute + $frameOffset,
-			$this->marge_droite + $frameOffset
-		);
-	}
-
-	/**
-	 * @param int $pageNum
-	 * @return int
-	 */
-	function getFrameOffset($pageNum = null) {
-		if ($pageNum === null) $pageNum = $this->pdf->GetPage();
-		return $this->frameOffset[$pageNum];
-	}
-
-	/**
-	 * Retourne la somme des hauteurs à réserver en bas de page:
-	 *  = marge basse
-	 *   + éventuel espace pour l'encadré
-	 *   + éventuel espace pour le tampon / signature
-	 * @param int $pageNum  Par défaut, retourne pour la page courante, mais on peut demander pour
-	 *                      une autre page existante.
-	 * @return int
-	 */
-	function getBreakMargin($pageNum = null) {
-		if ($pageNum === null) $pageNum = $this->pdf->GetPage();
-		$style = $this->usedPageStyles[$pageNum];
-		$breakMargin = $this->marge_basse;
-		if (!empty($style['use-frame'])) $breakMargin += $this->getFrameOffset($pageNum);
-		if (!empty($style['use-company-stamp'])) $breakMargin += $this->stampBottomOffset + $this->stampMaxHeight - $this->stampOverlapTolerance;
-		return $breakMargin;
-	}
-
 }

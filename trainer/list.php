@@ -50,8 +50,7 @@ $search_lastname = GETPOST('search_lastname', 'alpha');
 $search_firstname = GETPOST('search_firstname', 'alpha');
 $search_mail = GETPOST('search_mail', 'alpha');
 $search_type_trainer = GETPOST('search_type_trainer', 'alpha');
-$action = GETPOST('action', 'alphanohtml');
-$option = '';
+
 if (empty($sortorder)) {
 	$sortorder = "ASC";
 }
@@ -128,10 +127,7 @@ if ($arch == 2) {
 	print '<a href="' . $_SERVER ['PHP_SELF'] . '?' . $option . '&arch=2">' . $langs->trans("AgfAfficherFormateursArchives") . '</a>' . "\n";
 }
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 print '<form method="post" action="' . $_SERVER ['PHP_SELF'] . '" name="searchFormList" id="searchFormList">' . "\n";
-print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
 
 print_barre_liste($langs->trans("AgfTeacher"), $page, $_SERVER ['PHP_SELF'], $option . "&arch=" . $arch, $sortfield, $sortorder, "", $linenum, $nbtotalofrecords,'title_generic.png', 0, '', '', $limit);
 
@@ -222,7 +218,7 @@ print "</table>";
 print "</form>";
 print '<div class="tabsAction">';
 
-if ($action != 'create' && $action != 'edit') {
+if ($_GET ["action"] != 'create' && $_GET ["action"] != 'edit') {
 	if ($user->rights->agefodd->creer) {
 		print '<a class="butAction" href="card.php?action=create">' . $langs->trans('Create') . '</a>';
 	} else {

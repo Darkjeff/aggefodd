@@ -1,8 +1,7 @@
 <?php
 
-if (!defined('NOCSRFCHECK')) define('NOCSRFCHECK', 1);
-if (!defined('NOTOKENRENEWAL')) define('NOTOKENRENEWAL', 1);
-
+if (!defined('NOTOKENRENEWAL')) define('NOTOKENRENEWAL', '1'); // Disables token renewal
+if (!defined('NOCSRFCHECK'))  define('NOCSRFCHECK', '1');
 
 $res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
@@ -12,67 +11,29 @@ if (! $res)
 
 dol_include_once('/core/lib/functions.lib.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
-dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 
 $put = GETPOST('put', 'none');
 $idTraining = GETPOST('idTraining', 'none');
-$istraining = GETPOST('istraining', 'int');
 
 switch ($put){
     case 'printform':
         printForm($idTraining);
         break;
 
-    case 'printformCatalogue':
-        printForm($idTraining, $istraining);
-        break;
-
     Default:
         break;
 }
 
-function printForm($idSession, $isTemplate = true){
+function printForm($idTraining){
     global $db, $user,$langs;
 
-    $newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+    $agf_peda = new Formation($db);
+    $result_peda = $agf_peda->fetch_objpeda_per_formation($idTraining);
 
-    if ($isTemplate)
-	{
-		$agf_peda = new Formation($db);
-		$redirect_url = dol_buildpath('/agefodd/training/card.php',1) . "?id=" . $idSession;
-		$result_peda = $agf_peda->fetch_objpeda_per_formation($idSession);
-
-		if ($result_peda < 0)
-			setEventMessage($langs->trans("AgfErrorfetch_objpeda_per_formation"), 'errors');
-	}
-	else
-	{
-		$sess = new Agsession($db);
-		$resSess = $sess->fetch($idSession);
-		if (empty($resSess))
-			setEventMessage($langs->trans("AgfErrorfetch"));
-
-		$agf_peda = new SessionCatalogue($db);
-		$res = $agf_peda->fetchSessionCatalogue($idSession);
-
-		if ($res < 0)
-			setEventMessage($langs->trans("AgfErrorfetchSessionCatalogue"));
-
-		$redirect_url = dol_buildpath('/agefodd/session/catalogue.php',1) . "?id=" . $idSession;
-		if (empty($res))
-			$result_peda = $agf_peda->fetch_objpeda_per_formation($sess->fk_formation_catalogue);
-		else
-			$result_peda = $agf_peda->fetch_objpeda_per_session_catalogue($agf_peda->id);
-
-		if ($result_peda < 0)
-			setEventMessage($agf_peda->error, 'errors');
-	}
-
-
-    $form = '<form name="obj_peda" id="obj_peda" action="' . $redirect_url . '" method="POST">' . "\n";
-    $form.= '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+    $form = '<form name="obj_peda" id="obj_peda" action="' . dol_buildpath('/agefodd/training/card.php',1) . "?id=" . $idTraining . '" method="POST">' . "\n";
+    $form.= '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
     $form.= '<input type="hidden" name="action" value="ajax_obj_update">' . "\n";
-    $form.= '<input type="hidden" name="idforma" value="' . $idSession . '">' . "\n";
+    $form.= '<input type="hidden" name="idforma" value="' . $idTraining . '">' . "\n";
     $form.= '<span style="display:none" id="imgdel">'.img_picto($langs->trans("Delete"), 'delete').'</span>';
     $form.= '<table class="border" width="100%">';
     $form.= '<tr>';
@@ -106,7 +67,7 @@ function printForm($idSession, $isTemplate = true){
     }
     if ($user->rights->agefodd->agefodd_formation_catalogue->creer) {
         $form.= '<tr id="savepedago"><td colspan="3" style="text-align:right">';
-		$form.= '<input type="submit" class="butAction" value=" &#128427; ' . $langs->trans("AgfModSave") .'"/>';
+        $form.= '<input type="image" src="' . dol_buildpath('/agefodd/img/save.png', 1) . '" border="0" name="obj_update" alt="' . $langs->trans("AgfModSave") . '">';
         $form.= '</td></tr>';
     }
     /*
@@ -149,6 +110,6 @@ function printForm($idSession, $isTemplate = true){
 
             </script>';
 
-    print json_encode(array('idtraining'=>$idSession, 'form' => $form));
+    print json_encode(array('idtraining'=>$idTraining, 'form' => $form));
 }
 

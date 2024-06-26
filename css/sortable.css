@@ -28,10 +28,6 @@ li.agf-sortable-list__item .agf-sortable-list__item__title , #sortableListsBase 
 	cursor: pointer;
 }
 
-.agf-sortable-list__item__title__col.clickable{
-    cursor: default;
-}
-
 .sortableListsOpener{
     cursor: pointer !important;
 }

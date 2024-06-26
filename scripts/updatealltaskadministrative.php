@@ -60,7 +60,7 @@ if (empty($user->id)) {
 	exit();
 }
 
-print 'TRAINNING<br />';
+print 'TRAINNING<BR>';
 $sql = "SELECT s.rowid";
 $sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formation_catalogue as s";
 $sql .= " WHERE s.archive<>1";
@@ -86,7 +86,7 @@ if ($resql) {
 			print ' create_task training_id =' . $obj->rowid . ' OK <br>';
 		}
 
-		print 'SESSION<br />';
+		print 'SESSION<BR>';
 		$sqlsession = "SELECT s.rowid";
 		$sqlsession .= " FROM " . MAIN_DB_PREFIX . "agefodd_session as s";
 		$sqlsession .= " WHERE s.status<>4 AND fk_formation_catalogue=" . $obj->rowid;

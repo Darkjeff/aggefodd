@@ -41,8 +41,6 @@ require_once ('../class/agefodd_session_stagiaire.class.php');
 $langs->load("other");
 $langs->load("companies");
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 // Security check
 if (! $user->rights->agefodd->lire)
 	accessforbidden();
@@ -65,7 +63,6 @@ $civility_id = GETPOST('civility_id', 'alpha');
 $disable_auto_mail = GETPOST('disable_auto_mail', 'int');
 $date_birth = dol_mktime(0, 0, 0, GETPOST('datebirthmonth', 'int'), GETPOST('datebirthday', 'int'), GETPOST('datebirthyear', 'int'));
 $place_birth = GETPOST('place_birth', 'alpha');
-$cancel = GETPOST('cancel','alphanohtml');
 
 $create_thirdparty = GETPOST('create_thirdparty', 'int');
 if ($create_thirdparty==-1) {
@@ -91,19 +88,10 @@ $country_id = GETPOST('country_id', 'int');
 
 $stagiaire_type = GETPOST('stagiaire_type', 'int');
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 $agf = new Agefodd_stagiaire($db);
 $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element);
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
-	$extrafields->attribute_size = $extrafields->attributes[$agf->table_element]['size'];
-	$extrafields->attribute_unique = $extrafields->attributes[$agf->table_element]['unique'];
-	$extrafields->attribute_required = $extrafields->attributes[$agf->table_element]['required'];
-	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
-}
+
 $parameters = array('id'=>$id);
 $reshook = $hookmanager->executeHooks('doActions', $parameters, $agf, $action); // Note that $action and $object may have been modified by some hooks
 if ($reshook < 0)
@@ -114,7 +102,7 @@ if ($reshook < 0)
 if (GETPOST('modelselected', 'none')) $action = 'presend';
 
 // Cancel action
-if (!empty($cancel)) {
+if (isset($_POST['cancel'])) {
 	$action = '';
 	if (strlen($url_back) > 0)
 	{
@@ -125,14 +113,7 @@ if (!empty($cancel)) {
 
 
 $form = new Form($db);
-/** COMPATIBILITY DOL_VERSION < 10 */
-if(intval(DOL_VERSION) < 10 ){
-	include_once __DIR__ . '/../retrocompatibility/core/class/html.formcompany_v9.class.php';
-	$formcompany = new FormCompanyFallBackV9($db);
-}
-else{
-	$formcompany = new FormCompany($db);
-}
+$formcompany = new FormCompany($db);
 $formAgefodd = new FormAgefodd($db);
 
 /*
@@ -151,175 +132,12 @@ if ($action == 'confirm_delete' && $confirm == "yes" && ($user->rights->agefodd-
 		setEventMessage($agf->error, 'errors');
 	}
 }
-/**
- * Action confirm merge
- */
-if($action == 'confirm_merge' && $confirm == 'yes' && $user->rights->agefodd->creer) {
-	$error = 0;
-	$TProcessedFile = array();
 
-	$result = $agf->fetch($id);
-	if($result < 0) {
-		setEventMessage($agf->error, 'errors');
-		$error++;
-	}
-
-	$trainee_origin_id = GETPOST('trainee_origin', 'int');
-	$trainee_origin = new Agefodd_stagiaire($db);
-	if($trainee_origin_id <= 0) {
-		$langs->load('errors');
-		setEventMessages($langs->trans('ErrorTraineeIdIsMandatory', $langs->transnoentitiesnoconv('MergeOriginTrainee')), null, 'errors');
-	}
-	else {
-		if(! $error && $trainee_origin->fetch($trainee_origin_id) < 1) {
-			setEventMessages($langs->trans('ErrorRecordNotFound'), null, 'errors');
-			$error++;
-		}
-
-		if(! $error) {
-			$origin_dir = $conf->agefodd->dir_output.'/trainee/'.$trainee_origin->id;
-			$upload_dir = $conf->agefodd->dir_output.'/trainee/'.$agf->id;
-
-			$db->begin();
-			// Recopy some data
-			$listofproperties = array(
-				'nom',
-				'prenom',
-				'civilite',
-				'socid',
-				'fonction',
-				'tel1',
-				'tel2',
-				'mail',
-				'fk_socpeople',
-				'date_birth',
-				'place_birth',
-				'disable_auto_mail'
-			);
-			foreach($listofproperties as $property) {
-				if(empty($agf->$property)) {
-					$agf->$property = $trainee_origin->$property;
-				}
-			}
-
-			// Concat some data
-			$listofproperties = array(
-				'note'
-			);
-			foreach($listofproperties as $property) {
-				$agf->$property = dol_concatdesc($agf->$property, $trainee_origin->$property);
-			}
-
-			// Merge extrafields
-			if(is_array($trainee_origin->array_options)) {
-				foreach($trainee_origin->array_options as $key => $val) {
-					if(empty($agf->array_options[$key])) {
-                        $agf->array_options[$key] = $val;
-					}
-				}
-			}
-
-			// Update
-			$result = $agf->update($user, 1);
-			if($result < 0) {
-				setEventMessages($agf->error, $agf->errors, 'errors');
-				$error++;
-			}
-
-			if(! $error) {
-				//update all trainee field call
-				$objects = array(
-					'Agefodd_stagiaire_certif' => '/class/agefodd_stagiaire_certif.class.php',
-					'Agefodd_stagiaire_cursus' => '/class/agefodd_stagiaire_cursus.class.php',
-					'Agefoddsessionstagiaireheures' => '/class/agefodd_session_stagiaire_heures.class.php',
-					'Agefodd_stagiaire_soc_history' => '/class/agefodd_stagiaire_soc_history.class.php',
-					'Agefodd_session_stagiaire' => '/class/agefodd_session_stagiaire.class.php',
-					'AgefoddSignature' => '/class/agefodd_signature.class.php',
-				);
-
-				//First, all core objects must update their tables
-				foreach($objects as $object_name => $object_file) {
-					require_once __DIR__.'/..'.$object_file;
-
-					if(! $error && ! $object_name::replaceTrainee($db, $trainee_origin->id, $agf->id)) {
-						$error++;
-						setEventMessages($db->lasterror(), null, 'errors');
-						break;
-					}
-				}
-			}
-
-			//Fichiers joints
-			if(! $error) {
-				if(dol_is_dir($origin_dir)) {
-					$TOriginFiles = dol_dir_list($origin_dir, 'files');
-					if(! empty($TOriginFiles)) {
-						foreach($TOriginFiles as $fileToMove) {
-							if(!dol_is_dir($upload_dir)) dol_mkdir($upload_dir);
-							if(dol_copy($fileToMove['fullname'], $upload_dir.'/'.$fileToMove['name']) < 0) $error++;
-							else $TProcessedFile[] = $upload_dir.'/'.$fileToMove['name'];
-						}
-					}
-				}
-			}
-
-			// External modules should update their ones too
-			if(! $error) {
-				$reshook = $hookmanager->executeHooks('replaceTrainee', array(
-					'trainee_origin' => $trainee_origin->id,
-					'trainee_dest' => $agf->id
-				), $agf, $action);
-
-				if($reshook < 0) {
-					setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
-					$error++;
-				}
-			}
-
-			if(! $error) {
-				$agf->context = array('merge' => 1, 'mergefromid' => $soc_origin->id);
-
-				// Call trigger
-				$result = $agf->call_trigger('AGEFODD_STAGIAIRE_MODIFY', $user);
-				if($result < 0) {
-					setEventMessages($agf->error, $agf->errors, 'errors');
-					$error++;
-				}
-				// End call triggers
-			}
-
-			if(! $error) {
-				//We finally remove the old thirdparty
-				if($trainee_origin->remove($trainee_origin->id, $user) < 1) {
-					$error++;
-				}
-			}
-
-			if(! $error) {
-				setEventMessages($langs->trans('TraineesMergeSuccess'), null, 'mesgs');
-				$db->commit();
-				//On delete le dossier des fichiers joints d'origin
-				dol_delete_dir_recursive($origin_dir);
-			}
-			else {
-				$langs->load('errors');
-				setEventMessages($langs->trans('ErrorsTraineeMerge'), null, 'errors');
-				$db->rollback();
-				//On annule la copie des fichiers joints
-				if(! empty($TProcessedFile)) {
-					foreach($TProcessedFile as $processedFilePath) {
-						dol_delete_file($processedFilePath);
-					}
-				}
-			}
-		}
-	}
-}
 /*
  * Action update (fiche rens stagiaire)
 */
 if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agefodd->modifier)) {
-	if (empty($cancel)) {
+	if (! $_POST["cancel"]) {
 
 		$result = $agf->fetch($id);
 		if ($result > 0) {
@@ -367,7 +185,7 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 			$action='edit';
 		}
 	} else {
-		Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		Header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
 		exit();
 	}
 }
@@ -377,7 +195,7 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 */
 
 if ($action == 'create_confirm' && ($user->rights->agefodd->creer || $user->rights->agefodd->modifier)) {
-	if ( empty($cancel)) {
+	if (! $_POST["cancel"]) {
 		$error = 0;
 
 		if ($importfrom == 'create') {
@@ -519,7 +337,7 @@ if ($action == 'create_confirm' && ($user->rights->agefodd->creer || $user->righ
 
 		if ($result > 0 && empty($error)) {
 
-			// Inscrire dans la session et redirection vers sucribers.php
+			// Inscrire dans la session
 			if ($session_id > 0) {
 
 				$fk_soc_requester = GETPOST('fk_soc_requester', 'int');
@@ -543,23 +361,13 @@ if ($action == 'create_confirm' && ($user->rights->agefodd->creer || $user->righ
 
 				if ($result > 0) {
 					setEventMessage($langs->trans('SuccessCreateStagInSession'), 'mesgs');
-					$saveandstay = GETPOST('saveandstay', 'none');
-					if (empty($saveandstay)) {
-					$url_back = dol_buildpath('/agefodd/session/person.php', 1) . '?action=edit&id=' . $session_id;
-					}
-					else
-					{
-						$url_back = $_SERVER['PHP_SELF'] . '?action=create&session_id=' . $session_id.'&societe='.$socid.'&url_back=' . urlencode($url_back);
-					}
-					header("Location: " . $url_back);
-					exit;
+					$url_back = dol_buildpath('/agefodd/session/subscribers.php', 1) . '?id=' . $session_id;
 				} else {
 					setEventMessage($sessionstat->error, 'errors');
 				}
 			} else {
                 setEventMessage('AgfSuccessCreateStag', 'mesgs');
             }
-			$url_back = $_SERVER['PHP_SELF'] . "?id=" . $result;
 
 			$saveandstay = GETPOST('saveandstay', 'none');
             if (empty($saveandstay)) {
@@ -567,7 +375,7 @@ if ($action == 'create_confirm' && ($user->rights->agefodd->creer || $user->righ
                     header("Location: " . $url_back);
                 } else {
                     if($session_id > 0) header("Location: " . $_SERVER['PHP_SELF'] . "?session_id=" . $session_id.'&societe='.$socid);
-                    else header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $result);
+                    else header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $result);
                 }
                 exit();
             } else {
@@ -669,7 +477,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 	print "\n" . "</script>\n";
 
 	print '<form name="create" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">';
+	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 	print '<input type="hidden" name="session_id" value="' . $session_id . '">';
 	print '<input type="hidden" name="action" value="create_confirm">';
 	if ($url_back)
@@ -695,7 +503,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 
 	print '<table class="border" width="100%">';
 
-	if (empty($user->rights->agefodd->session->trainer)) {
+	if (! $user->rights->agefodd->session->trainer) {
 
 		$formAgefodd = new FormAgefodd($db);
 		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
@@ -743,13 +551,8 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 	print '</td>';
 	print '	</tr>';
 	print '<tr class="select_thirdparty_block"><td class="fieldrequired">' . $langs->trans("Company") . '</td><td colspan="3">';
-
-
-	$filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-	if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1);
-	else print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1);
-
-
+	if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($socid, 'societe', '(s.client IN (1,3,2))', 'SelectThirdParty', 1);
+	else print $form->select_thirdparty_list($socid, 'societe', '(s.client IN (1,3,2))', 'SelectThirdParty', 1);
 	print '</td></tr>';
 
 	print '<tr class="create_thirdparty_block"><td class="fieldrequired">' . $langs->trans("ThirdPartyName") . '</td>';
@@ -757,7 +560,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 
 	// Prospect/Customer
 	print '<tr class="create_thirdparty_block"><td>' . $langs->trans('ProspectCustomer') . '</td><td>';
-	print $formcompany->selectProspectCustomerType($prospcli, 'prospcli', 'prospcli', 'form', 'minwidth300');
+	print $formcompany->selectProspectCustomerType($prospcli, 'prospcli', 'prospcli');
 	print '</td></tr>';
 
 	// Categories
@@ -809,7 +612,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 	print '<tr class="liste_titre"><td colspan="4"><strong>' . $langs->trans("AgfMailTypeContactTrainee") . '</strong></td>';
 
 	print '<tr><td><span class="fieldrequired">' . $langs->trans("AgfCivilite") . '</span></td>';
-	print '<td colspan="3">' . $formcompany->select_civility($civility_id, 'civility_id', 'minwidth150') . '</td>';
+	print '<td colspan="3">' . $formcompany->select_civility($civility_id) . '</td>';
 	print '</tr>';
 
 	print '<tr><td><span class="fieldrequired">' . $langs->trans("Firstname") . '</span></td>';
@@ -867,12 +670,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		'methodename' => 'sendAgendaToTrainee',
 	);
 	$cronJob = new Cronjob($db);
-	if (method_exists($cronJob, 'fetch_all')){
-		$cronJob->fetch_all('DESC', 't.rowid',0, 0, $status, $filtercron);
-	}else{
-		$cronJob->fetchAll('DESC', 't.rowid',0, 0, $status, $filtercron);
-	}
-
+	$cronJob->fetch_all('DESC', 't.rowid',0, 0, $status, $filtercron);
 	if(!empty($cronJob->lines))
 	{
 		print '<tr><td>' . $form->textwithtooltip( $langs->trans("AgfSendAgendaMail") ,$langs->trans("AgfSendAgendaMailHelp"),2,1,img_help(1,'')). '</td>';
@@ -897,18 +695,13 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		$sortorder = "ASC";
 	if (empty($sortfield))
 		$sortfield = "s.dated";
-	$filter = array();
+
 	if (! empty($session_id)) {
 		$filter['s.rowid'] = $session_id;
 	}
 
 	$agf = new Agsession($db);
-	if (method_exists($agf, 'fetch_all')){
-		$resql = $agf->fetch_all($sortorder, $sortfield, 0, 0, $filter);
-	}else{
-		$resql = $agf->fetchAll($sortorder, $sortfield, 0, 0, $filter);
-	}
-
+	$resql = $agf->fetch_all($sortorder, $sortfield, 0, 0, $filter);
 	if ($resql<0) {
 		setEventMessages(null,$agf->errors,'errors');
 	}
@@ -935,7 +728,6 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		print '<tr class="agelfoddline"><td>' . $langs->trans('AgfTraineeSocDocUse') . '</td><td colspan="3">';
 		if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company(0, 'fk_soc_link', '', 'SelectThirdParty', 1);
 		else print $form->select_thirdparty_list(0, 'fk_soc_link', '', 'SelectThirdParty', 1, 0);
-
 		print '</td></tr>';
 		print '<tr class="agelfoddline"><td>' . $langs->trans('AgfTypeRequester') . '</td><td colspan="3">';
 		if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company(0, 'fk_soc_requester', '', 'SelectThirdParty', 1);
@@ -979,7 +771,7 @@ else
 			// Affichage en mode "édition"
 			if ($action == 'edit') {
 				print '<form name="update" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-				print '<input type="hidden" name="token" value="' . $newToken . '">';
+				print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 				print '<input type="hidden" name="action" value="update">';
 
 				print '<input type="hidden" name="id" value="' . $id . '">';
@@ -1003,9 +795,9 @@ else
 					print '</tr>';
 
 					print '<tr><td valign="top">' . $langs->trans("Company") . '</td><td>';
-					$filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-					if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
-					else print $form->select_thirdparty_list($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
+
+					if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($agf->socid, 'societe', '(s.client IN (1,3,2))', 'SelectThirdParty', 1);
+					else print $form->select_thirdparty_list($agf->socid, 'societe', '(s.client IN (1,3,2))', 'SelectThirdParty', 1);
 
 					print '</td></tr>';
 
@@ -1096,11 +888,7 @@ else
 					'methodename' => 'sendAgendaToTrainee',
 				);
 				$cronJob = new Cronjob($db);
-				if (method_exists($cronJob, 'fetch_all')){
-					$cronJob->fetch_all('DESC', 't.rowid',0, 0, $status, $filter);
-				}else{
-					$cronJob->fetchAll('DESC', 't.rowid',0, 0, $status, $filter);
-				}
+				$cronJob->fetch_all('DESC', 't.rowid',0, 0, $status, $filter);
 
 				if(!empty($cronJob->lines))
 				{
@@ -1145,19 +933,6 @@ else
 				*/
 				if ($action == 'delete') {
 					print $form->formconfirm($_SERVER['PHP_SELF'] . "?id=" . $id, $langs->trans("AgfDeleteOps"), $langs->trans("AgfConfirmDeleteTrainee"), "confirm_delete", '', '', 1);
-				}
-
-				if($action == 'merge') {
-					$formquestion = array(
-						array(
-							'name' => 'trainee_origin',
-							'label' => $langs->trans('MergeOriginTrainee'),
-							'type' => 'other',
-							'value' => $formAgefodd->select_stagiaire_list('', 'trainee_origin',  ' s.rowid != '.$id, 1, 0, array(), 0, 'style="width:200px;"')
-						)
-					);
-
-					print $form->formconfirm($_SERVER['PHP_SELF'].'?id='.$id, $langs->trans('Merge'), $langs->trans('ConfirmMergeTrainees'), 'confirm_merge', $formquestion, 'no', 1, 250);
 				}
 
 				print '<table class="border" width="100%">';
@@ -1215,11 +990,7 @@ else
 					'methodename' => 'sendAgendaToTrainee',
 				);
 				$cronJob = new Cronjob($db);
-				if (method_exists($cronJob, 'fetch_all')){
-					$cronJob->fetch_all('DESC', 't.rowid',0, 0, $status, $filter);
-				}else{
-					$cronJob->fetchAll('DESC', 't.rowid',0, 0, $status, $filter);
-				}
+				$cronJob->fetch_all('DESC', 't.rowid',0, 0, $status, $filter);
 
 				if(!empty($cronJob->lines))
 				{
@@ -1273,12 +1044,8 @@ else
 					print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 				}
 
-				if($user->rights->agefodd->creer || $user->rights->agefodd->modifier) {
-					print '<a class="butActionDelete" href="card.php?action=merge&id='.$id.'">'.$langs->trans('Merge').'</a>'."\n";
-				}
-
 				if ($user->rights->agefodd->creer || $user->rights->agefodd->modifier) {
-					print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+					print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 				} else {
 					print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 				}

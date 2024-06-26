@@ -180,22 +180,22 @@ $server->wsdl->addComplexType('agsession', 'complexType', 'struct', 'all', '', a
 				'name' => 'date_res_site',
 				'type' => 'xsd:string'
 		),
-
+		
 		'date_res_confirm_site' => array(
 				'name' => 'date_res_confirm_site',
 				'type' => 'xsd:string'
 		),
-
+		
 		'date_res_trainer' => array(
 				'name' => 'date_res_trainer',
 				'type' => 'xsd:string'
 		),
-
+		
 		'date_ask_OPCA' => array(
 				'name' => 'date_ask_OPCA',
 				'type' => 'xsd:string'
 		),
-
+	
 		'is_OPCA' => array(
 				'name' => 'is_OPCA',
 				'type' => 'xsd:string'

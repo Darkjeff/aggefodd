@@ -470,7 +470,6 @@ class Agefodd_convention {
 		if (! empty($this->only_product_session)) {
 			$sql .= " AND c.fk_product IN (SELECT fk_product FROM " . MAIN_DB_PREFIX . "agefodd_session WHERE rowid=" . $this->sessid . ")";
 		}
-		$sql .= " ORDER BY c.rang ASC";
 
 		dol_syslog(get_class($this) . "::fetch_commande_lines ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -494,12 +493,10 @@ class Agefodd_convention {
 						dol_syslog(get_class($this) . "::fetch_order_lines " . $prod_static->error, LOG_ERR);
 					}
 
-                    if (! empty($obj->label) && $obj->label != $prod_static->label) {
-                        $line->description = $obj->label . '<br />' . self::nl2br($obj->description);
-                    } elseif (strpos($obj->description, $prod_static->label) !== false) {
-                        $line->description = self::nl2br($obj->description);
+					if (strpos($obj->description, $prod_static->description) !== false || $conf->global->AGEFODD_CONVENTION_DOUBLE_DESC_DESACTIVATE) {
+						$line->description = $prod_static->ref . ' ' . $prod_static->label . '<BR>' . self::nl2br($obj->description);
 					} else {
-                        $line->description = $prod_static->label . '<br />' . self::nl2br($obj->description);
+						$line->description = $prod_static->ref . ' ' . self::nl2br($prod_static->description) . '<BR>' . $prod_static->label . '<BR>' . self::nl2br($obj->description);
 					}
 				} else {
 					$line->description = $obj->description;
@@ -545,7 +542,6 @@ class Agefodd_convention {
 		if (! empty($this->only_product_session)) {
 			$sql .= " AND c.fk_product IN (SELECT fk_product FROM " . MAIN_DB_PREFIX . "agefodd_session WHERE rowid=" . $this->sessid . ")";
 		}
-		$sql .= " ORDER BY c.rang ASC";
 
 		dol_syslog(get_class($this) . "::fetch_invoice_lines ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -570,9 +566,9 @@ class Agefodd_convention {
 					}
 
 					if (strpos($obj->description, $prod_static->description) !== false || $conf->global->AGEFODD_CONVENTION_DOUBLE_DESC_DESACTIVATE) {
-						$line->description = $prod_static->ref . ' ' . $prod_static->label . '<br />' . self::nl2br($obj->description);
+						$line->description = $prod_static->ref . ' ' . $prod_static->label . '<BR>' . self::nl2br($obj->description);
 					} else {
-						$line->description = $prod_static->ref . ' ' . self::nl2br($prod_static->description) . '<br />' . $prod_static->label . '<br />' . self::nl2br($obj->description);
+						$line->description = $prod_static->ref . ' ' . self::nl2br($prod_static->description) . '<BR>' . $prod_static->label . '<BR>' . self::nl2br($obj->description);
 					}
 				} else {
 					$line->description = $obj->description;
@@ -618,7 +614,6 @@ class Agefodd_convention {
 		if (! empty($this->only_product_session)) {
 			$sql .= " AND c.fk_product IN (SELECT fk_product FROM " . MAIN_DB_PREFIX . "agefodd_session WHERE rowid=" . $this->sessid . ")";
 		}
-		$sql .= " ORDER BY c.rang ASC";
 
 		dol_syslog(get_class($this) . "::fetch_propal_lines ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -641,13 +636,13 @@ class Agefodd_convention {
 					if ($result < 0) {
 						dol_syslog(get_class($this) . "::fetch_propal_lines " . $prod_static->error, LOG_ERR);
 					}
-					// $line->description = $prod_static->description . '<br />' . $prod_static->label . '<br />' . nl2br ( $obj->description );
+					// $line->description = $prod_static->description . '<BR>' . $prod_static->label . '<BR>' . nl2br ( $obj->description );
 					if (! empty($obj->label) && $obj->label != $prod_static->label) {
-						$line->description = $obj->label . '<br />' . self::nl2br($obj->description);
+						$line->description = $obj->label . '<BR>' . self::nl2br($obj->description);
 					} elseif (strpos($obj->description, $prod_static->label) !== false) {
 						$line->description = self::nl2br($obj->description);
 					} else {
-						$line->description = $prod_static->label . '<br />' . self::nl2br($obj->description);
+						$line->description = $prod_static->label . '<BR>' . self::nl2br($obj->description);
 					}
 				} else {
 					$line->description = $obj->description;

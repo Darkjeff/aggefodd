@@ -318,8 +318,8 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 					'add-customer-contact' => 'disabled'
 			)
 	);
-	$filters = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3) OR (s.fournisseur:=:1) )' : '((s.client IN (1,2,3)) OR (s.fournisseur=1))';
-	print '<td>' . $form->select_thirdparty_list('', 'societe', $filters, 'SelectThirdParty', 1, 0, $events) . '</td></tr>';
+	print '<td>' . $form->select_thirdparty_list('', 'societe', '((s.client IN (1,2,3)) OR (s.fournisseur=1))', 'SelectThirdParty', 1, 0, $events) . '</td></tr>';
+
 	print '<tr><td>' . $langs->trans("Contact") . '</td>';
 	print '<td>';
 	if (! empty($societe)) {
@@ -434,8 +434,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 								'add-customer-contact' => 'disabled'
 						)
 				);
-				$filters = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3) OR (s.fournisseur:=:1) )' :  '((s.client IN (1,2,3)) OR (s.fournisseur=1))';
-				print '<td>' . $form->select_thirdparty_list($agf->socid, 'societe', $filters, 'SelectThirdParty', 1, 0,$events) . '</td></tr>';
+				print '<td>' . $form->select_thirdparty_list($agf->socid, 'societe', '((s.client IN (1,2,3)) OR (s.fournisseur=1))', 'SelectThirdParty', 1, 0,$events) . '</td></tr>';
 
 				print '<tr><td>' . $langs->trans("Contact") . '</td>';
 				print '<td>';
@@ -624,11 +623,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->agefodd_place->creer) {
-
-		$urlToken = '';
-		if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
-		print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete&id=' . $id . $urlToken .'">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}

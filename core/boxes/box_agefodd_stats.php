@@ -60,8 +60,7 @@ class box_agefodd_stats extends ModeleBoxes {
 	function loadBox() {
 		global $conf, $user, $langs, $db;
 
-		if(!empty($max)) $this->max = $max;
-		else $this->max = 0;
+		$this->max = $max;
 
 		dol_include_once('/agefodd/class/agefodd_index.class.php');
 
@@ -151,7 +150,7 @@ class box_agefodd_stats extends ModeleBoxes {
 			$nbre = count($agf->lines);
 			$this->info_box_contents[$key][0] = array(
 					'td' => 'align="left"',
-					'text' => img_object($langs->trans("AgfMenuSessArchList"), "generic").' '.$langs->trans("AgfMenuSessArchList")
+					'text' => img_object($langs->trans("AgfMenuSessArchList"), "generic").$langs->trans("AgfMenuSessArchList")
 			);
 			$this->info_box_contents[$key][1] = array(
 					'td' => 'align="left"',
@@ -170,9 +169,9 @@ class box_agefodd_stats extends ModeleBoxes {
 	 * @param array $head with properties of box title
 	 * @param array $contents with properties of box lines
 	 * @param integer $nooutput nooutput
-	 * @return string
+	 * @return void
 	 */
 	function showBox($head = null, $contents = null, $nooutput = 0) {
-		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
+		parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
 	}
 }

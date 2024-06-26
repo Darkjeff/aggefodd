@@ -1,13 +1,13 @@
 <?php
-if (!defined('NOCSRFCHECK')) define('NOCSRFCHECK', 1);
-if (!defined('NOTOKENRENEWAL')) define('NOTOKENRENEWAL', 1);
+
+if (!defined('NOTOKENRENEWAL')) define('NOTOKENRENEWAL', '1'); // Disables token renewal
+if (!defined('NOCSRFCHECK'))  define('NOCSRFCHECK', '1');
 
 $res = @include ("../../main.inc.php"); // For root directory
 if (! $res)
 	$res = @include ("../../../main.inc.php"); // For "custom" directory
 if (! $res)
 	die("Include of main fails");
-
 
 dol_include_once('/core/lib/functions.lib.php');
 
@@ -24,33 +24,97 @@ $data['msg'] = '';
 
 
 // do action from GETPOST ...
-if(GETPOST('action', 'none'))
-{
-	$action = GETPOST('action', 'none');
+	if(GETPOST('action', 'none'))
+	{
+		$action = GETPOST('action', 'none');
 
-	if($action=='setAgefoddTrainingAdmlevelHierarchy'){
-		if (! $user->rights->agefodd->agefodd_formation_catalogue->creer){
-			$data['result'] = -1; // by default if no action result is false
-			$data['errorMsg'] = $langs->trans("ErrorForbidden"); // default message for errors
-		}
-		else{
+        if($action=='setAgefoddTrainingAdmlevelHierarchy'){
+            if (! $user->rights->agefodd->agefodd_formation_catalogue->creer){
+                $data['result'] = -1; // by default if no action result is false
+                $data['errorMsg'] = $langs->trans("ErrorForbidden"); // default message for errors
+            }
+            else{
 
-			$data['result'] = _updateAgefoddTrainingAdmlevelHierarchy($data['items'],0, 0, 0, $data['errorMsg']);
-			if($data['result']>0){
-				$data['msg'] =  $langs->transnoentities('Updated') . ' : ' .  $data['result'];
+                $data['result'] = _updateAgefoddTrainingAdmlevelHierarchy($data['items'],0, 0, 0, $data['errorMsg']);
+                if($data['result']>0){
+                    $data['msg'] =  $langs->transnoentities('Updated') . ' : ' .  $data['result'];
+                }
+            }
+        }
+		if($action=='setAgefoddAdminAdmlevelHierarchy'){
+			if (! $user->rights->agefodd->admin && ! $user->admin){
+				$data['result'] = -1; // by default if no action result is false
+				$data['errorMsg'] = $langs->trans("ErrorForbidden"); // default message for errors
+			}
+			else{
+
+				$data['result'] = _updateAgefoddSessionAdmlevelHierarchy($data['items'],0, 0, 0, $data['errorMsg']);
+				if($data['result']>0){
+					$data['msg'] =  $langs->transnoentities('Updated') . ' : ' .  $data['result'];
+				}
 			}
 		}
-	}
-	if($action=='setAgefoddAdminAdmlevelHierarchy'){
-		if (! $user->rights->agefodd->admin && ! $user->admin){
-			$data['result'] = -1; // by default if no action result is false
-			$data['errorMsg'] = $langs->trans("ErrorForbidden"); // default message for errors
-		}
-		else{
+		if($action == 'get_duration_and_product')
+		{
+			$fk_training= GETPOST('fk_training', 'none');
+			if(!empty($fk_training)){
+				$sql="SELECT cat.duree,cat.fk_product,p.ref FROM ".MAIN_DB_PREFIX."agefodd_formation_catalogue cat";
+				$sql.=" LEFT JOIN ".MAIN_DB_PREFIX."product p on (p.rowid = cat.fk_product)";
+				$sql.=" WHERE cat.rowid=".$fk_training;
+				$resql = $db->query($sql);
+				if(!empty($resql)){
+					$obj = $db->fetch_object($resql);
+					$data['duree']=$obj->duree;
+					$data['fk_product']=$obj->fk_product;
+					$data['ref_product']=$obj->ref;
+					$data['result'] = 1;
+				}
+			}
 
-			$data['result'] = _updateAgefoddSessionAdmlevelHierarchy($data['items'],0, 0, 0, $data['errorMsg']);
-			if($data['result']>0){
-				$data['msg'] =  $langs->transnoentities('Updated') . ' : ' .  $data['result'];
+		}
+		else if ($action == 'get_nb_place')
+	{
+		/*
+		 * On garde le nb_place le plus petit
+		 */
+		$fk_training = GETPOST('fk_training', 'none');
+		$fk_place = GETPOST('fk_place', 'none');
+		if ($fk_training>0)
+		{
+			$sql = "SELECT cat.nb_place FROM ".MAIN_DB_PREFIX."agefodd_formation_catalogue cat";
+			$sql .= " WHERE cat.rowid=".$fk_training;
+			$resql = $db->query($sql);
+			if (!empty($resql))
+			{
+				$obj = $db->fetch_object($resql);
+
+				$data['nb_place'] = $obj->nb_place;
+				if ($fk_place>0)
+				{
+					$sql_place = "SELECT cat.nb_place FROM ".MAIN_DB_PREFIX."agefodd_place cat";
+					$sql_place .= " WHERE cat.rowid=".$fk_place;
+					$resql_place = $db->query($sql_place);
+					if (!empty($resql_place))
+					{
+						$place = $db->fetch_object($resql_place);
+						if(!empty($obj->nb_place))$data['nb_place'] = ($data['nb_place'] < $place->nb_place) ? $data['nb_place'] : $place->nb_place;
+						else if(!empty($place->nb_place)) $data['nb_place'] =  $place->nb_place;
+											}
+				}
+
+				$data['result'] = 1;
+			}
+		}
+		else if ($fk_place>0)
+		{
+			$sql_place = "SELECT cat.nb_place FROM ".MAIN_DB_PREFIX."agefodd_place cat";
+			$sql_place .= " WHERE cat.rowid=".$fk_place;
+			$resql_place = $db->query($sql_place);
+			if (!empty($resql_place))
+			{
+				$place = $db->fetch_object($resql_place);
+				$data['nb_place'] =$place->nb_place;
+				$data['result'] = 1;
 			}
 		}
 	}

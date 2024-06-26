@@ -421,13 +421,13 @@ class Agefodd_stagiaire_cursus extends CommonObject {
 				$sql .= ' WHERE ' . $sqlwhere;
 			}
 		} else {
-			$sql .= " WHERE c.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+			$sql .= " WHERE c.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 		}
 
 		$sql .= " AND fk_cursus=" . $this->fk_cursus;
 		$sql .= " ORDER BY " . $sortfield . " " . $sortorder;
 		if(!empty($limit)) $sql .= " " . $this->db->plimit($limit + 1, $offset);
-
+		
 		dol_syslog(get_class($this) . "::fetch_stagiaire_per_cursus", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
@@ -687,24 +687,6 @@ class Agefodd_stagiaire_cursus extends CommonObject {
 			dol_syslog(get_class($this) . "::fetch_cursus_per_trainee " . $this->error, LOG_ERR);
 			return - 1;
 		}
-	}
-	/**
-	 * Function used to replace a trainee id with another one.
-	 * This function is meant to be called from replaceTrainee with the appropiate tables
-	 *
-	 * @param  DoliDB 	   $db 			  Database handler
-	 * @param  int 		   $origin_id     Old trainee id (the trainee to delete)
-	 * @param  int 		   $dest_id       New trainee id (the trainee that will received element of the other)
-	 * @return bool						  True if success, False if error
-	 */
-	public static function replaceTrainee(DoliDB $db, $origin_id, $dest_id) {
-		$sql = 'UPDATE '.MAIN_DB_PREFIX.'agefodd_stagiaire_cursus SET fk_stagiaire = '.((int) $dest_id).' WHERE fk_stagiaire = '.((int) $origin_id);
-
-		if(! $db->query($sql)) {
-			return false;
-		}
-
-		return true;
 	}
 }
 class AgfCursusTraineeLine {

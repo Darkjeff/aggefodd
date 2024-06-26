@@ -290,7 +290,7 @@ class Agefodd_stagiaire_certif extends CommonObject {
 		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "agefodd_session_stagiaire as stasess ON sta.rowid = stasess.fk_stagiaire AND stasess.fk_session_agefodd=s.rowid  AND certif.fk_session_stagiaire=stasess.rowid";
 		$sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . "societe as soc ON soc.rowid = sta.fk_soc";
 
-		$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+		$sql .= " WHERE s.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 
 		// Manage filter
 		if (count($filter) > 0) {
@@ -511,7 +511,7 @@ class Agefodd_stagiaire_certif extends CommonObject {
 					dol_syslog(get_class($this) . "::set_certif_state " . $this->error, LOG_ERR);
 					return - 1;
 				}
-
+				
 				return 1;
 			} else {
 				// Certificate state do not exist yet => we create it
@@ -531,7 +531,7 @@ class Agefodd_stagiaire_certif extends CommonObject {
 					dol_syslog(get_class($this) . "::set_certif_state " . $this->error, LOG_ERR);
 					return - 1;
 				}
-
+				
 				return 1;
 			}
 		} else {
@@ -567,7 +567,7 @@ class Agefodd_stagiaire_certif extends CommonObject {
 		$sql .= " t.mark";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_stagiaire_certif as t";
 
-		$sql .= " WHERE t.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+		$sql .= " WHERE t.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 		$sql .= " AND t.fk_stagiaire='" . $idtrainee . "'";
 
 		$sql .= " ORDER BY t.datec desc";
@@ -647,7 +647,7 @@ class Agefodd_stagiaire_certif extends CommonObject {
 		$sql .= " t.mark";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_stagiaire_certif as t";
 
-		$sql .= " WHERE t.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+		$sql .= " WHERE t.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 
 		// Manage filter
 		$sqlwhere = array();
@@ -793,25 +793,6 @@ class Agefodd_stagiaire_certif extends CommonObject {
 			$this->db->commit();
 			return 1;
 		}
-	}
-
-	/**
-	 * Function used to replace a trainee id with another one.
-	 * This function is meant to be called from replaceTrainee with the appropiate tables
-	 *
-	 * @param DoliDB $db        Database handler
-	 * @param int    $origin_id Old trainee id (the trainee to delete)
-	 * @param int    $dest_id   New trainee id (the trainee that will received element of the other)
-	 * @return bool                          True if success, False if error
-	 */
-	public static function replaceTrainee(DoliDB $db, $origin_id, $dest_id) {
-		$sql = 'UPDATE '.MAIN_DB_PREFIX.'agefodd_stagiaire_certif SET fk_stagiaire = '.((int) $dest_id).' WHERE fk_stagiaire = '.((int) $origin_id);
-
-		if(! $db->query($sql)) {
-			return false;
-		}
-
-		return true;
 	}
 
 	/**

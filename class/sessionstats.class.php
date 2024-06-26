@@ -41,7 +41,7 @@ class SessionStats extends Stats {
 	public $from;
 	public $field;
 	public $where;
-
+	
 	/**
 	 * Constructor
 	 *
@@ -53,16 +53,16 @@ class SessionStats extends Stats {
 	 */
 	public function SessionStats($db, $socid = 0, $mode = '', $userid = 0, $training_id = 0) {
 		global $conf;
-
+		
 		$this->db = $db;
 		$this->socid = $socid;
 		$this->userid = $userid;
 		$this->training_id = $training_id;
-
+		
 		$object = new Agsession($this->db);
 		$this->from = MAIN_DB_PREFIX . $object->table_element;
 		$this->field = 'sell_price';
-
+		
 		// $this->where = " fk_statut > 0";
 		$this->where .= " entity = " . $conf->entity;
 		// if ($mode == 'customer') $this->where.=" AND (fk_statut <> 3 OR close_code <> 'replaced')"; // Exclude replaced invoices as they are
@@ -72,11 +72,11 @@ class SessionStats extends Stats {
 		}
 		if ($this->userid > 0)
 			$this->where .= ' AND com.fk_user_com = ' . $this->userid;
-
+		
 		if ($this->training_id > 0)
 			$this->where .= ' AND main.fk_formation_catalogue=' . $this->training_id;
 	}
-
+	
 	/**
 	 * Renvoie le nombre de facture par annee
 	 *
@@ -85,25 +85,24 @@ class SessionStats extends Stats {
 	public function getNbByYear() {
 		$sql = "SELECT YEAR(main.datef) as dm, COUNT(DISTINCT main.rowid)";
 		$sql .= " FROM " . $this->from . " as main";
-
+		
 		if (strpos($this->where, 'com.fk_user_com') !== false) {
 			$sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . "agefodd_session_commercial as com ON main.rowid=com.fk_session_agefodd";
 		}
 		$sql .= " WHERE " . $this->where;
 		$sql .= " GROUP BY dm";
 		$sql .= $this->db->order('dm', 'DESC');
-
+		
 		return $this->_getNbByYear($sql);
 	}
-
+	
 	/**
 	 * Renvoie le nombre de facture par mois pour une annee donnee
 	 *
 	 * @param int $year scan
-	 * @param int $format
 	 * @return array of values
 	 */
-	public function getNbByMonth($year, $format = 0) {
+	public function getNbByMonth($year) {
 		$sql = "SELECT MONTH(main.datef) as dm, COUNT(DISTINCT main.rowid)";
 		$sql .= " FROM " . $this->from . " as main";
 		if (strpos($this->where, 'com.fk_user_com') !== false) {
@@ -113,20 +112,19 @@ class SessionStats extends Stats {
 		$sql .= " AND " . $this->where;
 		$sql .= " GROUP BY dm";
 		$sql .= $this->db->order('dm', 'DESC');
-
+		
 		$res = $this->_getNbByMonth($year, $sql);
 		// var_dump($res);print '<br>';
 		return $res;
 	}
-
+	
 	/**
 	 * Renvoie le montant de facture par mois pour une annee donnee
 	 *
 	 * @param int $year scan
-	 * @param int $format
 	 * @return array of values
 	 */
-	public function getAmountByMonth($year, $format = 0) {
+	public function getAmountByMonth($year) {
 		$sql = "SELECT date_format(main.datef,'%m') as dm, SUM(" . $this->field . ")";
 		$sql .= " FROM " . $this->from . " as main";
 		if (strpos($this->where, 'com.fk_user_com') !== false) {
@@ -136,12 +134,12 @@ class SessionStats extends Stats {
 		$sql .= " AND " . $this->where;
 		$sql .= " GROUP BY dm";
 		$sql .= $this->db->order('dm', 'DESC');
-
+		
 		$res = $this->_getAmountByMonth($year, $sql);
 		// var_dump($res);print '<br>';
 		return $res;
 	}
-
+	
 	/**
 	 * Return average amount
 	 *
@@ -158,10 +156,10 @@ class SessionStats extends Stats {
 		$sql .= " AND " . $this->where;
 		$sql .= " GROUP BY dm";
 		$sql .= $this->db->order('dm', 'DESC');
-
+		
 		return $this->_getAverageByMonth($year, $sql);
 	}
-
+	
 	/**
 	 * Return nb, total and average
 	 *
@@ -176,7 +174,7 @@ class SessionStats extends Stats {
 		$sql .= " WHERE " . $this->where;
 		$sql .= " GROUP BY year";
 		$sql .= $this->db->order('year', 'DESC');
-
+		
 		return $this->_getAllByYear($sql);
 	}
 }

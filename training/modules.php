@@ -36,9 +36,6 @@ $confirm = GETPOST('confirm', 'alpha');
 
 $moduletitle = GETPOST('moduletitle', 'alpha');
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 // Security check
 if (! $user->rights->agefodd->agefodd_formation_catalogue->lire)
 	accessforbidden();
@@ -137,7 +134,7 @@ if (is_array($object_modules->lines) && count($object_modules->lines) > 0) {
 		if ($user->rights->agefodd->agefodd_formation_catalogue->creer) {
 			print '<tr><td rowspan="5" width="20px">';
 			print '<a href="' . dol_buildpath('/agefodd/training/modules_chapters.php', 1) . '?id=' . $line_chapter->id . '&fk_formation_catalogue='.$object->id.'&action=edit">' . img_picto($langs->trans('Edit'), 'edit') . '</a>';
-			print '<a href="' . dol_buildpath('/agefodd/training/modules_chapters.php', 1) . '?id=' . $line_chapter->id . '&fk_formation_catalogue='.$object->id.'&action=delete'.$urlToken.'">' . img_picto($langs->trans('Delete'), 'delete') . '</a>';
+			print '<a href="' . dol_buildpath('/agefodd/training/modules_chapters.php', 1) . '?id=' . $line_chapter->id . '&fk_formation_catalogue='.$object->id.'&action=delete">' . img_picto($langs->trans('Delete'), 'delete') . '</a>';
 			print '</td></tr>';
 		}
 

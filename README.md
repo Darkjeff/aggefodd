@@ -5,7 +5,7 @@ AGEFODD
 Licence
 -------
 
-GPLv3 or (at your option) any later version. 
+GPLv3 or (at your option) any later version.
 
 See COPYING for more information.
 
@@ -16,23 +16,15 @@ INSTALL AGEFODD
 	http://wiki.dolibarr.org/index.php/FAQ_ModuleCustomDirectory
 
 
-INSTALL FROM GIT (into "custom" directory)
+INSTAL FROM GIT (into "custom" directory)
 ---------------
 
 	$git clone git@git.framasoft.org:atm-consulting/dolibarr_agefodd.git agefodd
 
-
-FORCE re-install Database elements
----------------
-
-If you have an install error and need to replay sql table creation script, 
-you can remove all AGF_LAST_VERION_INSTALL const in llx_const and then activate the module.
-
-
 DOCUMENTATION
 ---------------
 
-	https://wiki.atm-consulting.fr/index.php/Nos_modules_Dolibarr#Agefodd
+	http://www.open-concept.pro/images/doc/
 	
 
 DOLISTORE

@@ -274,7 +274,7 @@ if (! empty($id)) {
 				}
 
 				$agf_certif->certif_dt_end = $certif_dt_end;
-				$agf_certif->certif_dt_warning = dol_time_plus_duree($certif_dt_end, !empty($conf->global->AGF_CERTIF_ALERT_DATE_NB_MONTHS) ? -abs($conf->global->AGF_CERTIF_ALERT_DATE_NB_MONTHS) : -6, 'm');
+				$agf_certif->certif_dt_warning = dol_time_plus_duree($certif_dt_end, -6, 'm');
 
 				print '<tr><td>' . $langs->trans('AgfCertifCode') . '</td><td><input type="hidden" name="certif_code" value="' . $agf_certif->certif_code . '">' . $agf_certif->certif_code . '</td></tr>' . "\n";
 				print '<tr><td>' . $langs->trans('AgfCertifLabel') . '</td><td><input type="text" size="10" name="certif_label"  value="' . $agf_certif->certif_label . '"></td></tr>' . "\n";

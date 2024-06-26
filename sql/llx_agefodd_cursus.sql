@@ -28,5 +28,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_cursus (
   fk_user_mod integer NOT NULL,
   note_private	text,
   note_public	text,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  tms timestamp NOT NULL
 ) ENGINE=InnoDB;

@@ -28,7 +28,6 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
-dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
@@ -154,35 +153,13 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 				$tplidx = $pdf->importPage(1);
 			}
 
-			/** SWITCH OBJECT FORMATION - SESSION_CATALOGUE ---------------------------------  */
-			$agf_sessioncal = new SessionCatalogue($this->db); // formation clone
-			$ret = $agf_sessioncal->fetchSessionCatalogue($id); // par default ça fetch le clone
+			// Récuperation des objectifs pedagogique de la formation
+			$agf_op = new Formation($this->db);
+			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
 
-			$agf_session = new Agsession($this->db);
-			$retSession = $agf_session->fetch($id);
-
-			if (empty($ret)) // pas de clone
-			{
-
-				if ($retSession > 0 ){
-
-					$agf_op = new Formation($this->db);
-					$agf_op->fetch($agf_session->fk_formation_catalogue);
-					$agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
-
-				}else{
-					$agf_op = new Formation($this->db); // prevent error on foreach
-					setEventMessage('errorloadSession','errors');
-				}
-
-
-			}else{
-				$agf_op = new SessionCatalogue($this->db);
-				$agf_op->fetch($ret);
-				$agf_op->fetch_objpeda_per_session_catalogue($ret);
-			}
-			/** ---------------------------------  */
-
+			// Récupération de la duree de la formation
+			$agf_duree = new Formation($this->db);
+			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
 
 			// Recuperation des stagiaires participant à la formation
 			$agf2 = new Agefodd_session_stagiaire($this->db);
@@ -294,12 +271,12 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 						$pdf->Cell(0, 0, $outputlangs->convToOutputCharset($this->str), 0, 0, 'C', 0);
 
 						$tab_top = $newY + 10;
-                        $newY = $pdf->GetY() + 7;
-                        $pdf->SetXY($this->marge_gauche + 1, $newY);
 						if (count($agf_op->lines) > 0) {
 
 							$pdf->SetFont(pdf_getPDFFont($outputlangs), 'U', 12);
 							$this->str = $outputlangs->transnoentities('AgfPDFAttestationEndEval');
+							$newY = $pdf->GetY() + 5;
+							$pdf->SetXY($this->marge_gauche + 1, $newY);
 							$pdf->Cell(0, 0, $outputlangs->convToOutputCharset($this->str), 0, 0, 'L', 0);
 
 							// Output Rect
@@ -347,9 +324,7 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 						}
 
 						// Lieu
-						// GetY match with the last "X" Position in the goal table
-						// $height_obj match with the last table line height
-						$newY = $pdf->GetY() + $height_obj;
+						$newY = $pdf->GetY() + 10;
 						$pdf->SetFont(pdf_getPDFFont($outputlangs), 'U', 12);
 						$this->str = $outputlangs->transnoentities('Lieu :');
 						$pdf->SetXY($this->marge_gauche + 1, $newY);
@@ -382,17 +357,12 @@ class pdf_attestationendtraining extends ModelePDFAgefodd {
 						$pdf->SetXY($this->page_largeur - $this->marge_gauche - $this->marge_droite - 55, $newY);
 						$pdf->SetFont(pdf_getPDFFont($outputlangs), '', 12);
 						// Formateur
-						/* Tous les autres documents utilise le representant et pas le formateur en signature ...
-						 * Remise en conformité du document
-						 *
 						$trainer_arr = array ();
 						foreach ( $agf_session_trainer->lines as $trainer ) {
 							$trainer_arr[] = $trainer->firstname . " " . $trainer->lastname;
 						}
 						$trainer_str = implode("\n", $trainer_arr);
-						$pdf->MultiCell(80, 0, $outputlangs->transnoentities('AgfTrainerPDF') . ':' . "\n" . $trainer_str, 0, 'L', 0);*/
-						$trainer_str = $conf->global->AGF_ORGANISME_REPRESENTANT;
-						$pdf->MultiCell(80, 0, $outputlangs->transnoentities('AgfRepresant') . ':' . "\n" . $trainer_str, 0, 'L', 0);
+						$pdf->MultiCell(80, 0, $outputlangs->transnoentities('AgfTrainerPDF') . ':' . "\n" . $trainer_str, 0, 'L', 0);
 
 						// Incrustation image tampon
 						$tampon_exitst = 1;

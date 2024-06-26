@@ -39,13 +39,11 @@ require_once ('../class/agefodd_calendrier.class.php');
 require_once ('../class/agefodd_session_formateur.class.php');
 require_once ('../class/agefodd_session_stagiaire.class.php');
 require_once ('../class/agefodd_session_element.class.php');
-require_once ('../class/agefodd_place.class.php');
 require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
 require_once ('../lib/agefodd.lib.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
-require_once DOL_DOCUMENT_ROOT . '/core/lib/functions.lib.php';
 require_once ('../class/agefodd_formation_catalogue.class.php');
 require_once ('../class/agefodd_opca.class.php');
 
@@ -60,24 +58,15 @@ $hookmanager->initHooks(array(
 		,'globalcard'
 ));
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
 $arch = GETPOST('arch', 'int');
 $anchor = GETPOST('anchor', 'none');
-$fk_soc_employer = GETPOST('fk_soc_employer', 'int');
 $agf = new Agsession($db);
 $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element);
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
-	$extrafields->attribute_size = $extrafields->attributes[$agf->table_element]['size'];
-	$extrafields->attribute_unique = $extrafields->attributes[$agf->table_element]['unique'];
-	$extrafields->attribute_required = $extrafields->attributes[$agf->table_element]['required'];
-	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
-}
+
 $parameters = array(
 		'id' => $id,
 		'action' => $action,
@@ -160,22 +149,26 @@ if ($action == 'confirm_delete' && $confirm == "yes" && $user->rights->agefodd->
 	}
 }
 
-
-
-if ($action=='setsession_status') {
-        $agf = new Agsession($db);
-        $result = $agf->fetch($id);
-	$agf->status=GETPOST('session_status', 'none');
-
-	$result=$agf->update($user);
-	if ($result<0) {
-		setEventMessage($agf->error,'errors');
-	}
-}
-
 /*
  * Actions remove thirdparty
  */
+
+if ($action == 'remove_cust' && $user->rights->agefodd->modifier) {
+
+	$agf = new Agsession($db);
+	$result = $agf->fetch($id);
+	unset($agf->fk_soc);
+	$agf->contactid = 0;
+	$agf->sourcecontactid = 0;
+	$result = $agf->update($user);
+
+	if ($result > 0) {
+		Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		exit();
+	} else {
+		setEventMessage($agf->error, 'errors');
+	}
+}
 
 if ($action == 'remove_requester' && $user->rights->agefodd->modifier) {
 
@@ -270,14 +263,6 @@ if ($action == 'arch_confirm_delete' && $user->rights->agefodd->creer) {
 		} else {
 			$agf->status_before_archive = $agf->status;
 			$agf->status = 4;
-			if ($conf->global->AGF_SESSION_ARCHIVE_DOCUMENTS){
-				$isSuccess = $agf->zipDocumentsSession();
-				if ($isSuccess > 0){
-					setEventMessage($langs->trans('ArchiveCreate'));
-				}elseif($isSuccess < 0){
-					setEventMessage($agf->errors, 'errors');
-				}
-			}
 		}
 
 		$result = $agf->updateArchive($user);
@@ -347,8 +332,8 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 		} else {
 			$agf->nb_subscribe_min = GETPOST('nbmintarget', 'int');
 			$agf->fk_product = GETPOST('productid', 'int');
-			$agf->duree_session = GETPOST('duree_session', 'int') ? GETPOST('duree_session', 'int') : GETPOST('duree_session', 'intcomma');
-			$agf->intitule_custo = GETPOST('intitule_custo', 'none');
+			$agf->duree_session = GETPOST('duree_session', 'int');
+			$agf->intitule_custo = GETPOST('intitule_custo', 'alpha');
 		}
 
 		$agf->fk_formation_catalogue = $training_id;
@@ -360,12 +345,8 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 			setEventMessage($langs->trans('AgfSessionDateErrors'), 'errors');
 		}
 
-		$agf->setSendSurveyStatus(GETPOST('send_survey_status', 'int'), false);
-
-
 		$agf->fk_session_place = $fk_session_place;
-        $agf->fk_nature_action_code = GETPOST('code_c_formation_nature_action', 'alpha');
-        $agf->type_session = GETPOST('type_session', 'int');
+		$agf->type_session = GETPOST('type_session', 'int');
 		$agf->commercialid = GETPOST('commercial', 'int');
 		$agf->contactid = GETPOST('contact', 'int');
 
@@ -391,6 +372,7 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 		$fk_soc_requester = GETPOST('fk_soc_requester', 'int');
 		$fk_socpeople_requester = GETPOST('fk_socpeople_requester', 'int');
 		$fk_socpeople_presta = GETPOST('fk_socpeople_presta', 'int');
+		$fk_soc_employer = GETPOST('fk_soc_employer', 'int');
 		$color = GETPOST('color', 'alpha');
 		$nb_place = GETPOST('nb_place', 'int');
 		$nb_stagiaire = GETPOST('nb_stagiaire', 'int');
@@ -404,7 +386,7 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 
 		$cost_trip = GETPOST('costtrip', 'alpha');
 
-		if ($fk_soc > 0)
+		if (! empty($fk_soc))
 			$agf->fk_soc = $fk_soc;
 		if (! empty($fk_soc_requester))
 			$agf->fk_soc_requester = $fk_soc_requester;
@@ -432,11 +414,7 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 
 		if ($error == 0) {
 			$extrafields->setOptionalsFromPost($extralabels, $agf);
-			if ($agf->type_session == 1) {
-				unset($agf->fk_soc);
-				$agf->contactid = 0;
-				$agf->sourcecontactid = 0;
-			}
+
 			$result = $agf->update($user);
 			if ($result > 0) {
 
@@ -448,7 +426,7 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 				}
 				exit();
 			} else {
-				setEventMessages($agf->error, $agf->errors, 'errors');
+				setEventMessage($agf->error, 'errors');
 			}
 		} else {
 			if (! empty($saveandclose)) {
@@ -505,8 +483,7 @@ if ($action == 'add_confirm' && $user->rights->agefodd->creer) {
 
 		$agf->fk_formation_catalogue = $training_id;
 		$agf->fk_session_place = $fk_session_place;
-        $agf->nb_place = GETPOST('nb_place', 'int');
-		$agf->fk_nature_action_code = GETPOST('code_c_formation_nature_action', 'alpha');
+		$agf->nb_place = GETPOST('nb_place', 'int');
 		$agf->type_session = GETPOST('type_session', 'int');
 		$agf->nb_place = GETPOST('nb_place', 'int');
 		$agf->status = GETPOST('session_status', 'int');
@@ -514,12 +491,11 @@ if ($action == 'add_confirm' && $user->rights->agefodd->creer) {
 		$agf->fk_soc = GETPOST('fk_soc', 'int');
 		$agf->dated = dol_mktime(12, 0, 0, GETPOST('dadmonth', 'int'), GETPOST('dadday', 'int'), GETPOST('dadyear', 'int'));
 		$agf->datef = dol_mktime(12, 0, 0, GETPOST('dafmonth', 'int'), GETPOST('dafday', 'int'), GETPOST('dafyear', 'int'));
+
 		if ($agf->dated > $agf->datef) {
 			$error ++;
 			setEventMessage($langs->trans('AgfSessionDateErrors'), 'errors');
 		}
-
-		$agf->setSendSurveyStatus(GETPOST('send_survey_status', 'int'), false);
 
 		$agf->notes = GETPOST('notes', 'alpha');
 		$agf->commercialid = GETPOST('commercial', 'int');
@@ -542,7 +518,7 @@ if ($action == 'add_confirm' && $user->rights->agefodd->creer) {
 
 		$agf->fk_product = GETPOST('productid', 'int');
 
-		$agf->duree_session = GETPOST('duree_session', 'int') ? GETPOST('duree_session', 'int') : GETPOST('duree_session', 'intcomma');
+		$agf->duree_session = GETPOST('duree_session', 'int');
 		$agf->intitule_custo = GETPOST('intitule_custo', 'alpha');
 
 		$fk_propal = GETPOST('fk_propal', 'int');
@@ -565,7 +541,7 @@ if ($action == 'add_confirm' && $user->rights->agefodd->creer) {
 					$error ++;
 				}
 			} else {
-				setEventMessages($agf->error, $agf->errors, 'errors');
+				setEventMessage($agf->error, 'errors');
 				$error ++;
 			}
 
@@ -628,11 +604,8 @@ if ($action == 'confirm_clone' && $confirm == 'yes') {
 	 } else {*/
 	$agf = new Agsession($db);
 	if ($agf->fetch($id) > 0) {
-
-        $db->begin();
 		$result = $agf->createFromClone($id, $hookmanager);
 		if ($result > 0) {
-            $errors = 0;
 			if (GETPOST('clone_calendar', 'none')) {
 				// clone calendar information
 				$calendrierstat = new Agefodd_sesscalendar($db);
@@ -649,34 +622,22 @@ if ($action == 'confirm_clone' && $confirm == 'yes') {
 						$calendrierstat->heuref = $calendrier->lines[$i]->heuref;
 
 						$result1 = $calendrierstat->create($user);
-                        			if ($result1 < 0) {
-                            				$errors++;
-                            				if ($errors === 1) setEventMessages($calendrierstat->error, $calendrierstat->errors, 'errors');
-                        			}
 					}
 				}
 			}
-
 			if (GETPOST('clone_trainee', 'none')) {
 				// Clone trainee information
 				$traineestat = new Agefodd_session_stagiaire($db);
 				$session_trainee = new Agefodd_session_stagiaire($db);
 				$session_trainee->fetch_stagiaire_per_session($id);
 				$blocNumber = count($session_trainee->lines);
-
 				if ($blocNumber > 0) {
 					foreach ( $session_trainee->lines as $line ) {
 						$traineestat->fk_session_agefodd = $result;
 						$traineestat->fk_stagiaire = $line->id;
 						$traineestat->fk_agefodd_stagiaire_type = $line->fk_agefodd_stagiaire_type;
-                        			$traineestat->fk_soc = $line->socid;
 
 						$result1 = $traineestat->create($user);
-
-                        			if ($result1 < 0) {
-                           				$errors++;
-                            				if ($errors === 1) setEventMessages($traineestat->error, $traineestat->errors, 'errors');
-                        			}
 					}
 				}
 			}
@@ -687,17 +648,12 @@ if ($action == 'confirm_clone' && $confirm == 'yes') {
 				$session_trainer = new Agefodd_session_formateur($db);
 				$session_trainer->fetch_formateur_per_session($id);
 				$blocNumber = count($session_trainer->lines);
-
 				if ($blocNumber > 0) {
 					foreach ( $session_trainer->lines as $line ) {
 						$trainerstat->sessid = $result;
 						$trainerstat->formid = $line->formid;
 						$trainerstat->trainer_type = $line->trainer_type;
 						$result1 = $trainerstat->create($user);
-			                        if ($result1 < 0) {
-                            				$errors++;
-                            				if ($errors === 1) setEventMessages($trainerstat->error, $trainerstat->errors, 'errors');
-                        			}
 					}
 				}
 			}
@@ -719,17 +675,10 @@ if ($action == 'confirm_clone' && $confirm == 'yes') {
 				}
 
 			}
-
-            		if ($errors) {
-                		$db->rollback();
-            		} else {
-                		$db->commit();
-                		header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . $result);
-                		exit();
-            		}
+			header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . $result);
+			exit();
 		} else {
-            		$db->rollback();
-			setEventMessages($agf->error, $agf->errors, 'errors');
+			setEventMessage($agf->error, 'errors');
 			$action = '';
 		}
 	}
@@ -743,8 +692,7 @@ if ($action == 'confirm_clone' && $confirm == 'yes') {
  */
 
 llxHeader('', $langs->trans("AgfSessionDetail"), '', '', '', '', array(
-		'/agefodd/includes/lib.js',
-		'/agefodd/js/session_card.js'
+		'/agefodd/includes/lib.js'
 ), array());
 $form = new Form($db);
 $formAgefodd = new FormAgefodd($db);
@@ -756,44 +704,14 @@ $formother = new FormOther($db);
 if ($action == 'create' && $user->rights->agefodd->creer) {
 
 	$fk_soc_crea = GETPOST('fk_soc', 'int');
-	$fk_soc_requester = GETPOST('fk_soc_requester', 'int');
 	$fk_propal = GETPOST('fk_propal', 'int');
 	$fk_order = GETPOST('fk_order', 'int');
 	$urlreturnsite = '';
 
-	// Chargement de la formation et copie des extrafields de cette dernière vers la session
-	$fk_forma = GETPOST('formation', 'int');
-	$forma = new Formation($db);
-	if($fk_forma > 0) {
-		$forma->fetch($fk_forma);
-	}
-
-	$e_forma = new ExtraFields($db);
-	$e_forma->fetch_name_optionals_label('agefodd_formation_catalogue');
-
-	/*
-	 * Il est nécessaire de vider le $_POST des extrafields qui sont présent dans les formations et les sessions, car lors du rechargement automatique ayant lieu lorsqu'on sélectionne une formation,
-	 * ça poste des valeurs vides pour ces extrafields et du coup le showOutputField n'affiche jamais les extrafields provenant de la formation
-	 */
-	if (is_array($e_forma->attributes['agefodd_formation_catalogue']['label'])){
-	  foreach($e_forma->attributes['agefodd_formation_catalogue']['label'] as $ef_key=>$ef_val) {
-		unset($_POST['options_'.$ef_key]);
-	   }
-	}
-
-	$agf->array_options = $forma->array_options;
-
-	// Chargement du lieu pour récupération du nombre de places
-	$fk_session_place = GETPOST('place', 'int');
-	$lieu = new Agefodd_place($db);
-	if($fk_session_place > 0) {
-		$lieu->fetch($fk_session_place);
-	}
-
 	print_fiche_titre($langs->trans("AgfMenuSessNew"));
 
 	print '<form name="add" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">';
+	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 	print '<input type="hidden" name="action" value="add_confirm">';
 	if (! empty($fk_propal)) {
 		print '<input type="hidden" name="fk_propal" value="' . $fk_propal . '">';
@@ -811,7 +729,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print '<td><table class="nobordernopadding"><tr><td>';
 	print $formAgefodd->select_site_forma(GETPOST('place', 'int'), 'place', 1);
 	print '</td>';
-	print '<td> <a href="' . dol_buildpath('/agefodd/site/card.php', 1) . '?fk_soc='.$fk_soc_crea.'&action=create&url_return=' . urlencode($_SERVER['PHP_SELF'] . '?fk_soc='.$fk_soc_crea.'&action=create' . $urlreturnsite) . '" title="' . $langs->trans('AgfCreateNewSite') . '">' . $langs->trans('AgfCreateNewSite') . '</a>';
+	print '<td> <a href="' . dol_buildpath('/agefodd/site/card.php', 1) . '?action=create&url_return=' . urlencode($_SERVER['PHP_SELF'] . '?action=create' . $urlreturnsite) . '" title="' . $langs->trans('AgfCreateNewSite') . '">' . $langs->trans('AgfCreateNewSite') . '</a>';
 	print '</td><td>' . $form->textwithpicto('', $langs->trans("AgfCreateNewSiteHelp"), 1, 'help') . '</td></tr></table>';
 	print '</td></tr>';
 
@@ -820,11 +738,6 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 
 	print '<tr class="order_intituleCusto"><td>' . $langs->trans("AgfFormIntituleCust") . '</td>';
 	print '<td><input size="30" type="text" class="flat" id="intitule_custo" name="intitule_custo" value="' . dol_escape_htmltag($agf->intitule_custo) . '" /></td></tr>';
-
-	$fk_nature_action_code = '';
-	if($forma->id > 0) $fk_nature_action_code = $forma->fk_nature_action_code;
-    print '<tr class="order_natureAction"><td>' . $langs->trans("NatureAction") . '</td>';
-    print '<td>' .  $formAgefodd->select_formation_nature_action($fk_nature_action_code) .'</td></tr>' ;
 
 	print '<tr class="order_type"><td>' . $langs->trans("AgfFormTypeSession") . '</td>';
 	print '<td>' . $formAgefodd->select_type_session('type_session', $conf->global->AGF_DEFAULT_SESSION_TYPE) . '</td></tr>';
@@ -848,16 +761,11 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print '</td></tr>';
 
 	print '<tr class="order_dated"><td><span class="fieldrequired">' . $langs->trans("AgfDateDebut") . '</span></td><td>';
-	print $form->selectDate(dol_mktime(0, 0, 0, GETPOST('dadmonth', 'int'), GETPOST('dadday', 'int'), GETPOST('dadyear', 'int')), 'dad', '', '', '', 'add');
+	$form->select_date(dol_mktime(0, 0, 0, GETPOST('dadmonth', 'int'), GETPOST('dadday', 'int'), GETPOST('dadyear', 'int')), 'dad', '', '', '', 'add');
 	print '</td></tr>';
 
 	print '<tr class="order_datef"><td><span class="fieldrequired">' . $langs->trans("AgfDateFin") . '</span></td><td>';
-	print $form->selectDate(dol_mktime(0, 0, 0, GETPOST('dafmonth', 'int'), GETPOST('dafday', 'int'), GETPOST('dafyear', 'int')), 'daf', '', '', '', 'add');
-	print '</td></tr>';
-
-
-	print '<tr class="send_survey_status"><td>' . $langs->trans($agf->fields['send_survey_status']['label']) . '</td><td>';
-	print $agf->showInputField($agf->fields['send_survey_status'], 'send_survey_status', $agf->send_survey_status);
+	$form->select_date(dol_mktime(0, 0, 0, GETPOST('dafmonth', 'int'), GETPOST('dafday', 'int'), GETPOST('dafyear', 'int')), 'daf', '', '', '', 'add');
 	print '</td></tr>';
 
 	print '<tr class="order_customer"><td>' . $langs->trans("Customer") . '</td>';
@@ -883,9 +791,9 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 		print '<tr class="order_sessionContact"><td>' . $langs->trans("AgfSessionContact") . '</td>';
 		print '<td><table class="nobordernopadding"><tr><td>';
 		if (! empty($fk_soc_crea)) {
-			$formAgefodd->select_contacts_custom($fk_soc_crea, GETPOST('contact', 'int'), 'contact', 1, '', '', 1, '', 1);
+			$formAgefodd->select_contacts_custom($fk_soc_crea, '', 'contact', 1, '', '', 1, '', 1);
 		} else {
-			$formAgefodd->select_contacts_custom(0, GETPOST('contact', 'int'), 'contact', 1, '', 1000, 1, '', 1);
+			$formAgefodd->select_contacts_custom(0, '', 'contact', 1, '', 1000, 1, '', 1);
 		}
 		print '</td>';
 		print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolContactHelp"), 1, 'help') . '</td></tr></table>';
@@ -911,15 +819,15 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					'add-customer-contact' => 'disabled'
 			)
 	);
-	print $form->select_company($fk_soc_requester, 'fk_soc_requester', '', 'SelectThirdParty', 1, 0, $events, 0, 'minwidth100','','',2);
+	print $form->select_company($fk_soc_crea, 'fk_soc_requester', '', 'SelectThirdParty', 1, 0, $events, 0, 'minwidth100','','',2);
 	print '</td></tr>';
 
 	print '<tr class="order_typeRequesterContact"><td>' . $langs->trans("AgfTypeRequesterContact") . '</td>';
 	print '<td><table class="nobordernopadding"><tr><td>';
-	if (! empty($fk_soc_requester)) {
-		$formAgefodd->select_contacts_custom($fk_soc_requester, GETPOST('fk_socpeople_requester', 'int'), 'fk_socpeople_requester', 1, '', '', 1, '', 1);
+	if (! empty($fk_soc_crea)) {
+		$formAgefodd->select_contacts_custom($fk_soc_crea, '', 'fk_socpeople_requester', 1, '', '', 1, '', 1);
 	} else {
-		$formAgefodd->select_contacts_custom(0, GETPOST('fk_socpeople_requester', 'int'), 'fk_socpeople_requester', 1, '', 1000, 1, '', 1);
+		$formAgefodd->select_contacts_custom(0, '', 'fk_socpeople_requester', 1, '', 1000, 1, '', 1);
 	}
 	print '</td>';
 	print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolRequesterHelp"), 1, 'help') . '</td></tr></table>';
@@ -935,25 +843,16 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print $form->select_company($fk_soc_employer, 'fk_soc_employer', '', 'SelectThirdParty', 1, 0, array(), 0, 'minwidth100','','',2);
 	print '</td></tr>';
 
-	$prod_sess = '';
-	if($forma->id > 0) $prod_sess = $forma->fk_product;
 	print '<tr class="order_product"><td width="20%">' . $langs->trans("AgfProductServiceLinked") . '</td><td>';
-	print $form->select_produits($prod_sess, 'productid', '', 10000, 0, 1, 2, '', 0, array());
+	print $form->select_produits($agf->fk_product, 'productid', '', 10000, 0, 1, 2, '', 0, array());
 	print "</td></tr>";
 
-	$duree = '';
-	if($forma->id > 0) $duree = $forma->duree;
 	print '<tr class="order_duration"><td>' . $langs->trans("AgfDuree") . '</td>';
-	print '<td><input size="4" type="text" class="flat" id="duree_session" name="duree_session" value="' . $duree . '" /></td></tr>';
+	print '<td><input size="4" type="text" class="flat" id="duree_session" name="duree_session" value="' . $agf->duree_session . '" /></td></tr>';
 
-	$nb_place = '';
-	if($forma->id > 0 || $lieu->id > 0) {
-		if(empty($forma->nb_place) || empty($lieu->nb_place)) $nb_place = max($forma->nb_place, $lieu->nb_place);
-		else $nb_place = min($forma->nb_place, $lieu->nb_place);
-	}
-	print '<tr class="order_nbplaceavailable"><td>' . $langs->trans("AgfNumberPlaceAvailable") . $form->textwithpicto('', $langs->trans("AgfNbPlaceInfo"), 1, 'help') . '</td>';
+	print '<tr class="order_nbplaceavailable"><td>' . $langs->trans("AgfNumberPlaceAvailable") . '</td>';
 	print '<td>';
-	print '<input type="text" class="flat" name="nb_place" size="4" value="' . $nb_place . '"/>';
+	print '<input type="text" class="flat" name="nb_place" size="4" value="' . GETPOST('nb_place', 'int') . '"/>';
 	print '</td></tr>';
 
 	print '<tr class="order_note"><td valign="top">' . $langs->trans("AgfNote") . '</td>';
@@ -988,29 +887,82 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print '</form>';
 
 	?>
+<script type="text/javascript">
+	$(document).ready(function () {
+		<!--
 
-	<script type="text/javascript">
-
-		$(document).ready(function () {
-			<!--
-
-			$("body").on('#productid','change',function(){
-				$(this).val(result.fk_product);
-				});
-			-->
-
-			$("body").on('change','#formation,#place',function () {
-				var option_txt = $(this).find('option[value='+$(this).val()+']').text();
-				$('#intitule_custo').val(option_txt);
-
-				// Rechargement de la page pour remplir avec les données provenant de la formation du catalogue
-				$("input[name=action]").val("create");
-				$(document).find("form[name=add]").submit();
-
+		$("body").on('#productid','change',function(){
+			$(this).val(result.fk_product);
 			});
+		-->
+		$("body").on('change','#place',function () {
+			var fk_place = $(this).val();
+			var fk_training = $('#formation').val();
+			data = {"action":"get_nb_place","fk_training":fk_training,"fk_place":fk_place};
+			ajax_set_nbplace(data);
+
 		});
 
-	</script>
+		$("body").on('change','#formation',function () {
+			var fk_training = $(this).val();
+			data = {"action":"get_duration_and_product","fk_training":fk_training};
+			ajax_set_duration_and_product(data);
+			var option_txt = $(this).find('option[value='+$(this).val()+']').text();
+			$('#intitule_custo').val(option_txt);
+			var fk_place = $('#place').val();
+			data = {"action":"get_nb_place","fk_training":fk_training,"fk_place":fk_place};
+			ajax_set_nbplace(data);
+		});
+	});
+
+
+	function ajax_set_duration_and_product(data)
+    	{
+    		$.ajax({
+    		    url: "<?php echo dol_buildpath('/agefodd/scripts/interface.php', 1) ; ?>",
+    		    type: "POST",
+    		    dataType: "json",
+    		    data: data,
+    		    success: function(result){
+					if((result.duree)!= null){
+						$("#duree_session").val(result.duree);
+					}else {
+						$("#duree_session").val("");
+					}
+					if((result.fk_product)!= null ){
+						$("#productid").val(result.fk_product).change();
+					}else{
+						$("#productid").val(0).change();
+					}
+					if($('#search_productid').length != 0 ){
+						$('#search_productid').val(result.ref_product).change();
+					}
+				},
+    		    error: function(error){
+    		    	$.jnotify('AjaxError',"error");
+    		    }
+    		});
+    	}
+	function ajax_set_nbplace(data)
+    	{
+    		$.ajax({
+    		    url: "<?php echo dol_buildpath('/agefodd/scripts/interface.php', 1) ; ?>",
+    		    type: "POST",
+    		    dataType: "json",
+    		    data: data,
+    		    success: function(result){
+					if((result.nb_place)!= null){
+						$("input[name='nb_place']").val(result.nb_place);
+					}else {
+						$("input[name='nb_place']").val("");
+					}
+				},
+    		    error: function(error){
+    		    	$.jnotify('AjaxError',"error");
+    		    }
+    		});
+    	}
+</script>
 
 <?php
 	printSessionFieldsWithCustomOrder();
@@ -1019,6 +971,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	if ($id) {
 		$agf = new Agsession($db);
 		$result = $agf->fetch($id);
+
 		if ($result > 0) {
 			if (! (empty($agf->id))) {
 				$head = session_prepare_head($agf);
@@ -1065,7 +1018,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					}
 
 					print '<form name="update" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-					print '<input type="hidden" name="token" value="' . $newToken . '">';
+					print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 					print '<input type="hidden" name="action" value="update">';
 					print '<input type="hidden" name="id" value="' . $id . '">';
 					print '<input type="hidden" name="action" value="update">';
@@ -1081,16 +1034,13 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					print '<tr class="order_intituleCusto"><td>' . $langs->trans("AgfFormIntituleCust") . '</td>';
 					print '<td><input size="30" type="text" class="flat" id="intitule_custo" name="intitule_custo" value="' . dol_escape_htmltag($agf->intitule_custo) . '" /></td></tr>';
 
-                    print '<tr class="order_type"><td>' . $langs->trans("AgfFormTypeSession") . '</td>';
+					print '<tr class="order_type"><td>' . $langs->trans("AgfFormTypeSession") . '</td>';
 					print '<td>' . $formAgefodd->select_type_session('type_session', $agf->type_session) . '</td></tr>';
 
 					print '<tr class="order_formRef"><td>' . $langs->trans("AgfFormRef") . '</td>';
 					print '<td>' . $agf->formref . '</td></tr>';
 
-                    print '<tr class="order_natureAction"><td>' . $langs->trans("NatureAction") . '</td>';
-                    print '<td>' .  $formAgefodd->select_formation_nature_action($agf->fk_nature_action_code) .'</td></tr>' ;
-
-                    print '<tr  class="order_sessionColor"><td>' . $langs->trans("Color") . '</td>';
+					print '<tr  class="order_sessionColor"><td>' . $langs->trans("Color") . '</td>';
 					print '<td>';
 					print $formother->selectColor($agf->color, 'color');
 					print '</td></tr>';
@@ -1115,20 +1065,15 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					print "</td></tr>";
 
 					print '<tr class="order_dated"><td>' . $langs->trans("AgfDateDebut") . '</td><td>';
-					print $form->selectDate($agf->dated, 'dad', '', '', '', 'update');
+					$form->select_date($agf->dated, 'dad', '', '', '', 'update');
 					print '</td></tr>';
 
 					print '<tr class="order_datef"><td>' . $langs->trans("AgfDateFin") . '</td><td>';
-					print $form->selectDate($agf->datef, 'daf', '', '', '', 'update');
-					print '</td></tr>';
-
-					print '<tr class="send_survey_status"><td>' . $langs->trans($agf->fields['send_survey_status']['label']) . '</td><td>';
-					print $agf->showInputField($agf->fields['send_survey_status'], 'send_survey_status', $agf->send_survey_status);
+					$form->select_date($agf->datef, 'daf', '', '', '', 'update');
 					print '</td></tr>';
 
 					print '<tr class="order_customer"><td>' . $langs->trans("Customer") . '</td>';
 					print '<td>';
-
 					if ($conf->global->AGF_CONTACT_DOL_SESSION) {
 						$events = array();
 						$events[] = array(
@@ -1143,16 +1088,23 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					} else {
 						print $form->select_company($agf->fk_soc, 'fk_soc', '', 'SelectThirdParty', 1);
 					}
+					if (! empty($agf->fk_soc) && ! empty($conf->global->COMPANY_USE_SEARCH_TO_SELECT)) {
+						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_cust">' . img_delete($langs->trans('Delete')) . '</a>';
+					}
 					print '</td></tr>';
 
 					if ($conf->global->AGF_CONTACT_DOL_SESSION) {
 						print '<tr class="order_sessionContact"><td>' . $langs->trans("AgfSessionContact") . '</td>';
 						print '<td><table class="nobordernopadding"><tr><td>';
-						$formAgefodd->select_contacts_custom(0, $agf->sourcecontactid, 'contact', 1, '', '', 1, 'minwidth500', 1);
+						if (! empty($agf->fk_soc)) {
+							$formAgefodd->select_contacts_custom($agf->fk_soc, $agf->sourcecontactid, 'contact', 1, '', '', 1, '', 1);
+						} else {
+							$formAgefodd->select_contacts_custom(0, $agf->sourcecontactid, 'contact', 1, '', '', 1, '', 1);
+						}
 						print '</td>';
 						print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolContactHelp"), 1, 'help') . '</td></tr></table>';
 						if (! empty($agf->sourcecontactid) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 					} else {
@@ -1161,7 +1113,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						print $formAgefodd->select_agefodd_contact($agf->contactid, 'contact', '', 1);
 						print '</td><td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddContactHelp"), 1, 'help') . '</td></tr></table>';
 						if (! empty($agf->contactid) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contact">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 					}
@@ -1180,7 +1132,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						);
 						print $form->select_company($agf->fk_soc_requester, 'fk_soc_requester', '', 'SelectThirdParty', 1, 0, $events);
 						if (! empty($agf->fk_soc_requester) && ! empty($conf->global->COMPANY_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_requester&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_requester">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 
@@ -1194,7 +1146,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						print '</td>';
 						print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolRequesterHelp"), 1, 'help') . '</td></tr></table>';
 						if (! empty($agf->fk_socpeople_requester) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactrequester&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
+							print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactrequester">' . img_delete($langs->trans('Delete')) . '</a>';
 						}
 						print '</td></tr>';
 					}
@@ -1204,7 +1156,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					print '</td>';
 					print '<td>' . $form->textwithpicto('', $langs->trans("AgfTypePrestaHelp"), 1, 'help') . '</td></tr></table>';
 					if (! empty($agf->fk_socpeople_presta) && ! empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) {
-						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactpresta&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
+						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_contactpresta">' . img_delete($langs->trans('Delete')) . '</a>';
 					}
 					print '</td></tr>';
 
@@ -1214,7 +1166,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 					print '</td>';
 					print '<td>' . $form->textwithpicto('', $langs->trans("AgfTypeEmployeeHelp"), 1, 'help') . '</td></tr></table>';
 					if (! empty($agf->fk_soc_employer) && ! empty($conf->global->COMPANY_USE_SEARCH_TO_SELECT)) {
-						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_employer&token='.newToken().'">' . img_delete($langs->trans('Delete')) . '</a>';
+						print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $agf->id . '&amp;action=remove_employer">' . img_delete($langs->trans('Delete')) . '</a>';
 					}
 					print '</td></tr>';
 
@@ -1428,7 +1380,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 
 						print '<tr><td width="20%">' . $langs->trans("AgfOPCAName") . '</td>';
 						print '	<td>';
-						if (floatval(DOL_VERSION) < 6.0) {
+						if (DOL_VERSION < 6.0) {
 							print '<a href="' . dol_buildpath('/societe/soc.php', 1) . '?socid=' . $agf->fk_soc_OPCA . '">' . $agf->soc_OPCA_name . '</a>';
 						} else {
 							print '<a href="' . dol_buildpath('/societe/card.php', 1) . '?socid=' . $agf->fk_soc_OPCA . '">' . $agf->soc_OPCA_name . '</a>';
@@ -1503,33 +1455,18 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 							}
 						}
 
-						$cost_trainer_for_session=0;
 						if(!empty($invoice_trainer_array)) {
+							$cost_trainer_for_session=0;
 							foreach($invoice_trainer_array as &$objj) {
-								if ($objj->element_type == 'invoice_supplierline_trainer')
-								{
-									$fourninvoiceline = new SupplierInvoiceLine($db);
-									$fourninvoiceline->fetch($objj->fk_element);
-									$sqlLines = "SELECT count(*) as nblinked FROM ".MAIN_DB_PREFIX."agefodd_session_element WHERE element_type = 'invoice_supplierline_trainer' AND fk_element = ".intval($objj->fk_element);
-									$resql = $db->query($sqlLines);
-									if ($resql){
-										$objLine = $db->fetch_object($resql);
-										$cost_trainer_for_session += price2num($fourninvoiceline->total_ht / $objLine->nblinked, 'MT');
-									}
+								$fourninvoice = new FactureFournisseur($db);
+								$fourninvoice->fetch($objj->fk_element);
+								$agff = new Agsession($db);
+								$res = $agff->fetch_all_by_order_invoice_propal('', '', '', '', '', '', '', $fourninvoice->id, '');
+								if ($res<0) {
+									setEventMessage($agff->error, 'errors');
+								} else {
+									$cost_trainer_for_session += price2num($fourninvoice->total_ht / count($agff->lines), 'MT');
 								}
-								else
-								{
-									$fourninvoice = new FactureFournisseur($db);
-									$fourninvoice->fetch($objj->fk_element);
-									$agff = new Agsession($db);
-									$res = $agff->fetch_all_by_order_invoice_propal('', '', '', '', '', '', '', $fourninvoice->id, '');
-									if ($res<0) {
-										setEventMessage($agff->error, 'errors');
-									} else {
-										$cost_trainer_for_session += price2num($fourninvoice->total_ht / count($agff->lines), 'MT');
-									}
-								}
-
 							}
 						}
 
@@ -1591,53 +1528,11 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 							$spend_cost_planned += $costparticipantplanned;
 							$spend_cost_engaged += $costparticipantengaged;
 						} else {
-							$agf_fin = new Agefodd_session_element($db);
-							// Get all document lines
-							$result = $agf_fin->fetch_by_session_by_thirdparty($id, 0, array('\'invoice_supplier_missions\'','\'invoice_supplierline_missions\''));
-							//echo "<pre>"; var_dump($result, $agf_fin->lines);
-							$costTrip = 0;
-                            if (!empty($agf_fin->lines) && $result > 0)
-                            {
-                                foreach ( $agf_fin->lines as $line_fin ) {
-                                    switch ($line_fin->element_type)
-                                    {
-                                        case 'invoice_supplier_missions':
-                                            $agf->fetch_all_by_order_invoice_propal('', '','','','','','',$line_fin->fk_element,'');
-                                            $suplier_invoice = new FactureFournisseur($db);
-                                            $suplier_invoice->fetch($line_fin->fk_element);
-                                            $count = count($agf->lines);
-
-                                            if ($count > 0){
-                                                $costTrip += $suplier_invoice->total_ht/$count;
-                                            }
-                                            break;
-
-                                        case 'invoice_supplierline_missions':
-                                            $supplier_invoiceline = new SupplierInvoiceLine($db);
-                                            $supplier_invoiceline->fetch($line_fin->fk_element);
-
-                                            $sqlLines = "SELECT count(*) as nblinked FROM ".MAIN_DB_PREFIX."agefodd_session_element WHERE element_type = '".$line_fin->element_type."' AND fk_element  = ".$line_fin->fk_element;
-
-                                            $resql = $db->query($sqlLines);
-                                            if ($resql){
-                                                $objLine = $db->fetch_object($resql);
-                                                $costTrip += price2num($supplier_invoiceline->total_ht / $objLine->nblinked, 'MT');
-                                            }
-                                            break;
-
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                $costTrip = $agf->cost_trip;
-                            }
-
 							print '		<td>' . price($agf->cost_trip_planned) . '</td>'."\n";
 							print '		<td>' . price($cost_trip_engaged) . '</td>'."\n";
-							print '		<td>' . price($costTrip) . '</td>'."\n";
+							print '		<td>' . price($agf->cost_trip) . '</td>'."\n";
 							print '		<td>' . price($agf->cost_trip_planned - $agf->cost_trip) . '</td>'."\n";
-							$spend_cost += $costTrip;//$agf->cost_trip;
+							$spend_cost += $agf->cost_trip;
 							$spend_cost_planned += $agf->cost_trip_planned;
 							$spend_cost_engaged += $cost_trip_engaged;
 						}
@@ -1739,7 +1634,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 										} else {
 											print ', ';
 										}
-										if (empty($user->rights->agefodd->session->trainer)) {
+										if (! $user->rights->agefodd->session->trainer) {
 											print dol_print_date($trainer_calendar->lines[$j]->heured, 'hour') . ' - ' . dol_print_date($trainer_calendar->lines[$j]->heuref, 'hour');
 										}
 
@@ -1850,7 +1745,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 
 									print '<tr><td>' . $langs->trans("AgfOPCAName") . '</td>'."\n";
 									print '	<td>';
-									if (floatval(DOL_VERSION) < 6.0) {
+									if (DOL_VERSION < 6.0) {
 										print '<a href="' . dol_buildpath('/societe/soc.php', 1) . '?socid=' . $agf_opca->fk_soc_OPCA . '">' . $agf_opca->soc_OPCA_name . '</a>';
 									} else {
 										print '<a href="' . dol_buildpath('/societe/card.php', 1) . '?socid=' . $agf_opca->fk_soc_OPCA . '">' . $agf_opca->soc_OPCA_name . '</a>';
@@ -1973,9 +1868,6 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
  *
  */
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 print '<div class="tabsAction">';
 
 if ($action != 'create' && $action != 'edit' && (! empty($agf->id))) {
@@ -1983,18 +1875,39 @@ if ($action != 'create' && $action != 'edit' && (! empty($agf->id))) {
 	$parameters = array();
 	$reshook = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $agf, $action); // Note that $action and $object may have been modified by hook
 	if (empty($reshook)) {
-
-		if (!empty($user->rights->agefodd->modifier) && empty($user->rights->agefodd->session->trainer)) {
+		if ($user->rights->agefodd->creer) {
+			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=validateregistrants&id=' . $id . '">' . $langs->trans('AgfValidateRegistrants') . '</a>';
+		} else {
+			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfValidateRegistrants') . '</a>';
+		}
+		if ($user->rights->agefodd->modifier && ! $user->rights->agefodd->session->trainer) {
 			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '">' . $langs->trans('Modify') . '</a>';
 		} else {
 			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 		}
-		if (!empty($user->rights->agefodd->supprimer) && empty($user->rights->agefodd->session->trainer)) {
-			print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		if ($user->rights->agefodd->creer) {
+			print '<a class="butAction" href="subscribers.php?action=edit&id=' . $id . '">' . $langs->trans('AgfModifySubscribersAndSubrogation') . '</a>';
+		} else {
+			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifySubscribersAndSubrogation') . '</a>';
+		}
+		if ($user->rights->agefodd->creer) {
+			print '<a class="butAction" href="calendar.php?action=edit&id=' . $id . '">' . $langs->trans('AgfModifyCalendar') . '</a>';
+		} else {
+			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifyCalendar') . '</a>';
+		}
+
+		if ($user->rights->agefodd->creer) {
+			print '<a class="butAction" href="trainer.php?action=edit&id=' . $id . '">' . $langs->trans('AgfModifyTrainer') . '</a>';
+		} else {
+			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifyTrainer') . '</a>';
+		}
+
+		if ($user->rights->agefodd->supprimer && ! $user->rights->agefodd->session->trainer) {
+			print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 		} else {
 			print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 		}
-		if (empty($user->rights->agefodd->session->trainer)) {
+		if (! $user->rights->agefodd->session->trainer) {
 			if ($agf->status != 4) {
 				$button = $langs->trans('AgfArchiver');
 				$arch = 1;
@@ -2011,7 +1924,7 @@ if ($action != 'create' && $action != 'edit' && (! empty($agf->id))) {
 		if ($user->rights->agefodd->creer) {
 			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=clone&id=' . $id . '">' . $langs->trans('ToClone') . '</a>';
 		}
-		if (empty($user->rights->agefodd->session->trainer)) {
+		if (! $user->rights->agefodd->session->trainer) {
 			print '<a class="butAction" href="' . dol_buildpath('/agefodd/session/history.php', 1) . '?id=' . $id . '">' . $langs->trans('AgfViewActioncomm') . '</a>';
 		}
 	}

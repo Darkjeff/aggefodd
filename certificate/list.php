@@ -205,12 +205,12 @@ if ($resql>=0) {
 	print '</td>';
 
 	print '<td class="liste_titre">' . $langs->trans('From') . ' ';
-	print $form->select_date($search_start_date, 'search_start_date', 0, 0, 1, 'search_form').'<br />'.$langs->trans('to').' ';
+	print $form->select_date($search_start_date, 'search_start_date', 0, 0, 1, 'search_form').'<BR>'.$langs->trans('to').' ';
 	print $form->select_date($search_start_date2, 'search_start_date2', 0, 0, 1, 'search_form');
 	print '</td>';
 
 	print '<td class="liste_titre">' . $langs->trans('From') . ' ';
-	print $form->select_date($search_end_date, 'search_end_date', 0, 0, 1, 'search_form').'<br />'.$langs->trans('to').' ';
+	print $form->select_date($search_end_date, 'search_end_date', 0, 0, 1, 'search_form').'<BR>'.$langs->trans('to').' ';
 	print $form->select_date($search_end_date2, 'search_end_date2', 0, 0, 1, 'search_form');
 	print '</td>';
 
@@ -221,12 +221,12 @@ if ($resql>=0) {
 	print '</td>';
 
 	print '<td class="liste_titre">' . $langs->trans('From') . ' ';
-	print $form->select_date($search_certif_start_date, 'search_certif_start_date', 0, 0, 1, 'search_form').'<br />'.$langs->trans('to').' ';
+	print $form->select_date($search_certif_start_date, 'search_certif_start_date', 0, 0, 1, 'search_form').'<BR>'.$langs->trans('to').' ';
 	print $form->select_date($search_certif_start_date2, 'search_certif_start_date2', 0, 0, 1, 'search_form');
 	print '</td>';
 
 	print '<td class="liste_titre">' . $langs->trans('From') . ' ';
-	print $form->select_date($search_certif_end_date, 'search_certif_end_date', 0, 0, 1, 'search_form').'<br />'.$langs->trans('to').' ';
+	print $form->select_date($search_certif_end_date, 'search_certif_end_date', 0, 0, 1, 'search_form').'<BR>'.$langs->trans('to').' ';
 	print $form->select_date($search_certif_end_date2, 'search_certif_end_date2', 0, 0, 1, 'search_form');
 	print '</td>';
 
@@ -311,21 +311,21 @@ if ($resql>=0) {
 		print '<td>' . $line->fromrefinterne . '</td>';
 		print '<td><a href="' . dol_buildpath('/agefodd/trainee/session.php', 1) . '?id=' . $line->trainee_id . '">' . $line->trainee_name . ' ' . $line->trainee_firstname . '</a></td>';
 		print '<td>' . dol_print_email($line->trainee_mail).'</td>';
-		print '<td>' . dol_print_date($line->dated, '%d/%m/%Y') . '</td>';
-		print '<td>' . dol_print_date($line->datef, '%d/%m/%Y') . '</td>';
+		print '<td>' . dol_print_date($line->dated, 'daytext') . '</td>';
+		print '<td>' . dol_print_date($line->datef, 'daytext') . '</td>';
 		print '<td>' . $line->certif_code . '</td>';
 
 		print '<td>' . $line->certif_label . '</td>';
 
-		print '<td>' . dol_print_date($line->certif_dt_start, '%d/%m/%Y') . '</td>';
+		print '<td>' . dol_print_date($line->certif_dt_start, 'daytextshort') . '</td>';
 
-		print '<td>' . dol_print_date($line->certif_dt_end, '%d/%m/%Y') . '</td>';
+		print '<td>' . dol_print_date($line->certif_dt_end, 'daytextshort') . '</td>';
 
 		if(!empty($line->certif_dt_end) && $line->certif_dt_end < dol_now()) $style = "background-color:red;";
 		elseif(!empty($line->certif_dt_warning) && $line->certif_dt_warning < dol_now()) $style = "background-color:orange;";
 		else $style = "background-color:green;";
 
-		print '<td style="'.$style.'">'.dol_print_date($line->certif_dt_warning, '%d/%m/%Y').'</td>';
+		print '<td style="'.$style.'">'.dol_print_date($line->certif_dt_warning, 'daytextshort').'</td>';
 		print "</tr>\n";
 
 		$oldid = $line->rowid;

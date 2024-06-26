@@ -404,7 +404,7 @@ class ReportCommercial extends AgefoddExportExcel
 			}
 			$array_total_hthf = array ();
 
-			$TTotal = array_fill(1, count($this->year_to_report_array) + 1, '');
+			$TTotal = array_fill(1, count($this->year_to_report_array) + 1, 0);
 
 			foreach($this->TData as $TDataLine)
 			{
@@ -431,13 +431,13 @@ class ReportCommercial extends AgefoddExportExcel
 
 					$total += $value;
 
-					$TTotal[$index] += $value;
+					$TTotal[$index - 3] += $value;
 				}
 
 				$TDataLine['row'][3 + count($this->year_to_report_array)] = $total;
 
 
-				$TTotal[count($this->year_to_report_array)+3] += $total;
+				$TTotal[count($this->year_to_report_array)+1] += $total;
 
 				$result = $this->write_line($TDataLine['row'], 0, $fill);
 				if ($result < 0)
@@ -447,8 +447,10 @@ class ReportCommercial extends AgefoddExportExcel
 			}
 
 			// Totaux
-			$TTotal[1] = 'TOTAUX';
-			$result = $this->write_line($TTotal);
+
+			$TTotalRow = array_merge(array('TOTAUX', ''), $TTotal);
+
+			$result = $this->write_line($TTotalRow);
 			if ($result < 0)
 			{
 				return $result;
@@ -493,7 +495,7 @@ class ReportCommercial extends AgefoddExportExcel
 				FROM '  . MAIN_DB_PREFIX . 'societe s
 				LEFT JOIN ' . MAIN_DB_PREFIX . 'societe parent ON (parent.rowid = s.parent)
 				LEFT JOIN ' . MAIN_DB_PREFIX . 'societe_commerciaux sc ON (sc.fk_soc = s.rowid)
-				WHERE s.entity in ( ' . getEntity('societe').' )
+				WHERE s.entity = ' . getEntity('societe').'
 				AND COALESCE(parent.rowid, 0) = ' . $parentID. '
 				AND s.fk_typent != 103';
 

@@ -211,19 +211,16 @@ if (empty($socid)) {
 	// Show filter box
 	print '<form name="stats" method="POST" action="' . $_SERVER ["PHP_SELF"] . '">';
 	print '<input type="hidden" name="mode" value="' . $mode . '">';
-	$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-	print '<input type="hidden" name="token" value="' . $newToken . '">';
 	print '<table class="border" width="100%">';
 	print '<tr><td class="liste_titre" colspan="2">' . $langs->trans("Filter") . '</td></tr>';
 	// Company
 	print '<tr><td>' . $langs->trans("ThirdParty") . '</td><td>';
 	if ($mode == 'customer') {
-		$filter = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3))' :  's.client in (1,2,3)';
+		$filter = 's.client in (1,2,3)';
 	}
 	if ($mode == 'supplier') {
-		$filter = (float) DOL_VERSION >= 18.0 ? '( (s.fournisseur:=:1) )' : 's.fournisseur = 1';
+		$filter = 's.fournisseur = 1';
 	}
-
 	print $form->select_thirdparty_list($socid, 'socid', $filter, 'SelectThirdParty');
 	print '</td></tr>';
 	// User

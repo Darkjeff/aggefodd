@@ -91,15 +91,10 @@ $nb_trainer = $trainer->fetch_all('', '', 0, 0, - 1, array(
 ));
 if ($nb_trainer < 0) {
 	setEventMessage('From hook completeTabsHead agefodd trainer :' . $trainer->error, 'errors');
-} elseif ($nb_trainer>=0) {
+} elseif ($nb_trainer>0) {
 	print '<tr><td class="titlefield">' . $langs->trans("AgfTeacher") . '</td><td>';
-	if(!empty($trainer->lines)){
-		foreach ( $trainer->lines as $line ) {
-			print $line->getNomUrl('name','session');
-		}
-	}
-	else{
-		print '<em>'.$langs->trans("ThisContactIsNotInSessionAsTeacher").'</em>';
+	foreach ( $trainer->lines as $line ) {
+		print $line->getNomUrl('name','session');
 	}
 	print '</td></tr>';
 }
@@ -111,15 +106,10 @@ $nb_trainee = $trainee->fetch_all('', '', 0, 0, array(
 ));
 if ($nb_trainee < 0) {
 	setEventMessage('From hook completeTabsHead agefodd trainee:' . $trainee->error, 'errors');
-} elseif ($nb_trainee>=0) {
+} elseif ($nb_trainee>0) {
 	print '<tr><td class="titlefield">' . $langs->trans("AgfStagiaireDetail") . '</td><td>';
-	if(!empty($trainee->lines)) {
-		foreach ($trainee->lines as $line) {
-			print $line->getNomUrl('name', 'session');
-		}
-	}
-	else{
-		print '<em>'.$langs->trans("ThisContactIsNotInSessionAsTrainee").'</em>';
+	foreach ( $trainee->lines as $line ) {
+		print $line->getNomUrl('name','session');
 	}
 	print '</td></tr>';
 }

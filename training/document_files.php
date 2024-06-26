@@ -87,7 +87,6 @@ if (GETPOST('sendit','alpha') && ! empty($conf->global->MAIN_UPLOAD_DOC) && !emp
 		}
 	}
 }
-$permissiontoadd = !empty($user->rights->agefodd->creer);
 include_once DOL_DOCUMENT_ROOT.'/core/actions_linkedfiles.inc.php';
 //Copy file uploaded as a training program file
 if (!empty($asfichepedago)) {

@@ -31,8 +31,6 @@ if (! $res)
 	die("Include of main fails");
 
 require_once ('../class/agefodd_stagiaire.class.php');
-dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
-require_once ('../lib/agefodd.lib.php');
 require_once (DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php');
 
@@ -58,16 +56,16 @@ $search_soc = GETPOST("search_soc", 'none');
 $search_tel = GETPOST("search_tel", 'none');
 $search_tel2 = GETPOST("search_tel2", 'none');
 $search_mail = GETPOST("search_mail", 'none');
-$search_namefirstname = GETPOST("search_namefirstname", 'none'); // filtre depuis la page
-$search_namefirstname = GETPOST("search_all", 'none');           // recherche depuis la loupe globale
-$search_training_ref = GETPOST("search_training_ref", 'alpha');
-$trainee_view = GETPOST("trainee_view", 'int');
+$search_namefirstname = GETPOST("search_namefirstname", 'none');
 
 //Since 8.0 sall get parameters is sent with rapid search
-$sall = GETPOST('sall');
-$search_by = "search_namefirstname";
-if (!empty($sall))
-	${$search_by} = $sall;
+$search_by=GETPOST('search_by', 'alpha');
+if (!empty($search_by)) {
+	$sall=GETPOST('sall', 'alpha');
+	if (!empty($sall)) {
+		${$search_by}=$sall;
+	}
+}
 
 // Do we click on purge search criteria ?
 if (GETPOST("button_removefilter_x", 'none')) {
@@ -89,22 +87,6 @@ $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element, true);
 
 $search_array_options=$extrafields->getOptionalsFromPost($extralabels,'','search_');
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
-	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
-	$extrafields->attribute_list = $extrafields->attributes[$agf->table_element]['list'];
-	$extrafields->attribute_pos = $extrafields->attributes[$agf->table_element]['pos'];
-	$extrafields->attribute_computed = $extrafields->attributes[$agf->table_element]['computed'];
-}
-// Banner function
-
-if (! empty($trainee_view)) {
-	$agformation = new Formation($db);
-	$agformation->fetch('', $search_training_ref);
-
-	$trainee_view = 1;
-	$search_training_ref = $agformation->ref_obj;
-}
 
 $arrayfields=array(
 		's.rowid'			=>array('label'=>"Id", 'checked'=>1),
@@ -117,7 +99,7 @@ $arrayfields=array(
 );
 
 // Extra fields
-if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
+if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label))
 {
 	foreach($extrafields->attribute_label as $key => $val)
 	{
@@ -128,50 +110,41 @@ if (!empty($extrafields->attribute_label) && is_array($extrafields->attribute_la
 }
 
 $filter = array ();
-$param='';
-
-if ($trainee_view && ! empty($search_training_ref)) {
-	$param = '&trainee_view=' . $trainee_view . '&search_training_ref=' . $search_training_ref;
-}
-
+$option='';
 if (! empty($search_name)) {
 	$filter ['s.nom'] = $search_name;
-	$param .= '&search_name=' . $search_name;
+	$option .= '&search_name=' . $search_name;
 }
 if (! empty($search_firstname)) {
 	$filter ['s.prenom'] = $search_firstname;
-	$param .= '&search_firstname=' . $search_name;
+	$option .= '&search_firstname=' . $search_name;
 }
 if (! empty($search_civ)) {
 	$filter ['civ.code'] = $search_civ;
-	$param .= '&search_civ=' . $search_civ;
+	$option .= '&search_civ=' . $search_civ;
 }
 if (! empty($search_soc)) {
 	$filter ['so.nom'] = $search_soc;
-	$param .= '&search_soc=' . $search_soc;
+	$option .= '&search_soc=' . $search_soc;
 }
 if (! empty($search_tel)) {
 	$filter ['s.tel1'] = $search_tel;
-	$param .= '&search_tel=' . $search_tel;
+	$option .= '&search_tel=' . $search_tel;
 }
 if (! empty($search_tel2)) {
 	$filter ['s.tel2'] = $search_tel2;
-	$param .= '&search_tel2=' . $search_tel2;
+	$option .= '&search_tel2=' . $search_tel2;
 }
 if (! empty($search_mail)) {
 	$filter ['s.mail'] = $search_mail;
-	$param .= '&search_mail=' . $search_mail;
+	$option .= '&search_mail=' . $search_mail;
 }
 if (! empty($search_namefirstname)) {
 	$filter ['naturalsearch'] = $search_namefirstname;
-	$param .= '&search_namefirstname=' . $search_namefirstname;
+	$option .= '&search_namefirstname=' . $search_namefirstname;
 }
 if (!empty($limit)) {
-	$param .= '&limit=' . $limit;
-}
-if (! empty($search_training_ref)) {
-	$filter['cat.ref'] = $search_training_ref;
-	$param .= '&search_training_ref=' . $search_training_ref;
+	$option .= '&limit=' . $limit;
 }
 
 foreach ($search_array_options as $key => $val)
@@ -185,7 +158,7 @@ foreach ($search_array_options as $key => $val)
 	if ($crit != '' && (! in_array($typ, array('select','sellist')) || $crit != '0') && (! in_array($typ, array('link')) || $crit != '-1'))
 	{
 		$filter['ef.'.$tmpkey]= natural_search('ef.'.$tmpkey, $crit, $mode_search);
-		$param .= '&search_options_'.$tmpkey.'=' . $crit;
+		$option .= '&search_options_'.$tmpkey.'=' . $crit;
 	}
 }
 
@@ -207,23 +180,6 @@ $formcompagny = new FormCompany($db);
 
 // Count total nb of records
 $nbtotalofrecords = 0;
-
-
-if ($trainee_view && ! empty($search_training_ref)) {
-
-	$param .= '&trainee_view=' . $trainee_view;
-
-	$agfFormation = new Formation($db);
-	$result = $agfFormation->fetch('', $search_training_ref);
-
-	$head = training_prepare_head($agfFormation);
-
-	dol_fiche_head($head, 'trainee', $langs->trans("AgfCatalogDetail"), -1, 'label');
-	dol_agefodd_banner_tab($agfFormation, 'trainee_view');
-	dol_fiche_end();
-}
-
-
 
 if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
 	$nbtotalofrecords = $agf->fetch_all($sortorder, $sortfield, 0, 0, $filter);
@@ -248,12 +204,8 @@ if ($result >= 0) {
 	if (! empty($limit)) {
 		print '<input type="hidden" name="limit" value="' . $limit . '"/>';
 	}
-	if ($trainee_view && ! empty($search_training_ref)) {
-		print '<input type="hidden" name="trainee_view" value="' . $trainee_view . '"/>';
-		print '<input type="hidden" name="search_training_ref" value="' . $search_training_ref . '"/>';
-	}
 
-	print_barre_liste($langs->trans("AgfStagiaireList"), $page, $_SERVER ['PHP_SELF'], $param, $sortfield, $sortorder, '', $result, $nbtotalofrecords, 'title_generic.png', 0, '', '', $limit);
+	print_barre_liste($langs->trans("AgfStagiaireList"), $page, $_SERVER ['PHP_SELF'], $option, $sortfield, $sortorder, '', $result, $nbtotalofrecords, 'title_generic.png', 0, '', '', $limit);
 
 	$varpage=empty($contextpage)?$_SERVER["PHP_SELF"]:$contextpage;
 	$selectedfields=$form->multiSelectArrayWithCheckbox('selectedfields', $arrayfields, $varpage);	// This also change content of $arrayfields
@@ -361,27 +313,26 @@ if ($result >= 0) {
 
 	print '<tr class="liste_titre">';
 	if (! empty($arrayfields['s.rowid']['checked'])) {
-		print_liste_field_titre($langs->trans("Id"), $_SERVER ['PHP_SELF'], "s.rowid", "", $param, '', $sortfield, $sortorder);
+		print_liste_field_titre($langs->trans("Id"), $_SERVER ['PHP_SELF'], "s.rowid", "", $option, '', $sortfield, $sortorder);
 	}
 	if (! empty($arrayfields['s.nom']['checked'])) {
-		print_liste_field_titre($langs->trans("AgfNomPrenom"), $_SERVER ['PHP_SELF'], "s.nom", "", $param, '', $sortfield, $sortorder);
+		print_liste_field_titre($langs->trans("AgfNomPrenom"), $_SERVER ['PHP_SELF'], "s.nom", "", $option, '', $sortfield, $sortorder);
 	}
 	if (! empty($arrayfields['civ.code']['checked'])) {
-		print_liste_field_titre($langs->trans("AgfCivilite"), $_SERVER ['PHP_SELF'], "civ.code", "", $param, '', $sortfield, $sortorder);
+		print_liste_field_titre($langs->trans("AgfCivilite"), $_SERVER ['PHP_SELF'], "civ.code", "", $option, '', $sortfield, $sortorder);
 	}
 	if (! empty($arrayfields['so.nom']['checked'])) {
-		print_liste_field_titre($langs->trans("Company"), $_SERVER ['PHP_SELF'], "so.nom", "", $param, '', $sortfield, $sortorder);
+		print_liste_field_titre($langs->trans("Company"), $_SERVER ['PHP_SELF'], "so.nom", "", $option, '', $sortfield, $sortorder);
 	}
 	if (! empty($arrayfields['s.tel1']['checked'])) {
-		print_liste_field_titre($langs->trans("Phone"), $_SERVER ['PHP_SELF'], "s.tel1", "", $param, '', $sortfield, $sortorder);
+		print_liste_field_titre($langs->trans("Phone"), $_SERVER ['PHP_SELF'], "s.tel1", "", $option, '', $sortfield, $sortorder);
 	}
 	if (! empty($arrayfields['s.tel2']['checked'])) {
-		print_liste_field_titre($langs->trans("Mobile"), $_SERVER ['PHP_SELF'], "s.tel2", "", $param, '', $sortfield, $sortorder);
+		print_liste_field_titre($langs->trans("Mobile"), $_SERVER ['PHP_SELF'], "s.tel2", "", $option, '', $sortfield, $sortorder);
 	}
 	if (! empty($arrayfields['s.mail']['checked'])) {
-		print_liste_field_titre($langs->trans("Mail"), $_SERVER ['PHP_SELF'], "s.mail", "", $param, '', $sortfield, $sortorder);
+		print_liste_field_titre($langs->trans("Mail"), $_SERVER ['PHP_SELF'], "s.mail", "", $option, '', $sortfield, $sortorder);
 	}
-
 
 	// Extra fields
 	if (file_exists(DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_list_search_title.tpl.php')) {
@@ -395,15 +346,13 @@ if ($result >= 0) {
 					$sortonfield = "ef." . $key;
 					if (! empty($extrafields->attribute_computed[$key]))
 						$sortonfield = '';
-						print getTitleFieldOfList($langs->trans($extralabels[$key]), 0, $_SERVER["PHP_SELF"], $sortonfield, "", $param, ($align ? 'align="' . $align . '"' : ''), $sortfield, $sortorder) . "\n";
+						print getTitleFieldOfList($langs->trans($extralabels[$key]), 0, $_SERVER["PHP_SELF"], $sortonfield, "", $option, ($align ? 'align="' . $align . '"' : ''), $sortfield, $sortorder) . "\n";
 				}
 			}
 		}
 	}
 
-
-
-	print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"], '','',$param,'align="center"', $sortfield, $sortorder,'maxwidthsearch ');
+	print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"],"",'','','align="center"', $sortfield, $sortorder,'maxwidthsearch ');
 	print "</tr>\n";
 
 	$var = true;
@@ -449,9 +398,6 @@ if ($result >= 0) {
 		}
 
 		// Extra fields
-//		var_dump();exit;
-
-
 		if (is_array($extrafields->attribute_label) && count($extrafields->attribute_label)) {
 			foreach ( $extrafields->attribute_label as $key => $val ) {
 				if (! empty($arrayfields["ef." . $key]['checked'])) {
@@ -461,7 +407,7 @@ if ($result >= 0) {
 						print ' align="' . $align . '"';
 						print '>';
 						$tmpkey = 'options_' . $key;
-						print $extrafields->showOutputField($key, !empty($line->array_options[$tmpkey]) ? $line->array_options[$tmpkey] : '', '', $agf->table_element);
+						print $extrafields->showOutputField($key, $line->array_options[$tmpkey], '');
 						print '</td>';
 						if (! $i)
 							$totalarray['nbfield'] ++;

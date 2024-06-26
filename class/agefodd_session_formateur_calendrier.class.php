@@ -320,16 +320,14 @@ class Agefoddsessionformateurcalendrier extends CommonObject {
 	 *
 	 * @param array		$TParam		tableau contenant en clé/valeur le champ par lequel on souhaite filtrer et sa valeur /!\ Si la valeur est un String, alors il faut y ajouter les guillemets à l'avance
 	 * @param string	$order
-	 * @param bool		$get_id_session_calendrier	indique s'il faut récupérer dans le résultat de la requête l'identifiant du créneau de la table llx_agefodd_session_calendrier correspondant au créneau du formateur présent dans la table llx_agefodd_session_formateur_calendrier (préférable de soumettre à un paramètre pour éviter des effets de bord du style démultiplication des lignes de résultat)
 	 * @return int
 	 */
-	public function fetchAllBy($TParam, $order = 's.date_session ASC, s.heured ASC', $get_id_session_calendrier=false)
+	public function fetchAllBy($TParam, $order = 's.date_session ASC, s.heured ASC')
 	{
 		dol_syslog(get_class($this) . "::".__METHOD__, LOG_DEBUG);
 
 		$sql = "SELECT ";
 		$sql .= "s.rowid,";
-		if($get_id_session_calendrier) $sql .= "sc.rowid as fk_session_calendrier,";
 		$sql .= "s.fk_agefodd_session_formateur,";
 		$sql .= "s.date_session,";
 		$sql .= "s.heured,";
@@ -344,10 +342,8 @@ class Agefoddsessionformateurcalendrier extends CommonObject {
 		$sql .= "sf.trainer_status as trainer_status_in_session";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_session_formateur_calendrier as s";
 		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "agefodd_session_formateur as sf ON sf.rowid=s.fk_agefodd_session_formateur";
-		if($get_id_session_calendrier) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_session_calendrier as sc ON (sc.fk_agefodd_session=sf.fk_session AND sc.heured = s.heured AND sc.heuref = s.heuref)";
 		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "agefodd_formateur as trainer ON trainer.rowid=sf.fk_agefodd_formateur";
 		$sql .= " WHERE 1=1 ";
-
 		// $field_value => contient déjà les guillemets
 		foreach ($TParam as $field_name => $field_value)
 		{
@@ -366,7 +362,6 @@ class Agefoddsessionformateurcalendrier extends CommonObject {
 				$obj = $this->db->fetch_object($resql);
 
 				$line->id = $obj->rowid;
-				if($get_id_session_calendrier) $line->fk_session_calendrier = $obj->fk_session_calendrier;
 				$line->date_session = $this->db->jdate($obj->date_session);
 				$line->fk_agefodd_session_formateur = $obj->fk_agefodd_session_formateur;
 				$line->heured = $this->db->jdate($obj->heured);
@@ -566,12 +561,12 @@ class Agefoddsessionformateurcalendrier extends CommonObject {
 					{
 						if (!empty($conf->global->AGF_ONLY_WARNING_ON_TRAINER_AVAILABILITY))
 						{
-							$warning_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime').'(<a href='.dol_buildpath('/agefodd/session/person.php', 1).'?id='.$line->fk_session.' target="_blank">'.$line->fk_session.'</a>)<br />';
+							$warning_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime').'(<a href='.dol_buildpath('/agefodd/session/trainer.php', 1).'?id='.$line->fk_session.' target="_blank">'.$line->fk_session.'</a>)<br />';
 						}
 						else
 						{
 							$error++;
-							$error_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime').'(<a href='.dol_buildpath('/agefodd/session/person.php', 1).'?id='.$line->fk_session.' target="_blank">'.$line->fk_session.'</a>)<br />';
+							$error_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime').'(<a href='.dol_buildpath('/agefodd/session/trainer.php', 1).'?id='.$line->fk_session.' target="_blank">'.$line->fk_session.'</a>)<br />';
 						}
 					}
 				}

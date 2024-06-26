@@ -392,9 +392,8 @@ print_fiche_titre('', $link . ' &nbsp; &nbsp; ' . $nav, '');
 
 // Get event in an array
 $eventarray = array ();
-// parentheses that enclose the FIRST SELECT
-$sql = "(";
-$sql .= ' SELECT ';
+
+$sql = 'SELECT ';
 $sql .= " DISTINCT";
 $sql .= ' a.id, a.label,';
 $sql .= ' a.datep,';
@@ -444,7 +443,7 @@ if (! empty($filter_trainee)) {
 }
 $sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . 'societe as socsess ON agf.fk_soc = socsess.rowid ';
 
-$sql .= ' WHERE a.entity IN (' . getEntity('agefodd_base') . ')';
+$sql .= ' WHERE a.entity IN (' . getEntity('agefodd'/*'session'*/) . ')';
 $sql .= ' AND a.elementtype IN (\'agefodd_agsession\', \'agefodd_formateur\' )';
 if ($action == 'show_day') {
 	$sql .= " AND (";
@@ -471,7 +470,12 @@ if ($action == 'show_day') {
 	$sql .= ')';
 }
 
-
+// Fix indisponibilite formateur
+$sql.= ' AND 1 = CASE ';
+$sql.= ' 		WHEN ca.code = \'AC_AGF_NOTAV\' AND a.fk_element = trainer.rowid  AND a.elementtype = \'agefodd_formateur\' THEN 1  ';
+$sql.= '		WHEN ca.code != \'AC_AGF_NOTAV\' THEN 1 ';
+$sql.= '     ELSE 0 ';
+$sql.= ' END ';
 
 if (! empty($filter_commercial)) {
 	$sql .= " AND salesman.fk_user_com=" . $filter_commercial;
@@ -514,146 +518,8 @@ if (! empty($filter_session_status)) {
 if (! empty($filter_trainee)) {
 	$sql .= " AND trainee_session.fk_stagiaire=".$filter_trainee;
 }
-// parentheses that enclose the FIRST SELECT
-$sql .= ")";
-
-
-$sql .="UNION";
-// parentheses that enclose the SECOND SELECT
-$sql .= ' ( ';
-
-$sql .= ' SELECT ';
-$sql .= " DISTINCT";
-$sql .= ' a.id, a.label,';
-$sql .= ' a.datep,';
-$sql .= ' a.datep2,';
-$sql .= ' a.percent,';
-$sql .= ' a.fk_user_author,a.fk_user_action,';
-$sql .= ' a.transparency, a.priority, a.fulldayevent, a.location,';
-$sql .= ' a.fk_soc, a.fk_contact,';
-$sql .= ' a.priority, a.fulldayevent, a.location,';
-if (! empty($filter_trainer)) {
-	$sql .= ' socsess.rowid as fk_soc,';
-} else {
-	$sql .= ' a.fk_soc,';
-}
-$sql .= '  a.fk_contact,';
-$sql .= ' ca.code';
-$sql .= ' ,agf.rowid as sessionid';
-$sql .= ' ,agf.type_session as sessiontype';
-$sql .= ' ,agf_status.code as sessionstatus';
-$sql .= ' ,trainer_session.trainer_status';
-
-$sql .= ', a.fk_element AS trainerid';
-
-$sql .= " FROM " . MAIN_DB_PREFIX . "actioncomm as a";
-$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_actioncomm as ca ON a.fk_action = ca.id";
-$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON a.fk_user_author = u.rowid ";
-$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'agefodd_session as agf ON agf.rowid = a.fk_element ';
-$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'agefodd_session_status_type as agf_status ON agf.status = agf_status.rowid';
-if (! empty($filter_commercial)) {
-	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'agefodd_session_commercial as salesman ON agf.rowid = salesman.fk_session_agefodd ';
-}
-if (! empty($filter_contact)) {
-	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'agefodd_session_contact as contact_session ON agf.rowid = contact_session.fk_session_agefodd ';
-	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'agefodd_contact as contact ON contact_session.fk_agefodd_contact = contact.rowid ';
-}
-$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'agefodd_session_formateur as trainer_session ON agf.rowid = trainer_session.fk_session ';
-$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_formateur as trainer ON trainer_session.fk_agefodd_formateur = trainer.rowid ";
-if (! empty($conf->global->AGF_DOL_TRAINER_AGENDA)) {
-	if (!empty($onlysession)) {
-		$sql .= " AND ca.code='AC_AGF_NOTAV' ";
-	}
-	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_session_formateur_calendrier as trainercal ON trainercal.fk_agefodd_session_formateur = trainer_session.rowid ";
-	if (!empty($onlysession)) {
-		$sql .=' AND trainercal.fk_actioncomm=a.id ';
-	}
-}
-if (! empty($filter_trainee)) {
-	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'agefodd_session_stagiaire as trainee_session ON agf.rowid = trainee_session.fk_session_agefodd ';
-}
-$sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . 'societe as socsess ON agf.fk_soc = socsess.rowid ';
-
-$sql .= ' WHERE a.entity IN (' . getEntity('agefodd_base') . ')';
-$sql .= ' AND a.elementtype IN (\'agefodd_formateur\' )';
-if ($action == 'show_day') {
-	$sql .= " AND (";
-	$sql .= " (a.datep BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $month, $day, $year)) . "'";
-	$sql .= " AND '" . $db->idate(dol_mktime(23, 59, 59, $month, $day, $year)) . "')";
-	$sql .= " OR ";
-	$sql .= " (a.datep2 BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $month, $day, $year)) . "'";
-	$sql .= " AND '" . $db->idate(dol_mktime(23, 59, 59, $month, $day, $year)) . "')";
-	$sql .= " OR ";
-	$sql .= " (a.datep < '" . $db->idate(dol_mktime(0, 0, 0, $month, $day, $year)) . "'";
-	$sql .= " AND a.datep2 > '" . $db->idate(dol_mktime(23, 59, 59, $month, $day, $year)) . "')";
-	$sql .= ')';
-} else {
-	// To limit array
-	$sql .= " AND (";
-	$sql .= " (a.datep BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $month, 1, $year) - (60 * 60 * 24 * 7)) . "'"; // Start 7 days before
-	$sql .= " AND '" . $db->idate(dol_mktime(23, 59, 59, $month, 28, $year) + (60 * 60 * 24 * 10)) . "')"; // End 7 days after + 3 to go from 28 to 31
-	$sql .= " OR ";
-	$sql .= " (a.datep2 BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $month, 1, $year) - (60 * 60 * 24 * 7)) . "'";
-	$sql .= " AND '" . $db->idate(dol_mktime(23, 59, 59, $month, 28, $year) + (60 * 60 * 24 * 10)) . "')";
-	$sql .= " OR ";
-	$sql .= " (a.datep < '" . $db->idate(dol_mktime(0, 0, 0, $month, 1, $year) - (60 * 60 * 24 * 7)) . "'";
-	$sql .= " AND a.datep2 > '" . $db->idate(dol_mktime(23, 59, 59, $month, 28, $year) + (60 * 60 * 24 * 10)) . "')";
-	$sql .= ')';
-}
-
-if (! empty($filter_commercial)) {
-	$sql .= " AND salesman.fk_user_com=" . $filter_commercial;
-}
-if (! empty($filter_customer)) {
-	$sql .= " AND agf.fk_soc=" . $filter_customer;
-}
-if (! empty($filter_contact)) {
-
-	if ($conf->global->AGF_CONTACT_DOL_SESSION) {
-		$sql .= " AND contact.fk_socpeople=" . $filter_contact;
-	} else {
-		$sql .= " AND contact.rowid=" . $filter_contact;
-	}
-}
-if (! empty($filter_trainer)) {
-
-	if ($type == 'trainer') {
-		$sql .= " AND trainer.fk_user=" . $filter_trainer;
-	} else {
-		$sql .= " AND trainer_session.fk_agefodd_formateur=" . $filter_trainer;
-	}
-}
-
-if (! empty($onlysession) && empty($conf->global->AGF_DOL_TRAINER_AGENDA)) {
-	$sql .= " AND ca.code='AC_AGF_NOTAV'";
-}
-if ($filter_type_session != '') {
-	$sql .= " AND agf.type_session=" . $filter_type_session;
-}
-if (! empty($filter_location)) {
-	$sql .= " AND agf.fk_session_place=" . $filter_location;
-}
-if (! empty($filterdatestart)) {
-	$sql .= ' AND a.datep>=\'' . $db->idate($filterdatestart) . '\'';
-}
-if (! empty($filter_session_status)) {
-	$sql .= " AND agf.status IN (" . implode(',',$filter_session_status).")";
-}
-if (! empty($filter_trainee)) {
-	$sql .= " AND trainee_session.fk_stagiaire=".$filter_trainee;
-}
-// parentheses that enclose the SECOND SELECT
-$sql .= ' ) ';
-
-
 // Sort on date
 $sql .= ' ORDER BY datep';
-
-
-/**
- *
- */
-
 
 dol_syslog("agefodd/agenda/pertrainer.php", LOG_DEBUG);
 $resql = $db->query($sql);
@@ -695,8 +561,7 @@ if ($resql) {
 		$event->trainerid = $obj->trainerid;
 
 		$event->socid = $obj->fk_soc;
-		if(intval(DOL_VERSION) < 13) $event->contactid = $obj->fk_contact;
-		else $event->contact_id = $obj->fk_contact;
+		$event->contactid = $obj->fk_contact;
 		// $event->societe->id=$obj->fk_soc; // deprecated
 		// $event->contact->id=$obj->fk_contact; // deprecated
 
@@ -805,6 +670,12 @@ $newparam = preg_replace('/year=[0-9]+&?/i', '', $newparam);
 $newparam = preg_replace('/viewweek=[0-9]+&?/i', '', $newparam);
 $newparam = preg_replace('/showbirthday_=/i', 'showbirthday=', $newparam); // Restore correct parameter
 $newparam .= '&viewweek=1';
+
+echo '<form id="move_event" action="" method="POST"><input type="hidden" name="action" value="mupdate">';
+echo '<input type="hidden" name="backtopage" value="' . $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'] . '">';
+echo '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+echo '<input type="hidden" name="newdate" id="newdate">';
+echo '</form>';
 
 // Line header with list of days
 
@@ -921,7 +792,7 @@ echo "</table>\n";
 
 if (! empty($conf->global->AGENDA_USE_EVENT_TYPE)) {
 	$langs->load("commercial");
-	print '<br>' . $langs->trans("TrainerStatusLabelLegend") . ': <br>';
+	print '<br>' . $langs->trans("Legend") . ': <br>';
 	foreach ( $colorsbytype as $code => $color ) {
 		if ($color) {
 			print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($color ? 'background: #' . $color . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
@@ -930,58 +801,6 @@ if (! empty($conf->global->AGENDA_USE_EVENT_TYPE)) {
 			print '</div>';
 		}
 	}
-
-	$statusColorLegend = array(
-		0 => 'f8f816', // Prospect
-		1 => '66ff99', // Confirmé
-		2 => '33ff33', // Accord verbal
-		3 => '3366ff', // Présent
-		4 => '33ccff', // Partiellement présent
-		5 => 'cc6600', // Non présent
-		6 => 'cc0000', // Annulé dans les temps
-		7 => '7a7a7a', // Chevauchement de deux créneaux horaires différents
-	);
-
-	//Prospect
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[0] ? 'background: #' . $statusColorLegend[0] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("TraineeSessionStatusProspect");
-	print '</div>';
-
-	//Confirmé
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[1] ? 'background: #' . $statusColorLegend[1] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("TraineeSessionStatusVerbalAgreement");
-	print '</div>';
-
-	//Accord verbal
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[2] ? 'background: #' . $statusColorLegend[2] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("TraineeSessionStatusConfirmShort");
-	print '</div>';
-
-	//Présent
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[3] ? 'background: #' . $statusColorLegend[3] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("TraineeSessionStatusPresent");
-	print '</div>';
-
-	//Partiellement présent
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[4] ? 'background: #' . $statusColorLegend[4] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("TraineeSessionStatusPartPresent");
-	print '</div>';
-
-	//Non présent
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[5] ? 'background: #' . $statusColorLegend[5] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("TraineeSessionStatusNotPresent");
-	print '</div>';
-
-	//Annulé dans les temps
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[6] ? 'background: #' . $statusColorLegend[6] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("TraineeSessionStatusCancelled");
-	print '</div>';
-
-	// Chevauchement de deux créneaux horaires différents
-	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div style="' . ($statusColorLegend[7] ? 'background: #' . $statusColorLegend[7] . ';' : '') . 'width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
-	print $langs->trans("AgfTimeSlotOverlapping");
-	print '</div>';
-
 	// $color=sprintf("%02x%02x%02x",$theme_datacolor[0][0],$theme_datacolor[0][1],$theme_datacolor[0][2]);
 	print '<div style="float: left; padding: 2px; margin-right: 6px;"><div class="peruser_busy" style="width:16px; float: left; margin-right: 4px;">&nbsp;</div>';
 	print $langs->trans("Other");
@@ -1095,7 +914,7 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
 
 				// Define $color (Hex string like '0088FF') and $cssclass of event
 				$statusColor = array(
-				    0 => 'f8f816',
+				    0 => 'F8F816',
                     1 => '66ff99',
                     2 => '33ff33',
                     3 => '3366ff',
@@ -1103,7 +922,7 @@ function show_day_events2($username, $day, $month, $year, $monthshown, $style, &
                     5 => 'cc6600',
                     6 => 'cc0000',
                 );
-                // indispo formateur
+
 				if($event->type_code == 'AC_AGF_NOTAV')
                 {
                     $color = str_replace("#", "", $colorsbytype[$event->type_code]);

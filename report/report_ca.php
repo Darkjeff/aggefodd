@@ -76,7 +76,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportCA'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/ca';
+$upload_dir = $conf->agefodd->dir_output . '/report/ca/';
 
 $agf = new Agsession($db);
 
@@ -90,7 +90,7 @@ $filter = array ('accounting_date' => $search_accounting_date);
 if (! empty($search_year)) {
 	$filter['startyear'] = $search_year;
 }
-if (! empty($search_sale) && $search_sale > 0) {
+if (! empty($search_sale)) {
 	$filter['sale.fk_user'] = $search_sale;
 }
 if ($search_type_session != '' && $search_type_session != - 1) {
@@ -140,7 +140,7 @@ if ($action == 'builddoc') {
 
 		//$report_by_cust->file = $upload_dir . 'reportbycust-' . dol_print_date(dol_now(), 'dayhourlog') . '.xlsx';
 		$file_sub_title=$report_ca->getSubTitlFileName($filter);
-		$report_ca->file = $upload_dir . '/reportca-' . $file_sub_title . '.xlsx';
+		$report_ca->file = $upload_dir . 'reportca-' . $file_sub_title . '.xlsx';
 
 
 		$result = $report_ca->write_file($filter);

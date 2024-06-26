@@ -39,25 +39,9 @@ if (! $user->rights->agefodd->admin && ! $user->admin) {
 $langs->load("admin");
 $langs->load('agefodd@agefodd');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $action = GETPOST('action', 'alpha');
 
 if ($action == 'setvar') {
-
-	if ($conf->multicompany->enabled){
-
-		$bpfOnlyCurrentEntity = GETPOST('AGF_SHOW_ONLY_CURRENT_ENTITY_ON_BPF', 'int');
-		if (empty($bpfOnlyCurrentEntity)) {
-			$res = dolibarr_set_const($db, 'AGF_SHOW_ONLY_CURRENT_ENTITY_ON_BPF', '', 'chaine', 0, '', $conf->entity);
-		} else {
-			$res = dolibarr_set_const($db, 'AGF_SHOW_ONLY_CURRENT_ENTITY_ON_BPF', $bpfOnlyCurrentEntity, 'chaine', 0, '', $conf->entity);
-		}
-
-		if (! $res > 0) {
-			$error ++;
-		}
-	}
 
 	$categ = GETPOST('AGF_CAT_BPF_OPCA', 'array');
 	if (empty($categ)) {
@@ -215,36 +199,12 @@ print '</td>';
 print "</tr>\n";
 print '</table>';
 
-
-print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" enctype="multipart/form-data" >';
-print '<input type="hidden" name="token" value="' . $newToken . '">';
-print '<input type="hidden" name="action" value="setvar">';
-
-if ($conf->multicompany->enabled){
-
-	print load_fiche_titre($langs->trans("AgfBpfmulticompany"));
-
-	print '<table class="noborder" width="100%">';
-
-	print '<tr class="liste_titre">';
-	print '<td>' . $langs->trans("Name") . '</td>';
-	print '<td width="400px">' . $langs->trans("Valeur") . '</td>';
-	print '<td></td>';
-	print "</tr>\n";
-
-	print '<tr class="oddeven"><td>' . $langs->trans("AGF_SHOW_ONLY_CURRENT_ENTITY_ON_BPF") . '</td>';
-	print '<td align="right">';
-	print ajax_constantonoff('AGF_SHOW_ONLY_CURRENT_ENTITY_ON_BPF');
-	print '</td>';
-	print '<td></td>';
-	print '</tr>';
-
-	print '</table>';
-}
-
 // Admin var of module
 print load_fiche_titre($langs->trans("AgfAdmVar"));
 
+print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" enctype="multipart/form-data" >';
+print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+print '<input type="hidden" name="action" value="setvar">';
 
 print '<table class="noborder" width="100%">';
 
@@ -253,9 +213,6 @@ print '<td>' . $langs->trans("Name") . '</td>';
 print '<td width="400px">' . $langs->trans("Valeur") . '</td>';
 print '<td></td>';
 print "</tr>\n";
-
-
-
 
 // Cat OPCA
 print '<tr class="impair"><td>' . $langs->trans("AgfReportBPFCategOPCA") . '</td>';
@@ -319,8 +276,6 @@ print '<td align="center">';
 print $form->textwithpicto('', $langs->trans("AgfReportBPFCategOPCAHelp"), 1, 'help');
 print '</td>';
 print '</tr>';
-
-
 
 // Cat Administration
 print '<tr class="pair"><td>' . $langs->trans("AgfReportBPFCategAdmnistration") . '</td>';

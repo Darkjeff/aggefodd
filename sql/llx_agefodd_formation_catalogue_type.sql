@@ -29,5 +29,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_formation_catalogue_type (
   intitule varchar(1000) NOT NULL,
   sort smallint NOT NULL,
   active integer NULL,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  tms timestamp NOT NULL
 ) ENGINE=InnoDB;

@@ -57,7 +57,7 @@ function agefodd_completesubstitutionarray(&$substitutionarray,$outputlangs,$obj
         $sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_stagiaire as trainee";
         $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_session_stagiaire as ss ON ss.fk_stagiaire = trainee.rowid";
         $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_session as s ON s.rowid = ss.fk_session_agefodd";
-        $sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ")";
+        $sql .= " WHERE s.entity IN (" . getEntity('agefodd') . ")";
         $sql .= " AND trainee.fk_socpeople = " . $object->id;
 
         $resql = $db->query($sql);

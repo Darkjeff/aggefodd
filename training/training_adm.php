@@ -34,10 +34,8 @@ require_once ('../class/html.formagefodd.class.php');
 require_once ('../lib/agefodd.lib.php');
 require_once (DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php");
 require_once __DIR__ .'/../lib/retroCompatibility.lib.php';
-
-$langs->LoadLangs(array('admin', 'agefodd@agefodd', 'projects'));
-
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+$langs->load("admin");
+$langs->load('agefodd@agefodd');
 
 // Security check
 if (! $user->rights->agefodd->agefodd_formation_catalogue->lire)
@@ -47,7 +45,7 @@ $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
 $trainingid = GETPOST('trainingid', 'int');
-$parent_level = GETPOSTISSET('fk_parent_level') ? GETPOST("fk_parent_level",'int') :   GETPOST('parent_level', 'int');
+$parent_level = GETPOST('fk_parent_level', 'int');
 
 if (empty($trainingid)) {
 	$trainingid = $id;
@@ -86,15 +84,6 @@ if ($action == 'sessionlevel_create') {
 	$agf->intitule = GETPOST('intitule', 'alpha');
 	$agf->delais_alerte = GETPOST('delai', 'int');
 	$agf->delais_alerte_end = GETPOST('delai_end', 'int');
-    $agf->mandatory_file = GETPOST('mandatory_file', 'int');
-    if(GETPOSTISSET('mandatory_file'))
-    {
-        $agf->mandatory_file = 1;
-    }
-    else
-    {
-        $agf->mandatory_file = 0;
-    }
 
 	if ($agf->level_rank > 3) {
 		setEventMessage($langs->trans("AgfAdminNoMoreThan3Level"), 'errors');
@@ -152,8 +141,7 @@ if ($action == 'sessionlevel_update') {
 			$agf->intitule = GETPOST('intitule', 'alpha');
 			$agf->delais_alerte = GETPOST('delai', 'int');
 			$agf->delais_alerte_end = GETPOST('delai_end', 'int');
-            $agf->mandatory_file = GETPOST('mandatory_file', 'int');
-            $updatedRowId = $id;
+			$updatedRowId = $id;
 			if (! empty($parent_level)){
 				if ($parent_level != $agf->fk_parent_level) {
 					$agf->fk_parent_level = $parent_level;
@@ -252,7 +240,7 @@ print load_fiche_titre($langs->trans("AgfAdminTrainingLevel"), $morehtmlright);
 $sesslevel_remove = GETPOST('sesslevel_remove', 'none');
 if ($action == 'sessionlevel_update' && !empty($sesslevel_remove)){
 	$deleteConfirmUrl = $url.'&sesslevel_remove=1&id='. GETPOST('id', 'int').'&sesslevel_remove_confirm=1';
-	print $form->formconfirm($deleteConfirmUrl, $langs->trans('ConfirmDelete'), $langs->trans('ConfirmDeleteATask'), 'sessionlevel_update', '', 0, 1);
+	print $form->formconfirm($deleteConfirmUrl, $langs->trans('ConfirmDelete'), '', 'sessionlevel_update', '', 0, 1);
 }
 
 
@@ -266,20 +254,18 @@ print '<th>' . $langs->trans("AgfIntitule") . '</th>';
 print '<th>' . $langs->trans("AgfParentLevel") . '</th>';
 print '<th>' . $langs->trans("AgfDelaiSessionLevel") . '</th>';
 print '<th>' . $langs->trans("AgfDelaiSessionLevelEnd") . '</th>';
-print '<th>' . $langs->trans("MandatoryFile") . '</th>';
 print '<th></th>';
 print "</tr>\n";
 
 print '<tr class="oddeven nodrag nodrop">';
 print '<form name="SessionLevel_create" action="' . $_SERVER ['PHP_SELF'] . '" method="POST">' . "\n";
-print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 print '<input type="hidden" name="action" value="sessionlevel_create">' . "\n";
 print '<input type="hidden" name="trainingid" value="' . $trainingid . '">' . "\n";
 print '<td>' . $langs->trans("Add") . ' <input type="text" name="intitule" value="" size="30" placeholder="' . $langs->trans("AgfIntitule") . '"/></td>';
 print '<td>' . $formAgefodd->select_action_training_adm('', 'parent_level', 0, $trainingid) . '</td>';
 print '<td><input type="number" step="1" name="delai" value=""/></td>';
 print '<td><input type="number" step="1" name="delai_end" value=""/></td>';
-print '<td><input type="checkbox" step="1" name="mandatory_file" value="1"/></td>';
 print '<td><input type="image" src="' . DOL_URL_ROOT . '/theme/' . $conf->theme . '/img/edit_add.png" border="0" name="sesslevel_update" alt="' . $langs->trans("Save") . '"></td>';
 print '</form>';
 print '</tr>';
@@ -433,13 +419,8 @@ $(function()
 		dialogBox.find( "input[name=\'delai\']" ).val(item.data("alert"));
 		dialogBox.find( "input[name=\'delai_end\']" ).val(item.data("alert_end"));
 		dialogBox.find( "input[name=\'fk_parent_level\']" ).val(item.data("parent_level"));
-        
-        if(item.data("mandatory_file") > 0){
-		    dialogBox.find( "input[name=\'mandatory_file\']" ).prop("checked", true);
-        }else{
-		    dialogBox.find( "input[name=\'mandatory_file\']" ).prop("checked", false);
-        }
-        
+
+
 		dialogBox.dialog( "open" );
 	}
 
@@ -460,10 +441,8 @@ function _displayFormField($training_admlevel)
 {
 	global $langs, $url, $trainingid;
 
-    $newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
-    $outForm= '<form name="SessionLevel_update" action="' . $url . '" method="POST">' . "\n";
-	$outForm.= '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+	$outForm= '<form name="SessionLevel_update" action="' . $url . '" method="POST">' . "\n";
+	$outForm.= '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 	$outForm.= '<input type="hidden" name="id" value="' . $training_admlevel->id . '">' . "\n";
 	$outForm.= '<input type="hidden" name="fk_parent_level" value="' . $training_admlevel->fk_parent_level . '">' . "\n";
 	$outForm.= '<input type="hidden" name="action" value="sessionlevel_update">' . "\n";
@@ -479,7 +458,6 @@ function _displayFormField($training_admlevel)
 	$outForm.= '<p>';
 	$outForm.= '<label>' . $langs->trans("AgfDelaiSessionLevel") . '</label><br/>';
 	$outForm.= '<i class="fa fa-hourglass-start"></i> ';
-	if(empty($training_admlevel->alerte)) $training_admlevel->alerte = 0;
 	$outForm.= '<input type="number" step="1" name="delai" value="' . $training_admlevel->alerte . '"/>';
 	$outForm.= ' '.$langs->trans('days');
 	$outForm.= '</p>';
@@ -487,17 +465,9 @@ function _displayFormField($training_admlevel)
 	$outForm.= '<p>';
 	$outForm.= '<label>' . $langs->trans("AgfDelaiSessionLevelEnd") . '</label><br/>';
 	$outForm.= '<i class="fa fa-hourglass-start"></i> ';
-	if(empty($training_admlevel->alerte_end)) $training_admlevel->alerte_end = 0;
 	$outForm.= '<input type="number" step="1" name="delai_end" value="' . $training_admlevel->alerte_end . '"/>';
 	$outForm.= ' '.$langs->trans('days');
 	$outForm.= '</p>';
-
-    $outForm.= '<p>';
-    $outForm.= '<label>' . $langs->trans("CheckIfYouWantMandatoryFile") . '</label><br/>';
-    $outForm.= '<i class="fa fa-file"></i> ';
-    $outForm.= '<label><input type="checkbox" name="mandatory_file" value="1"/>';
-    $outForm.= ' '.$langs->trans('MandatoryFile').'</label>';
-    $outForm.= '</p>';
 
 
 	$outForm.= '</form>';
@@ -528,9 +498,7 @@ function _displaySortableNestedItems($TNested, $htmlId='', $open = true){
 			$out.= ' data-alert="'.dol_escape_htmltag($object->alerte).'" ';
 			$out.= ' data-parent_level="'.dol_escape_htmltag($object->fk_parent_level).'" ';
 			$out.= ' data-alert_end="'.dol_escape_htmltag($object->alerte_end).'" ';
-            $out.= ' data-mandatory_file="'.dol_escape_htmltag($object->mandatory_file).'" ';
-
-            $out.= '>';
+			$out.= '>';
 			$out.= '<div class="agf-sortable-list__item__title  move">';
 				$out.= '<div class="agf-sortable-list__item__title__flex">';
 
@@ -550,18 +518,7 @@ function _displaySortableNestedItems($TNested, $htmlId='', $open = true){
 					$out.= '</span>';
 				$out.= '</div>';
 
-                $out.= '<div class="agf-sortable-list__item__title__col">';
-                if(!empty($object->mandatory_file))
-                {
-                    $out.= '<span class="classfortooltip"  title="'.$langs->trans("AgfAdministrativeTaskMandatoryFileHelp").'">';
-                    $out.= '<i class="fa fa-file"></i> ' . $object->mandatory_file .' '.$langs->trans('MandatoryFile');
-                    $out.= '</span>';
-                } else{
-
-                }
-                $out.= '</div>';
-
-                $out.= '<div class="agf-sortable-list__item__title__col -action clickable">';
+				$out.= '<div class="agf-sortable-list__item__title__col -action clickable">';
 
 					$out.= '<a href="" class="classfortooltip agf-sortable-list__item__title__button clickable -edit-btn"  title="' . $langs->trans("Edit") . '" data-id="'.$object->id.'">';
 					$out.= '<i class="fa fa-pencil clickable"></i>';
@@ -595,8 +552,6 @@ function _displaySortableNestedItems($TNested, $htmlId='', $open = true){
 function _displayEditableNestedItems($TNested){
     global $updatedRowId, $formAgefodd, $conf, $langs, $trainingid;
 
-    $newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
     $out = '';
 
     if(!empty($TNested) && is_array($TNested)){
@@ -620,7 +575,7 @@ function _displayEditableNestedItems($TNested){
 
             $out.= '<tr id="row-' . $line->rowid . '" class="oddeven ' . $rowClass . '" data-rowid="' . $line->rowid . '" >';
             $out.= '<form name="SessionLevel_update_' . $line->rowid . '" action="' . $_SERVER ['PHP_SELF'] . '#row-' . $line->rowid . '" method="POST">' . "\n";
-            $out.= '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+            $out.= '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
             $out.= '<input type="hidden" name="id" value="' . $line->rowid . '">' . "\n";
             $out.= '<input type="hidden" name="action" value="sessionlevel_update">' . "\n";
             $out.= '<input type="hidden" name="trainingid" value="' . $trainingid . '">' . "\n";
@@ -636,7 +591,6 @@ function _displayEditableNestedItems($TNested){
             //$out.= '<td>' . $formAgefodd->select_action_training_adm($line->fk_parent_level, 'parent_level', $line->rowid, $trainingid) . '</td>';
             $out.= '<td><input type="number" step="1" name="delai" value="' . $line->alerte . '"/></td>';
             $out.= '<td><input type="number" step="1" name="delai_end" value="' . $line->alerte_end . '"/></td>';
-            $out.= '<td><input type="number" step="1" name="mandatory_file" value="' . $line->mandatory_file . '"/></td>';
             $out.= '<td class="right"><input type="image" src="' . DOL_URL_ROOT . '/theme/' . $conf->theme . '/img/edit.png" border="0" name="sesslevel_update" alt="' . $langs->trans("Save") . '">';
             $out.= '<input type="image" src="' . DOL_URL_ROOT . '/theme/' . $conf->theme . '/img/delete.png" border="0" name="sesslevel_remove" alt="' . $langs->trans("Delete") . '"></td>';
             $out.= '</form>';

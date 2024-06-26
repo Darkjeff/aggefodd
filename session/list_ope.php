@@ -92,7 +92,7 @@ if (! empty($search_session_ref)) {
 	$filter['s.ref'] = $search_session_ref;
 	$option .= '&search_session_ref=' . $search_session_ref;
 }
-if (! empty($search_sale) && $search_sale > 0) {
+if (! empty($search_sale)) {
 	$filter ['sale.fk_user_com'] = $search_sale;
 	$option .= '&search_sale=' . $search_sale;
 }
@@ -166,6 +166,18 @@ $formother = new FormOther($db);
 
 $title = $langs->trans("AgfMenuSessListOpe");
 llxHeader('', $title);
+
+if ($training_view && ! empty($search_training_ref)) {
+	$agf = new Formation($db);
+	$result = $agf->fetch('', $search_training_ref);
+
+	$head = training_prepare_head($agf);
+
+	dol_fiche_head($head, 'sessions', $langs->trans("AgfCatalogDetail"), 0, 'label');
+
+	$agf->printFormationInfo();
+	print '</div>';
+}
 
 if ($site_view) {
 	$agf = new Agefodd_place($db);

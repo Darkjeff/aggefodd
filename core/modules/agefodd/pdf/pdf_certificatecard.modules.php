@@ -27,7 +27,6 @@ dol_include_once('/agefodd/core/modules/agefodd/modules_agefodd.php');
 dol_include_once('/agefodd/class/agsession.class.php');
 dol_include_once('/agefodd/class/agefodd_formation_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_session_stagiaire.class.php');
-dol_include_once('/agefodd/class/agefodd_session_catalogue.class.php');
 dol_include_once('/agefodd/class/agefodd_stagiaire_certif.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
 require_once (DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php');
@@ -140,18 +139,13 @@ class pdf_certificatecard extends ModelePDFAgefodd
 			$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
 			$pdf->SetAutoPageBreak(1, 0);
 
-
-
 			// Récuperation des objectifs pedagogique de la formation
 			$agf_op = new Formation($this->db);
 			$result2 = $agf_op->fetch_objpeda_per_formation($agf->fk_formation_catalogue);
 
-
 			// Récupération de la duree de la formation
 			$agf_duree = new Formation($this->db);
 			$result = $agf_duree->fetch($agf->fk_formation_catalogue);
-
-
 
 			// Recuperation des stagiaires participant à la formation
 			$agf2 = new Agefodd_session_stagiaire($this->db);

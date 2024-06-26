@@ -48,8 +48,6 @@ if (! $user->rights->agefodd->agefodd_formation_catalogue->lire)
 	// Load translation files required by the page
 $langs->load("agefodd@agefodd");
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $object = new Agefoddformationcataloguemodules($db);
 $object_training = new Formation($db);
 
@@ -164,7 +162,7 @@ if (($action == 'create' || $action == 'edit' || $action == 'delete') && $user->
 	}
 
 	print '<form action="' . $_SERVER["PHP_SELF"] . '" method="POST">';
-	print '<input type="hidden" name="token" value="' . $newToken . '">';
+	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 	print '<input type="hidden" name="fk_formation_catalogue" value="' . $fk_formation_catalogue . '">';
 	print '<input type="hidden" name="action" value="' . $action_next . '">';
 	print '<input type="hidden" name="id" value="' . $id . '">';

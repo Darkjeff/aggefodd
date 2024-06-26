@@ -58,20 +58,16 @@ class ReportCalendarByCustomer extends AgefoddExportExcel {
 
 		$array_column_header[0] = array (
 				1 => array (
-                    'type' => 'text',
-                    'header' => $outputlangs->transnoentities('SessionRef')
+						'type' => 'text',
+						'header' => $outputlangs->transnoentities('SessionRef')
 				),
 				2 => array (
-                    'type' => 'text',
-                    'header' => $outputlangs->transnoentities('AgfMenuActStagiaire')
+						'type' => 'text',
+						'header' => $outputlangs->transnoentities('AgfMenuActStagiaire')
 				),
-                3 => array (
-                    'type' => 'text',
-                    'header' => $outputlangs->transnoentities('Type')
-                ),
-				4 => array (
-                    'type' => 'text',
-                    'header' => $outputlangs->transnoentities('Type')
+				3 => array (
+						'type' => 'text',
+						'header' => $outputlangs->transnoentities('Type')
 				)
 
 		);
@@ -306,7 +302,7 @@ class ReportCalendarByCustomer extends AgefoddExportExcel {
 
 		if ($filter['so.rowid']) $sql .= ' INNER JOIN llx_agefodd_stagiaire AS sta ON ss.fk_stagiaire = sta.rowid AND ss.fk_soc = '.$this->db->escape($filter['so.rowid']);
 
-		$sql .= ' WHERE s.entity IN (' . getEntity('agefodd_base') . ')';
+		$sql .= ' WHERE s.entity IN (' . getEntity('agefodd') . ')';
 
 		// Manage filter
 		if (count($filter) > 0) {
@@ -404,10 +400,8 @@ class ReportCalendarByCustomer extends AgefoddExportExcel {
 			                    $heuresStagiaires = new Agefoddsessionstagiaireheures($this->db);
 			                    $heuresStagiaires->fetch_by_session($obj->rowid, $trainee->id, $calendar->id);
 
-                                $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['months'][$mois]['total_heures_mois'] += $calendar->duration;
-                                $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['months'][$mois]['presence'] += floatval($heuresStagiaires->heures);
-                                $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['total_heures'] += floatval($heuresStagiaires->heures);
-                                $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['months'][$mois]['missing'] = $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['months'][$mois]['total_heures_mois'] - $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['months'][$mois]['presence'];
+			                    $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['months'][$mois]['presence'] += floatval($heuresStagiaires->heures);
+			                    $TSessions[$obj->ref][$trainee->stagerowid]['modalite'][$mode]['total_heures'] += floatval($heuresStagiaires->heures);
 			                }
 			            }
 
@@ -466,7 +460,7 @@ class ReportCalendarByCustomer extends AgefoddExportExcel {
 
 	    if ($filter['so.rowid']) $sql .= ' INNER JOIN llx_agefodd_stagiaire AS sta ON ss.fk_stagiaire = sta.rowid AND ss.fk_soc = '.$this->db->escape($filter['so.rowid']);
 
-	    $sql .= ' WHERE s.entity IN (' . getEntity('agefodd_base') . ')';
+	    $sql .= ' WHERE s.entity IN (' . getEntity('agefodd') . ')';
 
 	    // Manage filter
 	    if (count($filter) > 0) {

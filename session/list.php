@@ -117,31 +117,12 @@ $search_session_status = GETPOST('search_session_status', 'none');
 $search_session_status_before_archive = GETPOST('search_session_status_before_archive', 'none');
 $search_product = GETPOST('search_product', 'none');
 $search_intitule_custo = GETPOST('search_intitule_custo', 'none');
-$search_send_survey_status = GETPOST('search_send_survey_status', 'int');
+
 $search_sale = GETPOST('search_sale', 'int');
 
-if (empty($status_view)) {
+if (empty($status_view))
 	$status_view = $search_session_status; // retrocompatibilité
-}
 
-$hookmanager->initHooks(array(
-	'sessionlist'
-));
-
-$contextpage = 'listsession' . $status_view;
-include DOL_DOCUMENT_ROOT . '/core/actions_changeselectedfields.inc.php';
-
-$agf_session = new Agsession($db);
-$extrafields = new ExtraFields($db);
-$extralabels = $extrafields->fetch_name_optionals_label($agf_session->table_element, true);
-$search_array_options = $extrafields->getOptionalsFromPost('agefodd_session', '', 'search_');
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_type = $extrafields->attributes[$agf_session->table_element]['type'];
-	$extrafields->attribute_size = $extrafields->attributes[$agf_session->table_element]['size'];
-	$extrafields->attribute_unique = $extrafields->attributes[$agf_session->table_element]['unique'];
-	$extrafields->attribute_required = $extrafields->attributes[$agf_session->table_element]['required'];
-	$extrafields->attribute_label = $extrafields->attributes[$agf_session->table_element]['label'];
-}
 // Banner function
 $idforma = GETPOST('idforma', 'int'); // id formation catalogue
 if (! empty($idforma)) {
@@ -156,39 +137,26 @@ if (! empty($idforma)) {
 if (! empty($conf->global->AGF_FILTER_SESSION_LIST_ON_COURANT_MONTH)) {
 	$button_removefilter_x = GETPOST("button_removefilter_x", 'none');
 	$button_search = GETPOST("button_search_x", 'none');
-	if (empty($button_removefilter_x) && empty($button_search) && empty($search_month) && empty($search_year)) {
+	if (empty($button_removefilter_x) && empty($button_search)) {
 		$search_month = date("m");
 		$search_year = date("Y");
 	}
 }
 
-// Since 8.0 sall get parameters is sent with rapid search
-// Global filter (by ref or by id) on sessions
-$sall = GETPOST('sall');
-if (empty($sall)) $sall = GETPOST('search_all','alpha');
-$Tsall  = explode('|', $sall);
-$sall_prefix = $Tsall[0];
-$sall   = $Tsall[1];
-if ($sall_prefix == 'ID')
-	$search_by = "search_id";
-else if ($sall_prefix == 'REF') {
-    $search_by = "search_session_ref";
+//Since 8.0 sall get parameters is sent with rapid search
+$search_by=GETPOST('search_by', 'alpha');
+if (!empty($search_by)) {
+    if ($search_by=="search_id") {
+        $sall=GETPOST('sall', 'int');
+    }else{
+        $sall=GETPOST('sall', 'alpha');
+    }
+	if (!empty($sall)) {
+		${$search_by}=$sall;
+	}
+	$search_month='';
+	$search_year='';
 }
-
-if (GETPOSTISSET('agefodd_session_search_by_id')
-	&& GETPOSTISSET('search_all')
-	&& !empty(GETPOST('search_all','alpha'))) {
-	$search_id = GETPOST('search_all','int');
-}
-
-if (GETPOSTISSET('agefodd_session_search_by_ref')
-	&& GETPOSTISSET('search_all')
-	&& !empty(GETPOST('search_all','alpha'))) {
-	$search_session_ref = GETPOST('search_all','alpha');
-}
-
-if (!empty($sall) && !empty($sall_prefix))
-	${$search_by} = $sall;
 
 // Do we click on purge search criteria ?
 if (GETPOST("button_removefilter_x", 'none')) {
@@ -215,13 +183,20 @@ if (GETPOST("button_removefilter_x", 'none')) {
 	$search_product = '';
 	$search_intitule_custo = '';
 	$search_session_status_before_archive = '';
-	$search_array_options = array();
-    $search_send_survey_status = array();
 }
 
+$hookmanager->initHooks(array(
+		'sessionlist'
+));
 
+$contextpage = 'listsession' . $status_view;
 
+include DOL_DOCUMENT_ROOT . '/core/actions_changeselectedfields.inc.php';
 
+$agf_session = new Agsession($db);
+$extrafields = new ExtraFields($db);
+$extralabels = $extrafields->fetch_name_optionals_label($agf_session->table_element, true);
+$search_array_options = $extrafields->getOptionalsFromPost('agefodd_session', '', 'search_');
 
 if (empty($search_array_options)) $search_array_options = array();
 
@@ -229,7 +204,7 @@ $arrayfields = array(
 		's.rowid' => array(
 				'label' => "Id",
 				'checked' => 1,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.ref' => array(
 				'label' => "SessionRef",
@@ -258,17 +233,17 @@ $arrayfields = array(
 		'c.ref' => array(
 				'label' => "Ref",
 				'checked' => 1,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		'c.ref_interne' => array(
 				'label' => "AgfRefInterne",
 				'checked' => 0,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.type_session' => array(
 				'label' => "AgfFormTypeSession",
 				'checked' => 1,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.dated' => array(
 				'label' => "AgfDateDebut",
@@ -290,7 +265,7 @@ $arrayfields = array(
 		'p.ref_interne' => array(
 				'label' => "AgfLieu",
 				'checked' => 1,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.sell_price' => array(
 				'label' => "AgfCoutFormation",
@@ -350,7 +325,7 @@ $arrayfields = array(
 		's.nb_stagiaire' => array(
 				'label' => "AgfNbreParticipants",
 				'checked' => 1,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.duree_session' => array(
 				'label' => "AgfDuree",
@@ -359,54 +334,39 @@ $arrayfields = array(
 		's.notes' => array(
 				'label' => "AgfNote",
 				'checked' => 1,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.fk_socpeople_presta' => array(
 				'label' => 'AgfTypePresta',
 				'checked' => 0,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.fk_soc_employer' => array(
 				'label' => 'AgfTypeEmployee',
 				'checked' => 0,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		's.fk_soc_requester' => array(
 				'label' => 'AgfTypeRequester',
 				'checked' => 0,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
 		'AgfListParticipantsStatus' => array(
 				'label' => "AgfListParticipantsStatus",
 				'checked' => 1,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
+				'enabled' => (! $user->rights->agefodd->session->trainer)
 		),
         'AgfSheduleBillingState' => array(
                 'label' => "AgfSheduleBillingState",
                 'checked' => 1,
                 'enabled' => (!empty($conf->global->AGF_MANAGE_SESSION_CALENDAR_FACTURATION))
         ),
-		'AgfProgress' => array(
-			'label' => "AgfProgress",
-			'checked' => 1,
-			'enabled' => 1
-		),
-		'AgfAdvancement' => array(
-			'label' => "AgfAdvancement",
-			'checked' => 1,
-			'enabled' => 1
-		),
 		's.fk_product' => array(
 				'label' => "AgfProductServiceLinked",
 				'checked' => 0,
-				'enabled' => (empty($user->rights->agefodd->session->trainer))
-		),
-        's.send_survey_status' => array(
-            'label' => 'SessionSendSurveyStatus',
-            'checked' => 1,
-            'enabled' => 1
-        )
-)   ;
+				'enabled' => (! $user->rights->agefodd->session->trainer)
+		)
+);
 
 foreach ( $arrayfields as $colname => $fields ) {
 	if (array_key_exists('enabled', $fields) && empty($fields['enabled'])) {
@@ -480,11 +440,11 @@ if (! empty($search_soc_employer)) {
 if (! empty($search_soc_requester)) {
 	$filter['sorequester.nom'] = $search_soc_requester;
 }
-if (! empty($search_sale) && $search_sale > 0) {
+if (! empty($search_sale)) {
 	$filter['sale.fk_user_com'] = $search_sale;
 	$option .= '&search_sale=' . $search_sale;
 }
-if (! empty($search_teacher_id) && $search_teacher_id != -1) {
+if (! empty($search_teacher_id) && $search_teacher_id != - 1) {
 	$filter['f.rowid'] = $search_teacher_id;
 	$option .= '&search_teacher_id=' . $search_teacher_id;
 }
@@ -555,13 +515,9 @@ if (! empty($search_session_status)) {
 	$filter['s.status'] = $search_session_status;
 	$option .= '&search_session_status=' . $search_session_status;
 }
-if ($search_product > 0) {
+if (! empty($search_product)) {
 	$filter['s.fk_product'] = $search_product;
 	$option .= '&search_product=' . $search_product;
-}
-if($search_send_survey_status > 0) {
-    $filter['s.send_survey_status'] = $search_send_survey_status;
-    $option .= '&search_send_survey_status=' . $search_send_survey_status;
 }
 if (! empty($limit)) {
 	$option .= '&limit=' . $limit;
@@ -591,7 +547,7 @@ if (is_array($search_array_options) && count($search_array_options)>0) {
 				'select',
 				'sellist'
 		)) || $crit != '0') && (! in_array($typ, array(
-				'link', 'boolean'
+				'link'
 		)) || $crit != '-1')) {
 
 		    if(is_array($crit)){
@@ -698,28 +654,12 @@ $agf = new Agsession($db);
 //Since dolibarr 11 extrafield is global so reload extrafield to avoid extrafeild for non agesession
 $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element, true);
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
-	$extrafields->attribute_size = $extrafields->attributes[$agf->table_element]['size'];
-	$extrafields->attribute_unique = $extrafields->attributes[$agf->table_element]['unique'];
-	$extrafields->attribute_required = $extrafields->attributes[$agf->table_element]['required'];
-	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
-}
+
 // Count total nb of records
 $nbtotalofrecords = 0;
 
 if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
 	$nbtotalofrecords = $agf->fetch_all($sortorder, $sortfield, 0, 0, $filter, $user);
-
-}
-$TKeysExtraLabel = array();
-if(!empty($extrafields->attribute_label)) $TKeysExtraLabel = array_keys($extrafields->attribute_label);
-
-$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $filter, $user, $TKeysExtraLabel, 1);
-
-if ($resql != - 1) {
-
-    //Deplacement du code qui se trouvait sous le fetch_all global
 	if ($user->rights->agefodd->session->margin) {
 
 		$total_sellprice = 0;
@@ -741,7 +681,6 @@ if ($resql != - 1) {
 		$total_invoice_hthf = 0;
 
 		// Loop on session array to calculate easyly normalized amount
-		$oldid = 0;
 		foreach ( $agf->lines as $line ) {
 			if ($line->rowid != $oldid) {
 				$total_sellprice += $line->sell_price;
@@ -789,8 +728,24 @@ if ($resql != - 1) {
 		}
 
 	}
+}
+$resql = $agf->fetch_all($sortorder, $sortfield, $limit, $offset, $filter, $user, array_keys($extrafields->attribute_label));
 
-	$num = $resql;
+if ($resql != - 1) {
+
+	if (is_array($agf->TTotalBySession) && count($agf->TTotalBySession) == 0) {
+		$result = $agf->getTTotalBySession(1);
+		if ($result > 0) {
+			$TTotalBySession = $agf->TTotalBySession;
+		} else {
+			setEventMessages(null, $agf->errors, 'errors');
+		}
+	}
+	if (!empty($agf->lines) && count($agf->lines)>$resql) {
+		$num = count($agf->lines);
+	} else {
+		$num = $resql;
+	}
 
 	$arrayofselected = is_array($toselect) ? $toselect : array();
 
@@ -822,7 +777,7 @@ if ($resql != - 1) {
 	$massactionbutton = $formAgefodd->selectMassSessionsAction();
 	print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $option, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_generic.png', 0, '', '', $limit);
 
-	$moreforfilter = '';
+	$morefilter = '';
 	// If the user can view prospects other than his'
 	if ($user->rights->societe->client->voir || $socid) {
 		$moreforfilter .= '<div class="divsearchfield">';
@@ -1000,22 +955,11 @@ if ($resql != - 1) {
 	if (array_key_exists('AgfSheduleBillingState', $arrayfields) && ! empty($arrayfields['AgfSheduleBillingState']['checked'])) {
 	    print '<td class="liste_titre"></td>';
 	}
-	if (array_key_exists('AgfProgress', $arrayfields) && ! empty($arrayfields['AgfProgress']['checked'])) {
-		print '<td class="liste_titre"></td>';
-	}
-	if (array_key_exists('AgfAdvancement', $arrayfields) && ! empty($arrayfields['AgfAdvancement']['checked'])) {
-		print '<td class="liste_titre"></td>';
-	}
 	if (array_key_exists('s.fk_product', $arrayfields) && ! empty($arrayfields['s.fk_product']['checked'])) {
 		print '<td class="liste_titre">';
 		print $form->select_produits($search_product, 'search_product', '', 10000);
 		print '</td>';
 	}
-    if (array_key_exists('s.send_survey_status', $arrayfields) && ! empty($arrayfields['s.send_survey_status']['checked'])) {
-        print '<td class="liste_titre">';
-        print $formAgefodd->select_send_survey_status($agf,'search_send_survey_status', intval($search_send_survey_status), 1);
-        print '</td>';
-    }
 
 	// Extra fields
 	if (file_exists(DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_list_search_input.tpl.php')) {
@@ -1177,18 +1121,9 @@ if ($resql != - 1) {
 	if (array_key_exists('AgfSheduleBillingState', $arrayfields) && ! empty($arrayfields['AgfSheduleBillingState']['checked'])) {
 	    print_liste_field_titre($langs->trans("AgfSheduleBillingState"), $_SERVER['PHP_SELF'], '', '', $option, '', $sortfield, $sortorder);
 	}
-	if (array_key_exists('AgfProgress', $arrayfields) && ! empty($arrayfields['AgfProgress']['checked'])) {
-		print_liste_field_titre($langs->trans("AgfProgress"), $_SERVER['PHP_SELF'], '', '', $option, '', $sortfield, $sortorder);
-	}
-	if (array_key_exists('AgfAdvancement', $arrayfields) && ! empty($arrayfields['AgfAdvancement']['checked'])) {
-		print_liste_field_titre($langs->trans("AgfAdvancement"), $_SERVER['PHP_SELF'], '', '', $option, '', $sortfield, $sortorder);
-	}
 	if (array_key_exists('s.fk_product', $arrayfields) && ! empty($arrayfields['s.fk_product']['checked'])) {
 		print_liste_field_titre($langs->trans("AgfProductServiceLinked"), $_SERVER['PHP_SELF'], '', '', $option, '', $sortfield, $sortorder);
 	}
-    if (array_key_exists('s.send_survey_status', $arrayfields) && ! empty($arrayfields['s.send_survey_status']['checked'])) {
-        print_liste_field_titre($langs->trans($arrayfields['s.send_survey_status']['label']), $_SERVER['PHP_SELF'], '', '', $option, '', $sortfield, $sortorder);
-    }
 
 	// Extra fields
 	if (is_array($extrafields->attributes[$agf_session->table_element]['label']) && count($extrafields->attributes[$agf_session->table_element]['label']) > 0) {
@@ -1213,18 +1148,9 @@ if ($resql != - 1) {
 	$var = true;
 	$oldid = 0;
 	foreach ( $agf->lines as $line ) {
+
 		if ($line->rowid != $oldid) {
-			$oldTaskAdminStatus = $line->admin_task_close_session;
-			$isGreen = false;
-		    if(! empty($conf->global->AGF_SHOW_COLORED_LINK)) {
-		        $isGreen = true;
-		        foreach($agf->lines as $linetmp) {
-		            if($linetmp->rowid == $line->rowid && empty($linetmp->admin_task_close_session)) {
-		                $isGreen = false;
-		                break;
-		            }
-		        }
-		    }
+
 			// Affichage tableau des sessions
 			print '<tr class="oddeven">';
 			// Calcul de la couleur du lien en fonction de la couleur définie sur la session
@@ -1236,7 +1162,7 @@ if ($resql != - 1) {
 			if ($line->color && ((($couleur_rgb[0] * 299) + ($couleur_rgb[1] * 587) + ($couleur_rgb[2] * 114)) / 1000) < 125) {
 				$color_a = ' style="color: #FFFFFF;"';
 			}
-			if (! empty($conf->global->AGF_SHOW_COLORED_LINK) && $isGreen) { // Ancienne fonctionnalité perdue dans le néant
+			if (! empty($conf->global->AGF_SHOW_COLORED_LINK) && ! empty($line->admin_task_close_session)) { // Ancienne fonctionnalité perdue dans le néant
 				$color_a = ' style="color: green;"';
 			}
 			if (array_key_exists('s.rowid', $arrayfields) && ! empty($arrayfields['s.rowid']['checked'])) {
@@ -1312,10 +1238,10 @@ if ($resql != - 1) {
 				print '<td>' . ($line->type_session ? $langs->trans('AgfFormTypeSessionInter') : $langs->trans('AgfFormTypeSessionIntra')) . '</td>';
 			}
 			if (array_key_exists('s.dated', $arrayfields) && ! empty($arrayfields['s.dated']['checked'])) {
-				print '<td>' . dol_print_date($line->dated, "%d/%m/%Y") . '</td>';
+				print '<td>' . dol_print_date($line->dated, 'daytextshort') . '</td>';
 			}
 			if (array_key_exists('s.datef', $arrayfields) && ! empty($arrayfields['s.datef']['checked'])) {
-				print '<td>' . dol_print_date($line->datef, "%d/%m/%Y") . '</td>';
+				print '<td>' . dol_print_date($line->datef, 'daytextshort') . '</td>';
 			}
 			if (array_key_exists('dicstatus.intitule', $arrayfields) && ! empty($arrayfields['dicstatus.intitule']['checked'])) {
 				print '<td>';
@@ -1383,7 +1309,7 @@ if ($resql != - 1) {
 
 			if (array_key_exists('AgfMargin', $arrayfields) && ! empty($arrayfields['AgfMargin']['checked'])) {
 				print '<td nowrap="nowrap"  name="margininfoline7' . $line->rowid . '">';
-				if (!empty($TTotalBySession[$line->rowid]) && $TTotalBySession[$line->rowid]['invoice']['total_ht'] > 0) {
+				if ($TTotalBySession[$line->rowid]['invoice']['total_ht'] > 0) {
 					$margin = $TTotalBySession[$line->rowid]['invoice']['total_ht'] - ($line->cost_trainer + $line->cost_other);
 					$percentmargin = price((($margin * 100) / $TTotalBySession[$line->rowid]['invoice']['total_ht']), 0, $langs, 1, 0, 1) . '%';
 				} else {
@@ -1477,18 +1403,6 @@ if ($resql != - 1) {
 			    print displayProgress($roundedBilled, '', $billed."/".$total, '6em');
 			    print '</td>';
 			}
-			if (array_key_exists('AgfProgress', $arrayfields) && ! empty($arrayfields['AgfProgress']['checked'])) {
-				$progress = !empty($line->nb_place) ? ($line->nb_stagiaire * 100 / $line->nb_place) : 0;
-				print '<td>';
-				print $progress . '%';
-				print '</td>';
-			}
-			//View progress-bar on list
-			if (array_key_exists('AgfAdvancement', $arrayfields) && ! empty($arrayfields['AgfAdvancement']['checked'])) {
-				print '<td>';
-                print getAgefoddSessionLinePlaceReservationProgressBar($line, true);
-                print '</td>';
-			}
 			if (array_key_exists('s.fk_product', $arrayfields) && ! empty($arrayfields['s.fk_product']['checked'])) {
 				if (! empty($line->fk_product)) {
 					$product = new Product($db);
@@ -1500,14 +1414,7 @@ if ($resql != - 1) {
 				print '<td>' . $productlink . '</td>';
 			}
 
-            if (array_key_exists('s.send_survey_status', $arrayfields) && ! empty($arrayfields['s.send_survey_status']['checked'])) {
-                print '<td>';
-                print $agf->showOutputField($agf->fields, 'send_survey_status', $line->send_survey_status);
-                print '</td>';
-            }
-
 			// Extra fields
-			$totalarray = array('nbfield' => 0);
 			if (is_array($extrafields->attributes[$agf_session->table_element]['label']) && count($extrafields->attributes[$agf_session->table_element]['label']) > 0) {
 				foreach ($extrafields->attributes[$agf_session->table_element]['label'] as $key=>$label) {
 					if (! empty($arrayfields["ef." . $key]['checked'])) {
@@ -1517,7 +1424,7 @@ if ($resql != - 1) {
 							print ' align="' . $align . '"';
 						print '>';
 						$tmpkey = 'options_' . $key;
-						print $extrafields->showOutputField($key, $line->array_options[$tmpkey], '', 'agefodd_session');
+						print $extrafields->showOutputField($key, $line->array_options[$tmpkey], '');
 						print '</td>';
 						if (! $i)
 							$totalarray['nbfield'] ++;
@@ -1547,7 +1454,6 @@ if ($resql != - 1) {
 			// print '<td>&nbsp;</td>';
 			print "</tr>\n";
 		} else {
-			if($oldTaskAdminStatus != $line->admin_task_close_session) continue;
 			print '<tr class="oddeven">';
 			if (array_key_exists('s.rowid', $arrayfields) && ! empty($arrayfields['s.rowid']['checked'])) {
 				print '<td></td>';
@@ -1672,12 +1578,6 @@ if ($resql != - 1) {
 			}
 			if (array_key_exists('AgfSheduleBillingState', $arrayfields) && ! empty($arrayfields['AgfSheduleBillingState']['checked'])) {
 			    print '<td></td>';
-			}
-			if (array_key_exists('AgfProgress', $arrayfields) && ! empty($arrayfields['AgfProgress']['checked'])) {
-				print '<td></td>';
-			}
-			if (array_key_exists('AgfAdvancement', $arrayfields) && ! empty($arrayfields['AgfAdvancement']['checked'])) {
-				print '<td></td>';
 			}
 			if (array_key_exists('s.fk_product', $arrayfields) && ! empty($arrayfields['s.fk_product']['checked'])) {
 				print '<td></td>';
@@ -1805,12 +1705,6 @@ if ($resql != - 1) {
 	}
 	if (array_key_exists('AgfSheduleBillingState', $arrayfields) && ! empty($arrayfields['AgfSheduleBillingState']['checked'])) {
 	    print '<td></td>';
-	}
-	if (array_key_exists('AgfProgress', $arrayfields) && ! empty($arrayfields['AgfProgress']['checked'])) {
-		print '<td></td>';
-	}
-	if (array_key_exists('AgfAdvancement', $arrayfields) && ! empty($arrayfields['AgfAdvancement']['checked'])) {
-		print '<td></td>';
 	}
 	if (array_key_exists('s.fk_product', $arrayfields) && ! empty($arrayfields['s.fk_product']['checked'])) {
 		print '<td></td>';

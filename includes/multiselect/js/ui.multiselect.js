@@ -177,9 +177,6 @@ $.widget("ui.multiselect", {
 		item.data('optionLink').attr('selected', selected);
 
 		if (selected) {
-			var oldItem = item.data('optionLink');
-			oldItem.appendTo(oldItem.parent());
-
 			var selectedItem = this._cloneWithData(item);
 			item[this.options.hide](this.options.animated, function() { $(this).remove(); });
 			selectedItem.appendTo(this.selectedList).hide()[this.options.show](this.options.animated);

@@ -76,7 +76,7 @@ $extracss = array (
 );
 
 llxHeader('', $langs->trans('AgfMenuReportByCustomer'), '', '', '', '', $extrajs, $extracss);
-$upload_dir = $conf->agefodd->dir_output . '/report/bycust';
+$upload_dir = $conf->agefodd->dir_output . '/report/bycust/';
 
 $agf = new Agsession($db);
 
@@ -98,7 +98,7 @@ if (! empty($session_dt_st)) {
 if (! empty($session_dt_end)) {
 	$filter['sesscal.date_session']['end'] = $session_dt_end;
 }
-if (! empty($search_sale) && $search_sale > 0) {
+if (! empty($search_sale)) {
 	$filter['sale.fk_user_com'] = $search_sale;
 }
 if ($search_type_session != '' && $search_type_session != - 1) {
@@ -144,7 +144,7 @@ if ($action == 'builddoc') {
 	if(!empty($avoidNotLinked)) $report_by_cust->avoidNotLinkedInvoices = 1;
 
 	$file_sub_title=$report_by_cust->getSubTitlFileName($filter);
-	$report_by_cust->file = $upload_dir . '/reportbycust-' . $file_sub_title . '.xlsx';
+	$report_by_cust->file = $upload_dir . 'reportbycust-' . $file_sub_title . '.xlsx';
 
 	$result = $report_by_cust->write_file($filter);
 	if ($result < 0) {

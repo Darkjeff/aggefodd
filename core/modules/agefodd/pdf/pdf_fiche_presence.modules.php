@@ -30,7 +30,6 @@ dol_include_once('/agefodd/class/agefodd_convention.class.php');
 dol_include_once('/agefodd/class/agefodd_place.class.php');
 dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
 dol_include_once('/agefodd/class/agefodd_session_calendrier.class.php');
-dol_include_once('/agefodd/class/agefodd_signature.class.php');
 dol_include_once('/core/lib/pdf.lib.php');
 dol_include_once('/agefodd/lib/agefodd.lib.php');
 dol_include_once('/core/lib/company.lib.php');
@@ -73,9 +72,6 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 	protected $agf_date;
 	/** @var Agefodd_opca[] $TOpco (associatif: la clé est le no. de dossier) */
 	protected $TOpco;
-
-	const MAX_WIDTH_FOR_CELL_SIGNATURE = 17;
-	const MAX_HEIGHT_FOR_CELL_SIGNATURE = 8;
 
 	/**
 	 * Constructor
@@ -131,7 +127,7 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 		// "taquets" d'alignement des textes pour l'encadré "La formation"
 		$this->formation_widthcol1 = 20; // titres "Intitulé", "Période", "Session"
 		$this->formation_widthcol2 = 80; // valeurs pour intitulé, période, session
-		$this->formation_widthcol3 = 35; // titre "Lieu de formation"
+		$this->formation_widthcol3 = 27; // titre "Lieu de formation"
 		$this->formation_widthcol4 = 65; // adresse du lieu de formation
 
 		// largeur page = 210, les marges font 20 donc largeur utile = 190
@@ -452,7 +448,6 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 	 */
 	function printPersonLine($type, $line, $n = 0, $dates_array = array())
 	{
-		global $conf, $langs;
 		$this->pdf->SetFont(pdf_getPDFFont($this->outputlangs), '', 9);
 		$nbTimeSlots = count($dates_array);
 		if ($type === 'formateurs') {
@@ -475,24 +470,8 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 			$str = (!empty($line->lastname) ? strtoupper($line->lastname) : strtoupper($line->name)) . ' ' . ucfirst($line->firstname);
 			$this->pdf->MultiCell($this->trainer_widthcol1, $this->h_ligne, $this->outputlangs->convToOutputCharset($str), 1, "L", false, 1, '', '', true, 0, false, false, $this->h_ligne, 'M');
 
-			$agfSign = new AgefoddSignature($this->db);
-			for ($i = 0; $i <= $nbTimeSlots - 1; $i++) {
-				$this->pdf->Rect($this->marge_gauche + $this->trainer_widthcol1 + ($timeSlotWidth * $i), $posY, $timeSlotWidth, $this->h_ligne);
-
-				if (getDolGlobalInt('AGF_DISPLAY_SIGNATURE_TRAINEE')) {
-					// signature
-					$path = $agfSign->getPathToImg($dates_array[$i]->sessid, $dates_array[$i]->id, $line->formid, 'trainer');
-					$width = 40;
-					if ($this->agf->status == Agsession::STATUS_REALISED && ($line->trainer_status == Agefodd_session_formateur::STATUS_IN_SESSION_NOT_PRESENT || !is_readable($path) )){
-						$this->pdf->MultiCell($timeSlotWidth, $this->h_ligne, $this->outputlangs->convToOutputCharset($langs->trans('AgfStatusCalendar_missing')), 0, "C", false, 1, $this->marge_gauche + $this->trainer_widthcol1 + ($timeSlotWidth * $i), $posY, true, 0, false, true, $this->h_ligne, 'M');
-					} else if (is_readable($path)) {
-//						$this->pdf->Image($path, $this->marge_gauche + $this->trainer_widthcol1 + $timeSlotWidth * $i + ($width / 2), $posY, $width, 0, '', '', 'center');
-						require_once DOL_DOCUMENT_ROOT . '/core/lib/images.lib.php';
-						$TRealSizeLogo=dol_getImageSize($path);
-						$TSize = $this->getGoodImageDimensionsForSignatureImage($TRealSizeLogo['width'], $TRealSizeLogo['height']);
-						$this->pdf->Image($path, $this->marge_gauche + $this->trainer_widthcol1 + ($timeSlotWidth * $i) + ($timeSlotWidth/2 - $TSize['width']/2), $posY+1, $TSize['width'], $TSize['height'], '', '', 'C');
-					}
-				}
+			for ($i = 0; $i < $nbTimeSlots - 1; $i++) {
+				$this->pdf->Rect($this->marge_gauche + $this->trainer_widthcol1 + $timeSlotWidth * $i, $posY, $timeSlotWidth, $this->h_ligne);
 			}
 		} elseif ($type === 'stagiaires') {
 			$timeSlotWidth = $this->trainee_widthtimeslot;
@@ -501,7 +480,7 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 				$nbTimeSlots = count($dates_array);
 				$timeSlotWidth = ($this->espaceH_dispo - $this->trainee_widthcol1 - (empty($conf->global->AGF_HIDE_SOCIETE_FICHEPRES) ? $this->trainee_widthcol2 : 0)) / $nbTimeSlots;
 			}
-			$this->printTraineeLine($line, $n, $nbTimeSlots, $timeSlotWidth, $dates_array);
+			$this->printTraineeLine($line, $n, $nbTimeSlots, $timeSlotWidth);
 		}
 	}
 
@@ -743,9 +722,9 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 	 * @param int               $timeSlotWidth largeur de colonne pour un créneau
 	 * @return array
 	 */
-	function printTraineeLine(&$line, $nbsta_index, $nbTimeSlots, $timeSlotWidth, $dates_array = array())
+	function printTraineeLine(&$line, $nbsta_index, $nbTimeSlots, $timeSlotWidth)
 	{
-		global $conf, $langs;
+		global $conf;
 		$posX = $this->pdf->GetX();
 		$posY = $this->pdf->GetY();
 
@@ -811,43 +790,13 @@ class pdf_fiche_presence extends ModelePDFAgefodd
 			$this->pdf->MultiCell($this->trainee_widthcol2, $this->h_ligne, $this->outputlangs->convToOutputCharset($str), 1, "C", false, 1, '', '', true, 0, false, false, $this->h_ligne, 'M');
 		}
 
-		for ($i = 0; $i <= $nbTimeSlots - 1; $i++) {
-
+		for ($i = 0; $i < $nbTimeSlots - 1; $i++) {
 			$this->pdf->Rect($posX + $this->trainee_widthcol1 + $this->trainee_widthcol2 + $timeSlotWidth * $i, $posY, $timeSlotWidth, $this->h_ligne);
-
-			$agfSign = new AgefoddSignature($this->db);
-			// signature
-			if (getDolGlobalInt('AGF_DISPLAY_SIGNATURE_TRAINEE')){
-				$path = $agfSign->getPathToImg($dates_array[$i]->sessid, $dates_array[$i]->id, $line->id);
-
-
-				if  ($this->agf->status == Agsession::STATUS_REALISED && ($line->trainer_status == Agefodd_session_formateur::STATUS_IN_SESSION_NOT_PRESENT || !is_readable($path))){
-
-					$this->pdf->MultiCell($timeSlotWidth, $this->h_ligne, $this->outputlangs->convToOutputCharset($langs->trans('AgfStatusCalendar_missing')), 0, "C", false, 1, $posX + $this->trainee_widthcol1 + $this->trainee_widthcol2 + ($timeSlotWidth * $i), $posY, true, 0, false, false, $this->h_ligne, 'M');
-				}elseif (is_readable($path)){
-					require_once DOL_DOCUMENT_ROOT . '/core/lib/images.lib.php';
-					$TRealSizeLogo=dol_getImageSize($path);
-					$TSize = $this->getGoodImageDimensionsForSignatureImage($TRealSizeLogo['width'], $TRealSizeLogo['height']);
-					$this->pdf->Image($path, $posX + $this->trainee_widthcol1 + $this->trainee_widthcol2 + ($timeSlotWidth * $i) + ($timeSlotWidth/2 - $TSize['width']/2), $posY+1, $TSize['width'], $TSize['height']);
-				}
-			}
-
-
-
 		}
 
 		$posY = $this->pdf->GetY();
 
 		return array($posX, $posY);
-	}
-
-	function getGoodImageDimensionsForSignatureImage($w, $h) {
-
-		if($w <= self::MAX_WIDTH_FOR_CELL_SIGNATURE && $h <= self::MAX_HEIGHT_FOR_CELL_SIGNATURE) return array('width'=>round($w), 'height'=>round($h));
-		else {
-			return $this->getGoodImageDimensionsForSignatureImage($w * 0.9, $h * 0.9);
-		}
-
 	}
 
 	/**
@@ -1038,7 +987,7 @@ class pdf_fiche_presence extends ModelePDFAgefodd
         if(!empty($time))
         {
             $this->pdf->SetXY($posX + $this->formation_widthcol1 + $this->formation_widthcol2, $posY_col4);
-            $str = $this->outputlangs->transnoentities('AgfPDFFichePresNbHours') . ' :';
+            $str = $this->outputlangs->transnoentities('Nombre d\'heures :');
             $this->pdf->SetFont(pdf_getPDFFont($this->outputlangs), 'B', 9);
             $this->pdf->Cell($this->formation_widthcol3, 4, $this->outputlangs->convToOutputCharset($str), 0, 2, "L", 0);
 

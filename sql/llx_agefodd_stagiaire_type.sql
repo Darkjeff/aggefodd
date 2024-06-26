@@ -26,7 +26,7 @@
 CREATE TABLE IF NOT EXISTS llx_agefodd_stagiaire_type (
   rowid integer NOT NULL auto_increment PRIMARY KEY,
   intitule varchar(255) NOT NULL,
-  sort smallint NOT NULL default 0,
-  active integer NULL default 0,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  sort smallint NOT NULL,
+  active integer NULL,
+  tms timestamp NOT NULL
 ) ENGINE=InnoDB;

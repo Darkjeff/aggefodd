@@ -61,9 +61,6 @@ require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
  * View
  */
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 llxHeader('', $langs->trans("AgefoddSetupDesc"));
 
 $linkback = '<a href="' . DOL_URL_ROOT . '/admin/modules.php">' . $langs->trans("BackToModuleList") . '</a>';
@@ -79,13 +76,7 @@ print '<br>';
 
 // Load attribute_label
 $extrafields->fetch_name_optionals_label($elementtype);
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_type = $extrafields->attributes[$elementtype]['type'];
-	$extrafields->attribute_size = $extrafields->attributes[$elementtype]['size'];
-	$extrafields->attribute_unique = $extrafields->attributes[$elementtype]['unique'];
-	$extrafields->attribute_required = $extrafields->attributes[$elementtype]['required'];
-	$extrafields->attribute_label = $extrafields->attributes[$elementtype]['label'];
-}
+
 print "<table summary=\"listofattributes\" class=\"noborder\" width=\"100%\">";
 
 print '<tr class="liste_titre">';
@@ -109,7 +100,7 @@ foreach ( $extrafields->attribute_type as $key => $value ) {
 	print '<td align="center">' . yn($extrafields->attribute_unique [$key]) . "</td>\n";
 	print '<td align="center">' . yn($extrafields->attribute_required [$key]) . "</td>\n";
 	print '<td align="right"><a href="' . $_SERVER ["PHP_SELF"] . '?action=edit&attrname=' . $key . '">' . img_edit() . '</a>';
-	print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete".$urlToken."&attrname=$key\">" . img_delete() . "</a></td>\n";
+	print "&nbsp; <a href=\"" . $_SERVER ["PHP_SELF"] . "?action=delete&attrname=$key\">" . img_delete() . "</a></td>\n";
 	print "</tr>";
 }
 

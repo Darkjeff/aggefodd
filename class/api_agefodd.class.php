@@ -40,7 +40,6 @@
  dol_include_once('/agefodd/class/agefodd_place.class.php');
  dol_include_once('/agefodd/class/agefodd_reginterieur.class.php');
  dol_include_once('/agefodd/class/agefodd_opca.class.php');
- dol_include_once('/agefodd/class/agefodd_signature.class.php');
 
  dol_include_once('agefodd/lib/agefodd.lib.php');
 
@@ -267,7 +266,7 @@ class Agefodd extends DolibarrApi
 
         $result = $this->session->fetch_all($sortorder, $sortfield, $limit, $offset, $filter, $u, $array_options_keys=array());
 
-        if ($result >= 0)
+        if ($result > 0)
         {
             foreach ($this->session->lines as $line){
                 $obj_ret[] = $this->_cleanObjectDatas($line);
@@ -1085,13 +1084,6 @@ class Agefodd extends DolibarrApi
             $obj->date_session = date("Y-m-d", $line->date_session);
             $obj->heured = date("Y-m-d H:i:s", $line->heured);
             $obj->heuref = date("Y-m-d H:i:s", $line->heuref);
-            $obj->calendrier_type_label = $line->calendrier_type_label;
-            $obj->status = $line->status;
-            $obj->status_label = $line->getStaticLibStatut($line->status);
-            $obj->billed = ($line->billed) ? true : false;
-            $obj->datec = date("Y-m-d H:i:s", $this->db->jdate($line->datec));
-			$obj->tms = date("Y-m-d H:i:s", $this->db->jdate($line->tms));
-            $obj->fk_user_author = $line->fk_user_author;
 
             $obj_ret[] = $obj;
         }
@@ -1147,23 +1139,10 @@ class Agefodd extends DolibarrApi
     {
         dol_include_once('/core/lib/date.lib.php');
 
-        $sql = "SELECT code, label FROM ".MAIN_DB_PREFIX."c_agefodd_session_calendrier_type WHERE active = 1";
-        $resql = $this->db->query($sql);
-        $TType = array();
-        if ($resql)
-        {
-            while ($objp = $this->db->fetch_object($resql))
-            {
-                $TType[$objp->code] = $objp->label;
-            }
-        }
-
         if(!isset($request['weekday']) || empty($request['weekday']) || !is_array($request['weekday'])) throw new RestException(503, "weekday must be provided for this mode. It must be an array with day of the week's numbers from 0 (Sunday) to 6 (Saturday).");
         if(!isset($request['datestart']) || empty($request['datestart'])) throw new RestException(503, "datestart must be provided for this mode. It must be a string date with format yyyy-mm-dd");
         if(!isset($request['dateend']) || empty($request['dateend'])) throw new RestException(503, "dateend must be provided for this mode. It must be a string date with format yyyy-mm-dd");
         if(!isset($request['hours1']) || empty($request['hours1']) || !is_array($request['hours1'])) throw new RestException(503, 'hours1 must be provided for this mode. It must be an array($starthour, $endhour). Hours must be in 24h format like 08:30 or 15:15. You can define hours2 to have 2 range of hours per day');
-        if (isset($request['status']) && ! in_array($request['status'], array(0,1,2,3,-1))) throw new RestException(503, "if status is provided for this mode. it must be number between -1 and 3");
-        if (isset($request['type']) && ! in_array($request['type'], array_keys($TType))) throw new RestException(503, "if type is provided for this mode. value mus be in ('".implode("','", array_keys($TType))."')");
 
         if(count($request['hours1']) !== 2) throw new RestException(503, "You must provide a start hour and an end hour for hours1");
         foreach ($request['hours1'] as $hour) {
@@ -1197,11 +1176,6 @@ class Agefodd extends DolibarrApi
                 $this->sessioncalendar->heured = dol_mktime($heure_tmp_arr[0], $heure_tmp_arr[1], 0, dol_print_date($treatmentdate, "%m"), dol_print_date($treatmentdate, "%d"), dol_print_date($treatmentdate, "%Y"));
                 $heure_tmp_arr = explode(':', $request['hours1'][1]);
                 $this->sessioncalendar->heuref = dol_mktime($heure_tmp_arr[0], $heure_tmp_arr[1], 0, dol_print_date($treatmentdate, "%m"), dol_print_date($treatmentdate, "%d"), dol_print_date($treatmentdate, "%Y"));
-                if (isset($request['status'])) $this->sessioncalendar->status = $request['status'];
-                if (isset($request['type'])) $this->sessioncalendar->calendrier_type = $request['type'];
-                if (isset($request['datec'])) $this->sessioncalendar->datec = $request['datec'];
-                if (isset($request['tms'])) $this->sessioncalendar->tms = $request['tms'];
-                if (isset($request['fk_user_author'])) $this->sessioncalendar->fk_user_author = $request['fk_user_author'];
 
                 $result = $this->sessioncalendar->create(DolibarrApiAccess::$user);
                 if ($result < 0) throw new RestException(500, "Creation error", array($this->session->error, $this->db->lastqueryerror));
@@ -1215,11 +1189,6 @@ class Agefodd extends DolibarrApi
                     $this->sessioncalendar->heured = dol_mktime($heure_tmp_arr[0], $heure_tmp_arr[1], 0, dol_print_date($treatmentdate, "%m"), dol_print_date($treatmentdate, "%d"), dol_print_date($treatmentdate, "%Y"));
                     $heure_tmp_arr = explode(':', $request['hours2'][1]);
                     $this->sessioncalendar->heuref = dol_mktime($heure_tmp_arr[0], $heure_tmp_arr[1], 0, dol_print_date($treatmentdate, "%m"), dol_print_date($treatmentdate, "%d"), dol_print_date($treatmentdate, "%Y"));
-                    if (isset($request['status'])) $this->sessioncalendar->status = $request['status'];
-                    if (isset($request['type'])) $this->sessioncalendar->calendrier_type = $request['type'];
-					if (isset($request['datec'])) $this->sessioncalendar->datec = $request['datec'];
-					if (isset($request['tms'])) $this->sessioncalendar->tms = $request['tms'];
-					if (isset($request['fk_user_author'])) $this->sessioncalendar->fk_user_author = $request['fk_user_author'];
 
                     $result = $this->sessioncalendar->create(DolibarrApiAccess::$user);
                     if ($result < 0) throw new RestException(500, "Creation error", array($this->session->error, $this->db->lastqueryerror));
@@ -1239,38 +1208,18 @@ class Agefodd extends DolibarrApi
      */
     function _sessioncalendarAddPeriod($sessid, $request)
     {
-
-        $sql = "SELECT code, label FROM ".MAIN_DB_PREFIX."c_agefodd_session_calendrier_type WHERE active = 1";
-        $resql = $this->db->query($sql);
-        $TType = array();
-        if ($resql)
-        {
-            while ($objp = $this->db->fetch_object($resql))
-            {
-                $TType[$objp->code] = $objp->label;
-            }
-        }
-
         if(!isset($request['date']) || empty($request['date'])) throw new RestException(503, "date must be provided for this mode. It must be a string date with the format yyyy-mm-dd");
         if(!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $request['date'])) throw new RestException(503, "Bad date format");
 
         if(!isset($request['start_hour']) || !preg_match('/^[0-9]{2}:[0-9]{2}$/', $request['start_hour'])) throw new RestException(503, "start_hour must be provided for this mode. With 24h format for ex.: 14:30 or 09:00");
         if(!isset($request['end_hour']) || !preg_match('/^[0-9]{2}:[0-9]{2}$/', $request['start_hour'])) throw new RestException(503, "end_hour must be provided for this mode. With 24h format for ex.: 14:30 or 09:00");
-        if (isset($request['status']) && ! in_array($request['status'], array(0,1,2,3,-1))) throw new RestException(503, "if status is provided for this mode. it must be number between -1 and 3");
-        if (isset($request['type']) && ! in_array($request['type'], array_keys($TType))) throw new RestException(503, "if type is provided for this mode. value mus be in ('".implode("','", array_keys($TType))."')");
 
         $this->sessioncalendar = new Agefodd_sesscalendar($this->db);
 
         $this->sessioncalendar->sessid = $this->session->id;
         $this->sessioncalendar->date_session = dol_mktime(0, 0, 0, substr($request['date'], 5, 2), substr($request['date'], 8, 2), substr($request['date'], 0, 4));
 
-        if (isset($request['status'])) $this->sessioncalendar->status = $request['status'];
-        if (isset($request['type'])) $this->sessioncalendar->calendrier_type = $request['type'];
-		if (isset($request['datec'])) $this->sessioncalendar->datec = $request['datec'];
-		if (isset($request['tms'])) $this->sessioncalendar->tms = $request['tms'];
-		if (isset($request['fk_user_author'])) $this->sessioncalendar->fk_user_author = $request['fk_user_author'];
-
-		// From calendar selection
+        // From calendar selection
         $heure_tmp_arr = array();
 
         $heured_tmp = $request['start_hour'];
@@ -1291,50 +1240,28 @@ class Agefodd extends DolibarrApi
         return array(
             'success' => array(
                 'code' => 200,
-                'message' => 'Period '.$result.' added to the session calendar',
-		'return_id' => $result
+                'message' => 'Period added to the session calendar'
             )
         );
     }
 
-	/**
-	 * Update a session calendar period
-	 *
-	 * @param int $id ID of the period
-	 * @param string $date_session date of period with format "yyyy-mm-dd"
-	 * @param string $starthour hour with format "hh:ii"
-	 * @param string $endhour hour with format "hh:ii"
-	 * @param string $status status id between -1 and 3
-	 * @param string $type	calendar type value must be in calendar type dictionary
-	 * @param int $billed boolean to know if period has been invoiced or not
-	 *
-	 * @return array
-	 * @throws RestException
-	 *
-	 * @url PUT /sessions/calendar/updateperiod/
-	 */
-    function sessionCalendarPutPeriod($id, $date_session = '', $starthour = '', $endhour = '', $status = '', $type = '', $billed = -1)
+    /**
+     * Update a session calendar period
+     *
+     * @param int $id ID of the period
+     *
+     * @url PUT /sessions/calendar/updateperiod/
+     */
+    function sessionCalendarPutPeriod($id, $date_session = '', $starthour = '', $endhour = '')
     {
         if(! DolibarrApiAccess::$user->rights->agefodd->creer) {
             throw new RestException(401, 'Modification not allowed for login '.DolibarrApiAccess::$user->login);
         }
 
-		$sql = "SELECT code, label FROM ".MAIN_DB_PREFIX."c_agefodd_session_calendrier_type WHERE active = 1";
-		$resql = $this->db->query($sql);
-		$TType = array();
-		if ($resql)
-		{
-			while ($objp = $this->db->fetch_object($resql))
-			{
-				$TType[$objp->code] = $objp->label;
-			}
-		}
-
         $this->sessioncalendar = new Agefodd_sesscalendar($this->db);
         $result = $this->sessioncalendar->fetch($id);
         if($result<0) throw new RestException(404, "Period not found");
 
-		$TStatusAvailable = array_keys($this->sessioncalendar->getListStatus());
         if(!empty($date_session))
         {
             if(!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $date_session)) throw new RestException(503, "Bad date format. It must be in format yyyy-mm-dd");
@@ -1368,16 +1295,6 @@ class Agefodd extends DolibarrApi
             $tmpM = date("i",$this->sessioncalendar->heuref);
         }
         $this->sessioncalendar->heuref = dol_mktime($tmpH, $tmpM, 0, date("m", $this->sessioncalendar->date_session), date("d", $this->sessioncalendar->date_session), date("Y", $this->sessioncalendar->date_session));
-
-		if ($billed != -1) $this->sessioncalendar->billed = $billed;
-
-		if ($status === '') $status = $this->sessioncalendar->status;
-		if ($status != '' && ! in_array($status, $TStatusAvailable)) throw new RestException(503, "if status is provided for this mode. it must be number between -1 and 3");
-		$this->sessioncalendar->status = $status;
-
-		if ($type === '') $type = $this->sessioncalendar->calendrier_type;
-		if (!empty($type) && ! in_array($type, array_keys($TType))) throw new RestException(503, "if type is provided for this mode. value must be in ('".implode("','", array_keys($TType))."') and ");
-		$this->sessioncalendar->calendrier_type = $type;
 
         $result = $this->sessioncalendar->update(DolibarrApiAccess::$user, 1);
         if($result < 0) throw new RestException(500, "Modification error", array($this->session->error, $this->db->lastqueryerror));
@@ -1818,266 +1735,6 @@ class Agefodd extends DolibarrApi
         );
     }
 
-    /**
-     * @param $sessid
-     * @param $traineeid
-     * @param $fk_calendrier
-     * @return mixed
-     * @throws RestException
-     *
-     * @url GET /signature/trainee/
-     */
-    function sessionGetTraineeSignature($sessid, $traineeid, $fk_calendrier)
-    {
-        if(! DolibarrApiAccess::$user->rights->agefodd->lire) {
-            throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
-        }
-
-        $this->traineeSignature = new AgefoddSignature($this->db);
-        $signatureResult = $this->traineeSignature->fetchAll('', '', 0, 0, ['customsql' => ' fk_calendrier = '.((int)$fk_calendrier).' AND fk_person = '.((int)$traineeid).' AND fk_session = '.((int)$sessid).' AND person_type = "'.$this->db->escape('trainee').'" ']);
-        $path = array_values($signatureResult)[0]->path;
-        if(is_readable($path)){
-            $signatureImg = file_get_contents($path);
-            $dataSignature = base64_encode($signatureImg);
-        }
-        else
-        {
-            throw new RestException(204, 'Error while retrieving the trainee signature in session calendar', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        return $dataSignature;
-    }
-
-    /**
-     * @param $sessid
-     * @param $trainerid
-     * @param $fk_calendrier
-     * @return string
-     * @throws RestException
-     *
-     * @url GET /signature/trainer/
-     */
-    function sessionGetTrainerSignature($sessid, $trainerid, $fk_calendrier)
-    {
-        if(! DolibarrApiAccess::$user->rights->agefodd->lire) {
-            throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
-        }
-
-        $this->trainerSignature = new AgefoddSignature($this->db);
-        $signatureResult = $this->trainerSignature->fetchAll('', '', 0, 0, ['customsql' => ' fk_calendrier = '.((int)$fk_calendrier).' AND fk_person = '.((int)$trainerid).' AND fk_session = '.((int)$sessid).' AND person_type = "'.$this->db->escape('trainer').'" ']);
-        $path = array_values($signatureResult)[0]->path;
-        if(is_readable($path)){
-            $signatureImg = file_get_contents($path);
-            $dataSignature = base64_encode($signatureImg);
-        }
-        else
-        {
-            throw new RestException(204, 'Error while retrieving the trainee signature in session calendar', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        return $dataSignature;
-    }
-
-    /**
-     * @param $sessId			id of agefodd session
-     * @param $traineeId		id of trainee
-     * @param $fk_calendrier	id of slot
-	 * @param $base64img		image in base64 encoding
-	 * @param $browser			browser used for image creation
-	 * @param $ip				ip used for image creation
-     * @return int
-     * @throws RestException
-     *
-     * @url POST /signature/trainee/
-     */
-    function sessionAddTraineeSignature($sessId, $traineeId, $fk_calendrier, $base64img, $browser, $ip){
-        global $conf;
-
-        $this->traineeinsession = new Agefodd_session_stagiaire($this->db);
-
-        // check parameters
-        if(! DolibarrApiAccess::$user->rights->agefodd->creer) {
-            throw new RestException(401, 'Creaton not allowed for login '.DolibarrApiAccess::$user->login);
-        }
-
-        $this->traineeSignature = new AgefoddSignature($this->db);
-		$res_array = $this->traineeSignature->fetchAll('', '', 0, 0, ['customsql' => ' fk_calendrier = '.((int)$fk_calendrier).' AND fk_session = '.((int)$sessId).' AND fk_person = '.((int)$traineeId).' AND person_type = "trainee" ']);
-
-		if(empty($res_array)) { // La signature n'existe pas encore
-
-			$this->traineeSignature->createSignatureFile(base64_decode($base64img), $sessId, $fk_calendrier, $traineeId, 'trainee');
-
-			$this->session = new Agsession($this->db);
-			$result = $this->session->fetch($sessId);
-			if($result < 0 || empty($this->session->id)) throw new RestException(404, 'Session not found');
-
-			$this->trainee = new Agefodd_stagiaire($this->db);
-			$result = $this->trainee->fetch($traineeId);
-			if($result < 0 || empty($this->trainee->id)) throw new RestException(404, 'Trainee not found');
-
-			$this->traineeSignature->entity = DolibarrApiAccess::$user->entity;
-			$this->traineeSignature->fk_person = (int) $traineeId;
-			$this->traineeSignature->person_type = 'trainee';
-			$this->traineeSignature->fk_session = (int) $sessId;
-			$this->traineeSignature->fk_calendrier = (int) $fk_calendrier;
-			$this->traineeSignature->ip = $ip;
-			$this->traineeSignature->navigateur = $browser;
-			$this->traineeSignature->datec = dol_now();
-			$this->traineeSignature->dates = dol_now();
-
-			$result = $this->traineeSignature->create(DolibarrApiAccess::$user);
-
-			if($result < 0) throw new RestException(500, "Error while adding trainee signature to the session calendar $fk_calendrier", [$this->db->lasterror, $this->db->lastqueryerror]);
-
-		} else {
-
-			throw new RestException(401, "Trainee signature already exists for the session calendar $fk_calendrier");
-
-		}
-
-        return $result;
-    }
-
-    /**
-     * @param $sessId			id of agefodd session
-     * @param $trainerId		id of trainer
-	 * @param $fk_calendrier	id of slot
-	 * @param $base64img		image in base64 encoding
-	 * @param $browser			browser used for image creation
-	 * @param $ip				ip used for image creation
-     * @return int
-     * @throws RestException
-     *
-     * @url POST /signature/trainer/
-     */
-    function sessionAddTrainerSignature($sessId, $trainerId, $fk_calendrier, $base64img, $browser, $ip){
-        global $conf;
-
-        $this->trainerinsession = new Agefodd_session_formateur($this->db);
-
-        // check parameters
-        if(! DolibarrApiAccess::$user->rights->agefodd->creer) {
-            throw new RestException(401, 'Creaton not allowed for login '.DolibarrApiAccess::$user->login);
-        }
-
-        $this->trainerSignature = new AgefoddSignature($this->db);
-		$res_array = $this->trainerSignature->fetchAll('', '', 0, 0, ['customsql' => ' fk_calendrier = '.((int)$fk_calendrier).' AND fk_session = '.((int)$sessId).' AND fk_person = '.((int)$trainerId).' AND person_type = "trainer" ']);
-
-		if(empty($res_array)) { // La signature n'existe pas encore
-
-			$this->trainerSignature->createSignatureFile(base64_decode($base64img), $sessId, $fk_calendrier, $trainerId, 'trainer');
-
-			$this->session = new Agsession($this->db);
-			$result = $this->session->fetch($sessId);
-			if ($result < 0 || empty($this->session->id)) throw new RestException(404, 'Session not found');
-
-			$this->trainer = new Agefodd_teacher($this->db);
-			$result = $this->trainer->fetch($trainerId);
-			if ($result < 0 || empty($this->trainer->id)) throw new RestException(404, 'Trainer not found');
-
-			$this->trainerSignature->entity = DolibarrApiAccess::$user->entity;
-			$this->trainerSignature->fk_person = (int)$trainerId;
-			$this->trainerSignature->person_type = "trainer";
-			$this->trainerSignature->fk_session = (int)$sessId;
-			$this->trainerSignature->fk_calendrier = (int)$fk_calendrier;
-			$this->trainerSignature->ip = $ip;
-			$this->trainerSignature->navigateur = $browser;
-			$this->trainerSignature->datec = dol_now();
-			$this->trainerSignature->dates = dol_now();
-
-			$result = $this->trainerSignature->create(DolibarrApiAccess::$user);
-
-			if ($result < 0) throw new RestException(500, "Error while adding trainer signature to the session calendar $fk_calendrier", array($this->db->lasterror, $this->db->lastqueryerror));
-
-		} else {
-
-			throw new RestException(401, "Trainer signature already exists for the session calendar $fk_calendrier");
-
-		}
-
-        return $result;
-    }
-
-    /**
-     * @param $sessid
-     * @param $traineeid
-     * @return mixed
-     * @throws RestException
-     *
-     * @url DELETE /signature/delete/trainee/
-     */
-    function sessionDeleteTraineeSignature($sessid, $traineeid, $fk_calendrier) {
-        if(! DolibarrApiAccess::$user->rights->agefodd->lire) {
-            throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
-        }
-
-        $this->traineeSignature = new AgefoddSignature($this->db);
-        $signatureResult = $this->traineeSignature->fetchAll('', '', 0, 0, ['customsql' => ' fk_calendrier = '.((int)$fk_calendrier).' AND fk_person = '.((int)$traineeid).' AND fk_session = '.((int)$sessid).' AND person_type = "'.$this->db->escape('trainee').'" ']);
-        $path = array_values($signatureResult)[0]->path;
-
-        //Si je ne génère pas d'exception ici, j'ai donc le path et id de la ligne
-        if(is_readable($path) == 0) {
-            throw new RestException(207, 'Can\'t find trainee signature');
-        }
-
-        //Si je ne génère pas d'exception, je récupère mon objet
-        if($this->traineeSignature->fetch(array_values($signatureResult)[0]->id) < 0) {
-            throw new RestException(500, 'Error while deleting trainee signature', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        //Si je ne génère pas d'exception, la suppression de la ligne c'est bien passé
-        if($this->traineeSignature->delete(DolibarrApiAccess::$user) < 0){
-            throw new RestException(500, 'Error while deleting trainee signature', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        //Si je ne génère pas d'exception, le fichier est supprimé
-        if(dol_delete_file($path) < 0) {
-            throw new RestException(500, 'Error while deleting trainee signature', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        return 'trainee '.$traineeid.' signature deleted successfully';
-    }
-
-    /**
-     * @param $sessid
-     * @param $trainerid
-     * @return string
-     * @throws RestException
-     *
-     * @url DELETE /signature/delete/trainer/
-     */
-    function sessionDeleteTrainerSignature($sessid, $trainerid, $fk_calendrier) {
-        if(! DolibarrApiAccess::$user->rights->agefodd->lire) {
-            throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
-        }
-
-        $this->trainerSignature = new AgefoddSignature($this->db);
-        $signatureResult = $this->trainerSignature->fetchAll('', '', 0, 0, ['customsql' => ' fk_calendrier = '.((int)$fk_calendrier).' AND fk_person = '.((int)$trainerid).' AND fk_session = '.((int)$sessid).' AND person_type = "'.$this->db->escape('trainer').'" ']);
-        $path = array_values($signatureResult)[0]->path;
-
-        //Si je ne génère pas d'exception ici, j'ai donc le path et id de la ligne
-        if(is_readable($path) == 0) {
-            throw new RestException(207, 'Can\'t find trainer signature');
-        }
-
-        //Si je ne génère pas d'exception, je récupère mon objet
-        if($this->trainerSignature->fetch(array_values($signatureResult)[0]->id) < 0) {
-            throw new RestException(500, 'Error while deleting trainer signature', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        //Si je ne génère pas d'exception, la suppression de la ligne c'est bien passé
-        if($this->trainerSignature->delete(DolibarrApiAccess::$user) < 0){
-            throw new RestException(500, 'Error while deleting trainer signature', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        //Si je ne génère pas d'exception, le fichier est supprimé
-        if(dol_delete_file($path) < 0) {
-            throw new RestException(500, 'Error while deleting trainer signature', array($this->db->lasterror, $this->db->lastqueryerror));
-        }
-
-        return 'trainee '.$trainerid.' signature deleted successfully';
-    }
-
     /***************************************************************** Trainerinsession Part *****************************************************************/
 
     /**
@@ -2440,10 +2097,10 @@ class Agefodd extends DolibarrApi
             if (! empty($line->trainer_status_in_session) && $line->trainer_status_in_session != 6) {
                 if (($this->trainerinsessioncalendar->heured <= $line->heured && $this->trainerinsessioncalendar->heuref >= $line->heuref) || ($this->trainerinsessioncalendar->heured >= $line->heured && $this->trainerinsessioncalendar->heuref <= $line->heuref) || ($this->trainerinsessioncalendar->heured <= $line->heured && $this->trainerinsessioncalendar->heuref <= $line->heuref && $this->trainerinsessioncalendar->heuref > $line->heured) || ($this->trainerinsessioncalendar->heured >= $line->heured && $this->trainerinsessioncalendar->heuref >= $line->heuref && $this->trainerinsessioncalendar->heured < $line->heuref)) {
                     if (! empty($conf->global->AGF_ONLY_WARNING_ON_TRAINER_AVAILABILITY)) {
-                        $warning_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/person.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
+                        $warning_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/trainer.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
                     } else {
                         $error ++;
-                        $error_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/person.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
+                        $error_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/trainer.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
                     }
                 }
             }
@@ -2461,9 +2118,8 @@ class Agefodd extends DolibarrApi
             return array(
                 'success' => array(
                     'code' => 200,
-                    'message' => 'Trainer\'s calendar period '.$result.' added',
-                    'warnings' => $warning_message,
-		    'return_id' => $result
+                    'message' => 'Trainer\'s calendar period added',
+                    'warnings' => $warning_message
                 )
             );
         } else {
@@ -2524,10 +2180,10 @@ class Agefodd extends DolibarrApi
 
                     if (($this->trainerinsessioncalendar->heured <= $line->heured && $this->trainerinsessioncalendar->heuref >= $line->heuref) || ($this->trainerinsessioncalendar->heured >= $line->heured && $this->trainerinsessioncalendar->heuref <= $line->heuref) || ($this->trainerinsessioncalendar->heured <= $line->heured && $this->trainerinsessioncalendar->heuref <= $line->heuref && $this->trainerinsessioncalendar->heuref > $line->heured) || ($this->trainerinsessioncalendar->heured >= $line->heured && $this->trainerinsessioncalendar->heuref >= $line->heuref && $this->trainerinsessioncalendar->heured < $line->heuref)) {
                         if (! empty($conf->global->AGF_ONLY_WARNING_ON_TRAINER_AVAILABILITY)) {
-                            $warning_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/person.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
+                            $warning_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/trainer.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
                         } else {
                             $error ++;
-                            $error_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/person.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
+                            $error_message[] = $langs->trans('AgfTrainerlAreadybookAtThisTime') . '(<a href=' . dol_buildpath('/agefodd/session/trainer.php', 1) . '?id=' . $line->fk_session . ' target="_blanck">' . $line->fk_session . '</a>)<br>';
                         }
                     }
                 }
@@ -4520,12 +4176,9 @@ class Agefodd extends DolibarrApi
             throw new RestException(404, 'trainer not found');
         }
 
-        $trainerDelete = $this->trainer->remove($id);
-        if($trainerDelete < 0)
+        if($this->trainer->remove($id) < 0)
         {
-            $addError = '';
-            if ($trainerDelete == -500) $addError = '. '.$this->trainer->error;
-            throw new RestException(500, 'Error while deleting trainer '.$id.$addError);
+            throw new RestException(500, 'Error while deleting trainer '.$id);
         }
 
         return array(
@@ -8303,7 +7956,7 @@ class Agefodd extends DolibarrApi
 
         if(!empty($date_warning) && !preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $date_warning)) throw new RestException(503, "Bad date format for date_warning. It must be a string date with format yyyy-mm-dd");
         elseif(!empty($date_warning)) $this->certif->certif_dt_warning = strtotime($date_warning);
-        else $this->certif->certif_dt_warning = dol_time_plus_duree($this->certif->certif_dt_end, !empty($conf->global->AGF_CERTIF_ALERT_DATE_NB_MONTHS) ? -abs($conf->global->AGF_CERTIF_ALERT_DATE_NB_MONTHS) : -6, 'm');
+        else $this->certif->certif_dt_warning = dol_time_plus_duree($this->certif->certif_dt_end, -6, 'm');
 
         if(!empty($note)) $this->certif->mark = $this->db->escape($note);
 
@@ -8779,9 +8432,9 @@ class Agefodd extends DolibarrApi
             throw new RestException(400, 'id not provided.');
         }
 
-        /*if (!DolibarrApiAccess::$user->rights->ecm->upload) {
+        if (!DolibarrApiAccess::$user->rights->ecm->upload) {
             throw new RestException(401);
-        }*/
+        }
 
         $newfilecontent = '';
         if (empty($fileencoding)) $newfilecontent = $filecontent;

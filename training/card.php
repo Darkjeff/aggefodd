@@ -55,24 +55,13 @@ $objc = GETPOST('objc', 'int');
 $categid = GETPOST('categid', 'int');
 $categidbpf= GETPOST('categidbpf', 'int');
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 $agf = new Formation($db);
 $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element);
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
-	$extrafields->attribute_size = $extrafields->attributes[$agf->table_element]['size'];
-	$extrafields->attribute_unique = $extrafields->attributes[$agf->table_element]['unique'];
-	$extrafields->attribute_required = $extrafields->attributes[$agf->table_element]['required'];
-	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
-}
+
 
 // Initialize technical object to manage hooks of page. Note that conf->hooks_modules contains array of hook context
 $hookmanager->initHooks(array('agftrainingcard','globalcard'));
-
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 
 $parameters=array('id'=>$id);
@@ -124,9 +113,6 @@ if ($action == 'update' && $user->rights->agefodd->agefodd_formation_catalogue->
 
 		$result = $agf->fetch($id);
 
-		$accessHandicap = GETPOSTISSET('AccessHandicap', 'int');
-		$agf->accessibility_handicap = $accessHandicap ? '1' : '0';
-
 		$intitule = GETPOST('intitule', 'no_html');
 		$agf->intitule = $intitule;
 		if (empty($agf->intitule)) {
@@ -142,8 +128,8 @@ if ($action == 'update' && $user->rights->agefodd->agefodd_formation_catalogue->
 			$error ++;
 		}
 
-		$agf->duree = GETPOST('duree', 'intcomma') ? GETPOST('duree', 'intcomma') : GETPOST('duree', 'int');
-		if (empty($conf->global->AGF_OPTIONNAL_TRAINING_DURATION) && empty($agf->duree)) {
+		$agf->duree = GETPOST('duree', 'int');
+		if (empty($agf->duree)) {
 			setEventMessage($langs->trans('ErrorFieldRequired', $langs->transnoentitiesnoconv("AgfDuree")), 'errors');
 			$action = 'edit';
 			$error ++;
@@ -159,7 +145,7 @@ if ($action == 'update' && $user->rights->agefodd->agefodd_formation_catalogue->
 			$agf->color = GETPOST('color', 'alpha');
 			$agf->qr_code_info = GETPOST('qr_code_info', 'none');
 			$agf->nb_place = GETPOST('nb_place', 'int');
-			$agf->fk_nature_action_code = 	GETPOST('code_c_formation_nature_action', 'alpha');
+
 			if (! empty($conf->global->AGF_MANAGE_CERTIF)) {
 				$certif_year = GETPOST('certif_year', 'int');
 				$certif_month = GETPOST('certif_month', 'int');
@@ -227,8 +213,8 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_formation_cat
 			$error ++;
 		}
 
-		$agf->duree = GETPOST('duree', 'intcomma') ? GETPOST('duree', 'intcomma') : GETPOST('duree', 'int');
-		if (empty($conf->global->AGF_OPTIONNAL_TRAINING_DURATION) && empty($agf->duree)) {
+		$agf->duree = GETPOST('duree', 'int');
+		if (empty($agf->duree)) {
 			setEventMessage($langs->trans('ErrorFieldRequired', $langs->transnoentitiesnoconv("AgfDuree")), 'errors');
 			$action = 'create';
 			$error ++;
@@ -237,16 +223,13 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_formation_cat
 		if (empty($error)) {
 			$agf->ref_obj = GETPOST('ref', 'alpha');
 			$agf->ref_interne = GETPOST('ref_interne', 'alpha');
-			$agf->duree = GETPOST('duree', 'intcomma') ? GETPOST('duree', 'intcomma') : GETPOST('duree', 'int');
+			$agf->duree = GETPOST('duree', 'int');
 			$agf->nb_place = GETPOST('nb_place', 'int');
 			$agf->nb_subscribe_min = GETPOST('nbmintarget', 'int');
 			$agf->fk_product = GETPOST('productid', 'int');
 			$agf->fk_c_category = $categid;
 			$agf->fk_c_category_bpf = $categidbpf;
 			$agf->qr_code_info = GETPOST('qr_code_info', 'none');
-			$agf->color = GETPOST('color', 'alpha');
-			$agf->fk_nature_action_code = GETPOST('code_c_formation_nature_action', 'alpha');
-			$agf->accessibility_handicap = GETPOST('AccessHandicap', 'alpha') == 'on';
 
 			if (! empty($conf->global->AGF_MANAGE_CERTIF)) {
 				$certif_year = GETPOST('certif_year', 'int');
@@ -285,12 +268,12 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_formation_cat
 				$result = $agf->createAdmLevelForTraining($user);
 				if ($result > 0) {
 					$action = 'create';
-					setEventMessage('L'.__LINE__.' '.$agf->error, 'errors');
+					setEventMessage($agf->error, 'errors');
 					$error ++;
 				}
 			} else {
 				$action = 'create';
-				setEventMessage('L'.__LINE__.' '.$agf->error, 'errors');
+				setEventMessage($agf->error, 'errors');
 				$error ++;
 			}
 
@@ -299,7 +282,7 @@ if ($action == 'create_confirm' && $user->rights->agefodd->agefodd_formation_cat
 				exit();
 			} else {
 				$action = 'create';
-				setEventMessage('L'.__LINE__.' '.$agf->error, 'errors');
+				setEventMessage($agf->error, 'errors');
 			}
 		}
 	} else {
@@ -477,7 +460,7 @@ if ($action == 'fichepeda' && $user->rights->agefodd->agefodd_formation_catalogu
 	if($result <= 0){
 		$outputlangs = $langs;
 		$newlang = GETPOST('lang_id', 'alpha');
-		if (!empty($conf->global->MAIN_MULTILANGS) && empty($newlang))
+		if ($conf->global->MAIN_MULTILANGS && empty($newlang))
 			$newlang = $object->thirdparty->default_lang;
 		if (! empty($newlang)) {
 			$outputlangs = new Translate("", $conf);
@@ -502,7 +485,7 @@ if ($action == 'fichepeda' && $user->rights->agefodd->agefodd_formation_catalogu
 			}
 		}
 
-		$result = agf_pdf_create($db, $agf, '', $model, $outputlangs, $file, 0);
+		$result = agf_pdf_create($db, $id, '', $model, $outputlangs, $file, 0);
 	}
 	if ($result > 0) {
 		Header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
@@ -590,7 +573,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 	print_fiche_titre($langs->trans("AgfMenuCatNew"));
 
 	print '<form name="create" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">';
+	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 	print '<input type="hidden" name="action" value="create_confirm">';
 
 	print '<table class="border" width="100%">';
@@ -622,7 +605,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 	print '<input name="ref_interne" class="flat" size="50" value="' . GETPOST('ref_interne', 'alpha') . '"></td></tr>';
 
 	print '<tr><td width="20%" class="fieldrequired">' . $langs->trans("AgfDuree") . '</td><td>';
-	print '<input name="duree" class="flat" size="4" value="' . (GETPOST('duree', 'intcomma') ? GETPOST('duree', 'intcomma') : GETPOST('duree', 'int')) . '"></td></tr>';
+	print '<input name="duree" class="flat" size="4" value="' . GETPOST('duree', 'int') . '"></td></tr>';
 	print '<tr><td width="20%" class="">' . $langs->trans("AgfNbPlace") . '</td><td>';
 	print '<input name="nb_place" class="flat" size="4" value="' . GETPOST('nb_place', 'int') . '"></td></tr>';
 
@@ -657,56 +640,49 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 	print $form->select_produits(GETPOST('productid', 'none'), 'productid', '', 10000);
 	print "</td></tr>";
 
-	print '<tr><td>' . $langs->trans("Color") . '</td>';
-	print '<td>';
-    if(!empty($agf->color)) $color = $agf->color;
-    else $color = '';
-	print $formother->selectColor($color, 'color');
-	print '</td></tr>';
-
 	print '<tr>';
 	print '<td valign="top">' . $langs->trans("AgfPublic") . '</td><td>';
-	$doleditor = new DolEditor('public', GETPOST('public', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('public', GETPOST('public', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfMethode") . '</td><td>';
-	$doleditor = new DolEditor('methode', GETPOST('methode', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('methode', GETPOST('methode', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfDocNeeded") . '</td><td>';
-	$doleditor = new DolEditor('note1', GETPOST('note1', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('note1', GETPOST('note1', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfEquiNeeded") . '</td><td>';
-	$doleditor = new DolEditor('note2', GETPOST('note2', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('note2', GETPOST('note2', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfPrerequis") . '</td><td>';
-	$doleditor = new DolEditor('prerequis', GETPOST('prerequis', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('prerequis', GETPOST('prerequis', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfBut") . '</td><td>';
-	$doleditor = new DolEditor('but', GETPOST('but', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('but', GETPOST('but', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfProgramme") . '</td><td>';
-	$doleditor = new DolEditor('programme', GETPOST('programme', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('programme', GETPOST('programme', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfPedagoUsage") . '</td><td>';
-	$doleditor = new DolEditor('pedago_usage', GETPOST('pedago_usage', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('pedago_usage', GETPOST('pedago_usage', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
 	print '<tr><td valign="top">' . $langs->trans("AgfSanction") . '</td><td>';
-	$doleditor = new DolEditor('sanction', GETPOST('sanction', 'none'), '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+	$doleditor = new DolEditor('sanction', GETPOST('sanction', 'none'), '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 	$doleditor->Create();
 	print "</td></tr>";
 
@@ -714,13 +690,6 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 		print '<tr><td valign="top">' . $langs->trans("AgfQRCodeCertifInfo") . '</td><td>';
 		print '<input name="qr_code_info" class="flat" size="50" value="' . GETPOST('qr_code_info', 'none') . '"></td></tr>';
 	}
-
-	print '<tr><td valign="top">' . $langs->trans("NatureAction") . '</td>';
-	print '<td>' .  $formagefodd->select_formation_nature_action((!empty($agf->fk_nature_action_code)) ? $agf->fk_nature_action_code : 'AGF_NAT_ACT_AF') .'<tr><td>' ;
-
-	print '<tr><td valign="top">' . $langs->trans("AccessHandicap") . '</td>';
-	$checked = $agf->accessibility_handicap == 1 ? "checked" : "";
-	print '<td><input type="checkbox" id="AccessHandicap" name="AccessHandicap" '. $checked . ' /></td></tr>';
 
 	if (! empty($extrafields->attribute_label)) {
 		print $agf->showOptionals($extrafields, 'edit');
@@ -773,7 +742,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 				}
 
 				print '<form name="update" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-				print '<input type="hidden" name="token" value="' . $newToken . '">';
+				print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 				print '<input type="hidden" name="action" value="update">';
 				print '<input type="hidden" name="id" value="' . $id . '">';
 
@@ -830,47 +799,47 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 
 				print '<tr>';
 				print '<td valign="top">' . $langs->trans("AgfPublic") . '</td><td>';
-				$doleditor = new DolEditor('public', $agf->public, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('public', $agf->public, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print '</td></tr>';
 
 				print '<tr><td valign="top">' . $langs->trans("AgfMethode") . '</td><td>';
-				$doleditor = new DolEditor('methode', $agf->methode, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('methode', $agf->methode, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print '</td></tr>';
 
 				print '<tr><td valign="top">' . $langs->trans("AgfDocNeeded") . '</td><td>';
-				$doleditor = new DolEditor('note1', $agf->note1, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('note1', $agf->note1, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print '</td></tr>';
 
 				print '<tr><td valign="top">' . $langs->trans("AgfEquiNeeded") . '</td><td>';
-				$doleditor = new DolEditor('note2', $agf->note2, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('note2', $agf->note2, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print '</td></tr>';
 
 				print '<tr><td valign="top">' . $langs->trans("AgfPrerequis") . '</td><td>';
-				$doleditor = new DolEditor('prerequis', $agf->prerequis, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('prerequis', $agf->prerequis, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print '</td></tr>';
 
 				print '<tr><td valign="top">' . $langs->trans("AgfBut") . '</td><td>';
-				$doleditor = new DolEditor('but', $agf->but, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('but', $agf->but, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print '</td></tr>';
 
 				print '<tr><td valign="top">' . $langs->trans("AgfProgramme") . '</td><td colspan=3>';
-				$doleditor = new DolEditor('programme', $agf->programme, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('programme', $agf->programme, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print "</td></tr>";
 
 				print '<tr><td valign="top">' . $langs->trans("AgfPedagoUsage") . '</td><td>';
-				$doleditor = new DolEditor('pedago_usage', $agf->pedago_usage, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('pedago_usage', $agf->pedago_usage, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print "</td></tr>";
 
 				print '<tr><td valign="top">' . $langs->trans("AgfSanction") . '</td><td>';
-				$doleditor = new DolEditor('sanction', $agf->sanction, '', 160, 'dolibarr_notes', 'In', true, true, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
+				$doleditor = new DolEditor('sanction', $agf->sanction, '', 160, 'dolibarr_notes', 'In', true, false, $conf->global->AGF_FCKEDITOR_ENABLE_TRAINING, 4, 90);
 				$doleditor->Create();
 				print "</td></tr>";
 
@@ -879,12 +848,6 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 					print '<input name="qr_code_info" class="flat" size="50" value="' . $agf->qr_code_info . '"></td></tr>';
 				}
 
-				print '<tr><td valign="top">' . $langs->trans("NatureAction") . '</td>';
-				print '<td>' .  $formagefodd->select_formation_nature_action($agf->fk_nature_action_code) .'<tr><td>' ;
-
-				print '<tr><td valign="top">' . $langs->trans("AccessHandicap") . '</td>';
-				$checked = $agf->accessibility_handicap == 1 ? "checked" : "";
-				print '<td><input type="checkbox" id="AccessHandicap" name="AccessHandicap" '. $checked . ' /></td></tr>';
 
 				if (! empty($extrafields->attribute_label)) {
 					print $agf->showOptionals($extrafields, 'edit');
@@ -945,7 +908,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 				print '<table class="border" width="100%">';
 
 				print '<tr><td>' . $langs->trans("AgfDuree") . '</td><td colspan=2>';
-				print (!empty($agf->duree) ? $agf->duree : $langs->trans('AgfDurationIsFonctionOfNbTrainee')) . '</td></tr>';
+				print $agf->duree . '</td></tr>';
 				print '<tr><td>' . $langs->trans("AgfNbPlace") . '</td><td colspan=2>';
 				print $agf->nb_place . '</td></tr>';
 
@@ -1068,14 +1031,6 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 					}
 					print '</td></tr>';
 				}
-				// view Nature action
-				print '<tr><td valign="top">' . $langs->trans("NatureAction") . '</td>';
-				print '<td>' .  $formagefodd->select_formation_nature_action($agf->fk_nature_action_code ,'code_c_formation_nature_action', true, $moreattr = 'disabled', '', 'view') .'<tr><td>' ;
-
-				// view Access Handicap
-				print '<tr><td valign="top">' . $langs->trans("AccessHandicap") . '</td>';
-				$checked = $agf->accessibility_handicap == 1 ? "checked" : "";
-				print '<td><input type="checkbox" id="AccessHandicap" name="AccessHandicap" '.$checked.' disabled /></td></tr>';
 
 				if (! empty($extrafields->attribute_label)) {
 					print $agf->showOptionals($extrafields);
@@ -1191,13 +1146,8 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
                 $filepath = $filedir . '/' . $filename;
 				if (is_file($filepath)) {
 					// afficher
-                    $resF = @fopen($filepath, 'r');
-                    $dateFileCreated = '';
-                    if ($resF) $dateFileCreated = '<br>' . date("d/m/Y", @fstat($resF)['mtime']);
-                    //var_dump(date("d/m/Y", fstat($resF)['ctime']), date("d/m/Y", fstat($resF)['mtime']), date("d/m/Y", fstat($resF)['atime']));
-
 					$legende = $langs->trans("AgfDocOpen");
-					print '<tr><td width="200" align="center">' . $langs->trans("AgfFichePedagogique") . $dateFileCreated .'</td><td> ';
+					print '<tr><td width="200" align="center">' . $langs->trans("AgfFichePedagogique") . '</td><td> ';
                     print '<a href="' . DOL_URL_ROOT . '/document.php?modulepart=agefodd&file=' . $filename . '" alt="' . $legende . '" title="' . $legende . '">';
                     print img_picto($filename . ':' . $filename, 'pdf2', 'class="valignmiddle"') . '</a>';
 					if (function_exists('getAdvancedPreviewUrl')) {
@@ -1205,8 +1155,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_formation_catalogue->
 						if ($urladvanced) print '&nbsp;&nbsp;<a data-ajax="false" href="'.$urladvanced.'" title="' . $langs->trans("Preview"). '">'.img_picto('', 'detail', 'class="valignmiddle"').'</a>';
 					}
                     if ($user->rights->agefodd->agefodd_formation_catalogue->supprimer) {
-                        $newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-                        print '<a href="' . $_SERVER["PHP_SELF"] . "?id=" . $agf->id . '&amp;action=remove_file&amp;file=' . urlencode($filename) . ($newToken ? '&token='.$newToken : '') . '">' . img_picto($langs->trans('Delete'), 'delete') . '</a>';
+                        print '<a href="' . $_SERVER["PHP_SELF"] . "?id=" . $agf->id . '&amp;action=remove_file&amp;file=' . urlencode($filename) . '">' . img_picto($langs->trans('Delete'), 'delete') . '</a>';
                     }
 					print '</td></tr>';
 				}
@@ -1262,14 +1211,10 @@ if ($action != 'create' && $action != 'edit') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('ToClone') . '</a>';
 	}
 
-	if ($user->rights->agefodd->agefodd_formation_catalogue->creer && $agf->countSessionsLinked($id) === 0) {
-		print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+	if ($user->rights->agefodd->agefodd_formation_catalogue->creer) {
+		print '<a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
-		$btnTitle = $langs->trans("NotAllowed");
-		if($agf->countSessionsLinked($id)>0){
-			$btnTitle.= '<br/>'.$langs->trans("CantDeleteCatalogueHaveSessionLinked");
-		}
-		print '<a class="butActionRefused classfortooltip" href="#" title="' . dol_escape_htmltag($btnTitle) . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}
 
 	if ($agf->archive == 0) {

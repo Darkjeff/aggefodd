@@ -128,7 +128,7 @@ if ($search_type_session != '' && $search_type_session != - 1) {
 }
 if (! empty($status_view)) {
 	$filter ['s.status'] = $status_view;
-	$option.='&status[]='.implode('&status[]=', $status_view);
+	$option.='&search_type_session='.$status_view;
 }
 if (! empty($search_type_affect)) {
 	$filter ['type_affect'] = $search_type_affect;
@@ -396,21 +396,22 @@ if ($result >= 0) {
 	print '</form>';
 
 	$var = true;
+	$total = 0;
 	$totalforthirdparty = 0;
 	foreach ( $agf->lines as $line ) {
 		if($i >= $limit) break;
 
 		$agf->fetch($line->rowid);
+		$coutTotalLigne = $agf->cost_trainer + $agf->cost_site + $agf->cost_trip;
 
 		if(! empty($conf->global->AGF_ADD_CUSTOM_COLUMNS_ON_FILTER) && $search_type_affect == 'trainee')
 		{
 			// on recalcule les couts
 			$agf_fin = new Agefodd_session_element($db);
-			$agf_fin->fetch_by_session_by_thirdparty($line->rowid, '', array('\'invoice_supplier_trainer\'', '\'invoice_supplier_room\'', '\'invoice_supplier_missions\'', '\'invoice_supplierline_trainer\'', '\'invoice_supplierline_room\'', '\'invoice_supplierline_missions\''));
-
-			$coutTotalLigne = 0;
+			$agf_fin->fetch_by_session_by_thirdparty($line->rowid, '', array('\'invoice_supplier_trainer\'', '\'invoice_supplierline_trainer\''));
 			if (!empty($agf_fin->lines))
 			{
+				$coutTotalLigne = 0;
 				foreach ( $agf_fin->lines as $line_fin ) {
 					switch ($line_fin->element_type)
 					{
@@ -436,13 +437,7 @@ if ($result >= 0) {
 						case 'invoice_supplierline_missions':
 							$supplier_invoiceline = new SupplierInvoiceLine($db);
 							$supplier_invoiceline->fetch($line_fin->fk_element);
-
-							$sqlLines = "SELECT count(*) as nblinked FROM ".MAIN_DB_PREFIX."agefodd_session_element WHERE element_type = '".$line_fin->element_type."' AND fk_element = ".$line_fin->fk_element;
-							$resql = $db->query($sqlLines);
-							if ($resql){
-								$objLine = $db->fetch_object($resql);
-								$coutTotalLigne += price2num($supplier_invoiceline->total_ht / $objLine->nblinked, 'MT');
-							}
+							$coutTotalLigne += $supplier_invoiceline->total_ht;
 
 					}
 				}
@@ -452,22 +447,7 @@ if ($result >= 0) {
 		// Retrouve tous les stagiaires d'une même société présents à une session de formation
 		$agfS = new Agefodd_session_stagiaire($db);
 		$agfS->fetch_stagiaire_per_session($line->rowid, $socid);
-		$nbSocParticipant = 0;
-		foreach($agfS->lines as $trainee){
-			if($trainee->status_in_session == 6) continue; // annulés
-			if($trainee->status_in_session == 7) continue; // excusés
-			$nbSocParticipant ++;
-		}
-
-		// Compte tous les stagiaires de la sessions sauf les excusés
-		$agfST = new Agefodd_session_stagiaire($db);
-		$agfST->fetch_stagiaire_per_session($line->rowid);
-		$nbParticipantWithoutExcuse = 0;
-		foreach($agfST->lines as $trainee){
-			if($trainee->status_in_session == 6) continue; // annulés
-			if($trainee->status_in_session == 7) continue; // excusés
-			$nbParticipantWithoutExcuse ++;
-		}
+		$nbSocParticipant = count($agfS->lines);
 
 		if ($line->rowid != $oldid) {
 
@@ -550,8 +530,10 @@ if ($result >= 0) {
 			print '<td>' . stripslashes($line->ref_interne) . '</td>';
 			print '<td>' . stripslashes($line->statuslib) . '</td>';
 			if(! empty($conf->global->AGF_ADD_CUSTOM_COLUMNS_ON_FILTER) && $search_type_affect == 'trainee') {
-				$pertrainee = $coutTotalLigne / ((!empty($nbParticipantWithoutExcuse)) ? $nbParticipantWithoutExcuse : 1);
-				$costBySoc = $pertrainee * ((!empty($nbSocParticipant)) ? $nbSocParticipant : 1); // fix da021366
+				$pertrainee = $coutTotalLigne / $line->nb_stagiaire;
+			//	$coutTotalLigne *= $nbSocParticipant;
+				$total += $coutTotalLigne;
+				$costBySoc = ($coutTotalLigne / $line->nb_stagiaire) * $nbSocParticipant;
 				$totalforthirdparty += $costBySoc;
 
 				print '<td>' . $nbSocParticipant . ' / ' . $line->nb_stagiaire . '</td>';
@@ -601,7 +583,8 @@ if ($result >= 0) {
 	if(! empty($conf->global->AGF_ADD_CUSTOM_COLUMNS_ON_FILTER) && $search_type_affect == 'trainee') {
 		print '<tr class="liste_total">';
 
-		print '<td align="right" colspan="16"><strong>Total :</strong></td>';
+		print '<td align="right" colspan="14"><strong>Total :</strong></td>';
+		//print '<td><strong>' . price(round($total,2)) . ' ' . $langs->trans('Currency' . $conf->currency) . '</strong></td>';
 		print '<td></td>';
 		print '<td><strong>' . price(round($totalforthirdparty,2)) . ' ' . $langs->trans('Currency' . $conf->currency) . '</strong></td>';
 

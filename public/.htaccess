@@ -1,4 +1,0 @@
-#Allow from All
-AuthType None
-Require all granted
-

@@ -39,8 +39,6 @@ require_once DOL_DOCUMENT_ROOT .'/core/class/html.formmail.class.php';
 $langs->load("admin");
 $langs->load('agefodd@agefodd');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 if (! $user->rights->agefodd->admin && ! $user->admin)
     accessforbidden();
 
@@ -338,7 +336,7 @@ if ($conf->use_javascript_ajax) {
 }
 
 print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '">';
-print '<input type="hidden" name="token" value="' . $newToken . '">';
+print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
 print '<input type="hidden" name="action" value="setvarother">';
 
 print '<table class="noborder liste" width="100%">';
@@ -350,7 +348,7 @@ print '</tr>';
 $sess_sta = new Agefodd_session_stagiaire($db);
 print '<tr class="class="oddeven""><td>' . $langs->trans("AgfTraineeStatusToExcludeToFichePres") . '</td>';
 print '<td align="right">';
-$TStagiaireStatusToExclude = !empty($conf->global->AGF_STAGIAIRE_STATUS_TO_EXCLUDE_TO_FICHEPRES) ? $conf->global->AGF_STAGIAIRE_STATUS_TO_EXCLUDE_TO_FICHEPRES : '';
+$TStagiaireStatusToExclude = $conf->global->AGF_STAGIAIRE_STATUS_TO_EXCLUDE_TO_FICHEPRES;
 if(strpos($TStagiaireStatusToExclude, '0') !== false) {
 	$TStagiaireStatusToExclude = strtr($conf->global->AGF_STAGIAIRE_STATUS_TO_EXCLUDE_TO_FICHEPRES, array('0'=>'prosp'));
 	$sess_sta->labelstatut['prosp'] = $sess_sta->labelstatut[0];
@@ -563,11 +561,6 @@ print $form->textwithpicto('', $langs->trans("AgfAddTraineeNameIntoDocHelp"), 1,
 print '</td>';
 print '</tr>';
 
-echo '<tr class="oddeven"><td>', $langs->trans('AgfExcludeTraineesNotFromThirdPartyFromDoc'),
-     '</td><td style="text-align: right">', ajax_constantonoff('AGF_FACTURE_SESSION_SHOW_ONLY_TRAINEES_Of_THIRD_PARTY'),
-     '</td><td style="text-align: center">', $form->textwithpicto('', $langs->trans("AgfExcludeTraineesNotFromThirdPartyFromDocHelp"), 1, 'help'),
-     '</td></tr>';
-
 // Update global variable AGF_ADD_AVGPRICE_DOCPROPODR
 print '<tr class="oddeven"><td>' . $langs->trans("AgfDisplayAvgPricePropalInvoice") . '</td>';
 print '<td align="right">';
@@ -705,24 +698,6 @@ print $form->textwithpicto('', $langs->trans("AgfUseFacWhithoutOrderHelp"), 1, '
 print '</td>';
 print '</tr>';
 
-// Utiliser les information de la ligne d'origine
-print '<tr class="oddeven"><td>' . $langs->trans("AgfGetOriginLineInfo") . '</td>';
-print '<td align="right">';
-if ($conf->use_javascript_ajax) {
-	print ajax_constantonoff('AGF_GET_ORIGIN_LINE_INFO');
-} else {
-	$arrval = array (
-		'0' => $langs->trans("No"),
-		'1' => $langs->trans("Yes")
-	);
-	print $form->selectarray("AGF_GET_ORIGIN_LINE_INFO", $arrval, $conf->global->AGF_GET_ORIGIN_LINE_INFO);
-}
-print '</td>';
-print '<td align="center">';
-print $form->textwithpicto('', $langs->trans("AgfGetOriginLineInfoHelp"), 1, 'help');
-print '</td>';
-print '</tr>';
-
 
 print '<tr class="liste_titre"><td colspan="3">' . $langs->trans("Other") . '</td>';
 print '</tr>';
@@ -737,9 +712,7 @@ if ($resql)
 
 print '<tr class="oddeven"><td>' . $langs->trans("AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE") . '</td>';
 print '<td align="right">';
-if(!empty($conf->global->AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE)) $AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE = json_decode($conf->global->AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE);
-else $AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE = '';
-print $form->multiselectarray('AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE', $TScheduleType, $AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE);
+print $form->multiselectarray('AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE', $TScheduleType, json_decode($conf->global->AGF_NO_TRAINER_CHECK_SCHEDULE_TYPE));
 print '</td>';
 print '<td></td>';
 print '</tr>';
@@ -769,7 +742,7 @@ $arrval = array (
 	'0' => $langs->trans("No"),
 	'1' => $langs->trans("Yes")
 );
-print $form->selectarray("AGF_USE_SITE_IN_AGENDA", $arrval, !empty($conf->global->AGF_USE_SITE_IN_AGENDA) ? $conf->global->AGF_USE_SITE_IN_AGENDA : '');
+print $form->selectarray("AGF_USE_SITE_IN_AGENDA", $arrval, $conf->global->AGF_USE_SITE_IN_AGENDA);
 print '</td>';
 print '<td></td>';
 print '</tr>';
@@ -783,7 +756,7 @@ print '</tr>';
 
 print '<tr class="oddeven"><td>' . $langs->trans("AgfPrintFieldsWithCustomOrder") . '</td>';
 print '<td align="right">';
-print '<input type="text" id="AGF_CUSTOM_ORDER" name="AGF_CUSTOM_ORDER" size="75%" value="'.(!empty($conf->global->AGF_CUSTOM_ORDER) ? $conf->global->AGF_CUSTOM_ORDER : '').'"/>';
+print '<input type="text" id="AGF_CUSTOM_ORDER" name="AGF_CUSTOM_ORDER" size="75%" value="'.$conf->global->AGF_CUSTOM_ORDER.'"/>';
 print '</td>';
 print '<td>';
 print $form->textwithpicto('', $langs->trans('AgfPrintFieldsWithCustomOrderHelp'), 1, 0);
@@ -1058,27 +1031,6 @@ print '</td>';
 print '<td></td>';
 print '</tr>';
 
-print '<tr class="oddeven"><td>' . $langs->trans("AgfUsePrevConventionBySoc") . '</td>';
-print '<td align="right">';
-print ajax_constantonoff('AGF_USE_PREV_CONVENTION_BY_SOC');
-print '</td>';
-print '<td></td>';
-print '</tr>';
-
-print '<tr class="oddeven"><td>' . $langs->trans("AgfOptionnalTrainingDuration") . '</td>';
-print '<td align="right">';
-print ajax_constantonoff('AGF_OPTIONNAL_TRAINING_DURATION');
-print '</td>';
-print '<td></td>';
-print '</tr>';
-
-print '<tr class="oddeven"><td>' . $form->textwithpicto($langs->trans("AgfGetRefSessionInsteadOfLabelWhenCreateProposalFromSession"), $langs->trans("AgfGetRefSessionInsteadOfLabelWhenCreateProposalFromSessionHelp"), 1, 'help') . '</td>';
-print '<td align="right">';
-print ajax_constantonoff('AGF_GET_REF_SESSION_INSTEAD_OF_LABEL_WHEN_CREATE_PROPOSAL_FROM_SESSION');
-print '</td>';
-print '<td></td>';
-print '</tr>';
-
 print '<tr class="liste_titre"><td colspan="3">' . $langs->trans("AgfTimeManagement") . '</td>';
 print '</tr>';
 
@@ -1175,40 +1127,6 @@ print $form->textwithpicto('', $langs->trans("AgfUseSubscriptionStatusAutoHelp")
 print '</td>';
 print '</tr>';
 
-// Gérer le planning par participant
-print '<tr class="oddeven"><td>' . $langs->trans("AgfDisplayPlanningTrainee") . '</td>';
-print '<td align="right">';
-if ($conf->use_javascript_ajax) {
-	print ajax_constantonoff('AGF_DISPLAY_PLANNING_TRAINEE');
-} else {
-	$arrval = array (
-		'0' => $langs->trans("No"),
-		'1' => $langs->trans("Yes")
-	);
-	print $form->selectarray("AGF_DISPLAY_PLANNING_TRAINEE", $arrval, $conf->global->AGF_DISPLAY_PLANNING_TRAINEE);
-}
-print '</td>';
-print '<td align="center">';
-print '</td>';
-print '</tr>';
-
-// Gestion des signatures par créneau des stagiaires et formateurs
-print '<tr class="oddeven"><td>' . $langs->trans("agfDisplaySignatureTrainee") . '</td>';
-print '<td align="right">';
-if ($conf->use_javascript_ajax) {
-	print ajax_constantonoff('AGF_DISPLAY_SIGNATURE_TRAINEE');
-} else {
-	$arrval = array (
-		'0' => $langs->trans("No"),
-		'1' => $langs->trans("Yes")
-	);
-	print $form->selectarray("AGF_DISPLAY_SIGNATURE_TRAINEE", $arrval, $conf->global->AGF_DISPLAY_SIGNATURE_TRAINEE);
-}
-print '</td>';
-print '<td align="center">';
-print $form->textwithpicto('', $langs->trans("agfDisplaySignatureTraineeHelp"), 1, 'help');
-print '</td>';
-print '</tr>';
 
 print '<tr class="liste_titre"><td colspan="3">' . $langs->trans("AgfManageCertification") . '</td>';
 print '</tr>';
@@ -1553,7 +1471,7 @@ print '<td align="right">';
 
 $formMail = new FormMail($db);
 $models = $formMail->fetchAllEMailTemplate('cron_session', $user, $langs);
-$modelmail_array = array();
+
 if($models>0)
 {
     foreach($formMail->lines_model as $line)
@@ -1569,8 +1487,7 @@ if($models>0)
         //if ($line->fk_user != $user->id) $modelmail_array[$line->id].=' - '.$langs->trans("By").' ';
     }
 }
-
-print $formMail->selectarray('AGF_SENDAGENDATOTRAINEE_DEFAULT_MAILMODEL', $modelmail_array, !empty($conf->global->AGF_SENDAGENDATOTRAINEE_DEFAULT_MAILMODEL) ? $conf->global->AGF_SENDAGENDATOTRAINEE_DEFAULT_MAILMODEL : '', 1);
+print $formMail->selectarray('AGF_SENDAGENDATOTRAINEE_DEFAULT_MAILMODEL', $modelmail_array, $conf->global->AGF_SENDAGENDATOTRAINEE_DEFAULT_MAILMODEL, 1);
 
 print '</td>';
 print '<td></td>';

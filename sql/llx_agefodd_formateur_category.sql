@@ -20,10 +20,10 @@
 CREATE TABLE IF NOT EXISTS llx_agefodd_formateur_category (
   rowid integer NOT NULL auto_increment PRIMARY KEY,
   entity integer NOT NULL DEFAULT 1,
-  fk_trainer integer NOT NULL default 0,
-  fk_category integer  NOT NULL default 0,
-  fk_user_author integer NOT NULL default 0,
+  fk_trainer integer NOT NULL,
+  fk_category integer  NOT NULL,
+  fk_user_author integer NOT NULL,
   datec datetime NOT NULL,
-  fk_user_mod integer NOT NULL default 0,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  fk_user_mod integer NOT NULL,
+  tms timestamp NOT NULL
 ) ENGINE=InnoDB;

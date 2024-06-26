@@ -43,8 +43,6 @@ if (! $user->rights->agefodd->lire)
 $langs->load('agefodd@agefodd');
 $langs->load('companies');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 $action = GETPOST('action', 'alpha');
 $confirm = GETPOST('confirm', 'alpha');
 $id = GETPOST('id', 'int');
@@ -66,13 +64,7 @@ $pagenext = $page + 1;
 $agf = new Agefodd_cursus($db);
 $extrafields = new ExtraFields($db);
 $extralabels = $extrafields->fetch_name_optionals_label($agf->table_element);
-if(floatval(DOL_VERSION) >= 17) {
-	$extrafields->attribute_type = $extrafields->attributes[$agf->table_element]['type'];
-	$extrafields->attribute_size = $extrafields->attributes[$agf->table_element]['size'];
-	$extrafields->attribute_unique = $extrafields->attributes[$agf->table_element]['unique'];
-	$extrafields->attribute_required = $extrafields->attributes[$agf->table_element]['required'];
-	$extrafields->attribute_label = $extrafields->attributes[$agf->table_element]['label'];
-}
+
 /*
  * Actions delete
 */
@@ -222,7 +214,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print_fiche_titre($langs->trans("AgfMenuCursusNew"));
 
 	print '<form name="create" action="' . $_SERVER ['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+	print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 	print '<input type="hidden" name="action" value="create_confirm">' . "\n";
 
 	print '<input type="hidden" name="url_return" value="' . $url_return . '">' . "\n";
@@ -266,7 +258,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 			// Card in edit mode
 			if ($action == 'edit') {
 				print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '" method="post">' . "\n";
-				print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+				print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 				print '<input type="hidden" name="action" value="update">' . "\n";
 				print '<input type="hidden" name="id" value="' . $id . '">' . "\n";
 
@@ -366,9 +358,6 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 *
 */
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 print '<div class="tabsAction">';
 
 if ($action != 'create' && $action != 'edit') {
@@ -378,7 +367,7 @@ if ($action != 'create' && $action != 'edit') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Modify') . '</a>';
 	}
 	if ($user->rights->agefodd->creer) {
-		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}
@@ -457,7 +446,7 @@ if ($action != 'edit' && $action != 'create') {
 
 	if ($user->rights->agefodd->modifier) {
 		print '<form name="update" action="' . $_SERVER ['PHP_SELF'] . '?id=' . $agf->id . '" method="post">' . "\n";
-		print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+		print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 		print '<input type="hidden" name="action" value="addtraining">' . "\n";
 
 		print '<table class="noborder" width="100%">';

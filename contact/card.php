@@ -33,8 +33,6 @@ if (! $res)
 require_once ('../class/agefodd_contact.class.php');
 require_once ('../lib/agefodd.lib.php');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 // Security check
 if (! $user->rights->agefodd->lire)
 	accessforbidden();
@@ -123,7 +121,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print_fiche_titre($langs->trans("AgfCreateContact"));
 
 	print '<form name="create" action="' . $_SERVER ['PHP_SELF'] . '" method="POST">' . "\n";
-	print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+	print '<input type="hidden" name="token" value="' . $_SESSION ['newtoken'] . '">' . "\n";
 	print '<input type="hidden" name="action" value="create_confirm">' . "\n";
 
 	print '<div class="warning">' . $langs->trans("AgfContactNewWarning1");
@@ -211,9 +209,6 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 *
 */
 
-$urlToken = '';
-if (function_exists('newToken')) $urlToken = "&token=".newToken();
-
 print '<div class="tabsAction">';
 
 if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
@@ -223,7 +218,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'nfcontact') {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('AgfModifierFicheContact') . '</a>';
 	}
 	if ($user->rights->agefodd->creer) {
-		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete'.$urlToken.'&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
+		print '<a class="butActionDelete" href="' . $_SERVER ['PHP_SELF'] . '?action=delete&id=' . $id . '">' . $langs->trans('Delete') . '</a>';
 	} else {
 		print '<a class="butActionRefused" href="#" title="' . dol_escape_htmltag($langs->trans("NotAllowed")) . '">' . $langs->trans('Delete') . '</a>';
 	}

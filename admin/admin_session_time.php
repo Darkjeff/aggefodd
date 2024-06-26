@@ -38,8 +38,6 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 $langs->load("admin");
 $langs->load('agefodd@agefodd');
 
-$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
-
 if (! $user->rights->agefodd->admin && ! $user->admin)
     accessforbidden();
 
@@ -135,7 +133,7 @@ $tmpl_calendar->fetch_all();
 foreach ( $tmpl_calendar->lines as $line ) {
 
     print '<form name="SessionCalendar_' . $line->id . '" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-    print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+    print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
     print '<input type="hidden" name="action" value="sessioncalendar_delete">' . "\n";
     print '<input type="hidden" name="id" value="' . $line->id . '">' . "\n";
     print '<tr>';
@@ -148,7 +146,7 @@ foreach ( $tmpl_calendar->lines as $line ) {
 }
 
 print '<form name="SessionCalendar_new" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 print '<input type="hidden" name="action" value="sessioncalendar_create">' . "\n";
 print '<tr>';
 print '<td><select id="newday" class="flat" name="newday">';
@@ -167,7 +165,7 @@ print '</form>';
 
 print_titre($langs->trans("AgfAdminCalendarDayToDate"));
 print '<form name="daytodate" action="' . $_SERVER['PHP_SELF'] . '" method="POST">' . "\n";
-print '<input type="hidden" name="token" value="' . $newToken . '">' . "\n";
+print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">' . "\n";
 print '<input type="hidden" name="action" value="updatedaytodate">' . "\n";
 print '<table class="noborder" width="100%">';
 print '<tr class="liste_titre">';

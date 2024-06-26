@@ -132,7 +132,7 @@ if (! empty($search_company)) {
 	$filter ['so.nom'] = $search_company;
 	$option .= '&search_company=' . $search_company;
 }
-if (! empty($search_sale) && $search_sale > 0) {
+if (! empty($search_sale)) {
 	$filter ['sale.fk_user_com'] = $search_sale;
 	$option .= '&search_sale=' . $search_sale;
 }
@@ -170,6 +170,7 @@ if ($id) {
 		$head = trainer_prepare_head($agf);
 
 		dol_fiche_head($head, 'sessionlist', $langs->trans("AgfTeacher"), 0, 'user');
+		dol_fiche_end();
 		dol_agefodd_banner_tab($agf, 'id');
 
 		dol_fiche_end();
@@ -184,7 +185,7 @@ if ($id) {
 			print '<a href="' . $_SERVER ['PHP_SELF'] . '?' . $option . '">' . $langs->trans("AgfAfficherSessionArchives") . '</a>' . "\n";
 		}
 
-		$moreforfilter = '<div class="divsearchfield">'.$langs->trans('SalesRepresentatives') . ': ';
+		$moreforfilter .= '<div class="divsearchfield">'.$langs->trans('SalesRepresentatives') . ': ';
 		$moreforfilter .= $formother->select_salesrepresentatives($search_sale, 'search_sale', $user).'</div>';
 
 		$moreforfilter .= '<div class="divsearchfield">'.$langs->trans('Period') . '(' . $langs->trans("AgfDateDebut") . ')' . ': ';
@@ -274,8 +275,8 @@ if ($id) {
 		print '</tr>';
 
 		$style = 'pair';
-		$dureetotal = $duree_jour_total = $totalsellprice = $totalsellprice_invoice = 0;
 		if (count($agf_session->lines) > 0) {
+			$dureetotal = 0;
 			foreach ( $agf_session->lines as $line ) {
 				$duree = 0;
 

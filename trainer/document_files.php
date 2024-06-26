@@ -83,7 +83,7 @@ if ($result < 0) {
 /*
  * Actions
  */
-$permissiontoadd = !empty($user->rights->agefodd->creer);
+
 include_once DOL_DOCUMENT_ROOT.'/core/actions_linkedfiles.inc.php';
 
 

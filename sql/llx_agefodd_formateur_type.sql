@@ -26,5 +26,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_formateur_type (
   intitule varchar(80) NOT NULL,
   sort smallint NOT NULL,
   active integer NULL,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  tms timestamp NOT NULL
 ) ENGINE=InnoDB;

@@ -104,11 +104,11 @@ class mod_agefodd_simple extends ModeleNumRefAgefodd {
 		// $yymm = strftime("%y%m",time());
 		$yymm = strftime("%y%m", $date);
 
-		// D'abord on recupere la valeur max uniquement sur les reférences ayant le bon format
+		// D'abord on recupere la valeur max
 		$posindice = 10;
-		$sql = "SELECT ref,MAX(SUBSTRING(ref FROM " . $posindice . ")) as max";
+		$sql = "SELECT MAX(SUBSTRING(ref FROM " . $posindice . ")) as max";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formation_catalogue";
-		$sql .= " WHERE ref REGEXP '^" . $this->prefix . $yymm . "-[0-9]+$'";
+		$sql .= " WHERE ref like '" . $this->prefix . $yymm . "-%'";
 
 		$resql = $db->query($sql);
 		dol_syslog("mod_agefodd_simple::getNextValue");

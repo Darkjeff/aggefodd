@@ -24,27 +24,10 @@
  */
 require_once (DOL_DOCUMENT_ROOT . "/core/class/commonobject.class.php");
 
-//TODO Reprendre la version du commonobject en dolibarr v24
-if((float) DOL_VERSION >= 18) {
-	class Formation18 extends CommonObject {
-		public function update_note($note, $suffix = '', $notrigger = 0) {
-			return static::update_note_formation($note, $suffix, $notrigger);
-		}
-	}
-}
-else {
-	class Formation18 extends CommonObject {
-		public function update_note($note, $suffix = '') {
-			return static::update_note_formation($note, $suffix);
-		}
-	}
-}
-
-
 /**
  * trainning Class
  */
-class Formation extends Formation18 {
+class Formation extends CommonObject {
 	public $error;
 	public $errors = array ();
 	public $element = 'agefodd_formation_catalogue';
@@ -83,8 +66,6 @@ class Formation extends Formation18 {
 	public $lines = array ();
 	public $trainers = array ();
 	public $nb_place;
-	public $accessibility_handicap;
-	public $fk_nature_action_code;
 
 	/**
 	 * Constructor
@@ -134,12 +115,6 @@ class Formation extends Formation18 {
 			$this->ref_interne = $this->db->escape(trim($this->ref_interne));
 		if (isset($this->qr_code_info))
 			$this->qr_code_info = $this->db->escape(trim($this->qr_code_info));
-		if (isset($this->color))
-			$this->color = $this->db->escape(trim($this->color));
-		if (isset($this->fk_nature_action_code))
-			$this->fk_nature_action_code = $this->db->escape(trim($this->fk_nature_action_code));
-		if (isset($this->accessibility_handicap))
-			$this->accessibility_handicap = $this->db->escape(trim($this->accessibility_handicap));
 
 		if (empty($this->duree))
 			$this->duree = 0;
@@ -150,8 +125,6 @@ class Formation extends Formation18 {
 		if ($this->fk_c_category_bpf == - 1)
 			$this->fk_c_category_bpf = 0;
 
-
-
 			// Insert request
 		$sql = "INSERT INTO " . MAIN_DB_PREFIX . "agefodd_formation_catalogue(";
 		$sql .= "datec, ref,ref_interne,intitule, duree, nb_place, public, methode, prerequis, but,";
@@ -161,16 +134,12 @@ class Formation extends Formation18 {
 		$sql .= ",sanction";
 		$sql .= ",qr_code_info";
 		$sql .= ",fk_c_category_bpf";
-		$sql .= ",tms";
-		$sql .= ",accessibility_handicap";
-		$sql .= ",fk_nature_action_code";
-		$sql .= ",color";
 		$sql .= ") VALUES (";
 		$sql .= "'" . $this->db->idate(dol_now()) . "', ";
 		$sql .= " " . (! isset($this->ref_obj) ? 'NULL' : "'" . $this->ref_obj . "'") . ",";
 		$sql .= " " . (! isset($this->ref_interne) ? 'NULL' : "'" . $this->ref_interne . "'") . ",";
 		$sql .= " " . (! isset($this->intitule) ? 'NULL' : "'" . $this->intitule . "'") . ",";
-		$sql .= " " . (! isset($this->duree) ? 'NULL' : price2num($this->duree)) . ","; // price2num used for "17,5" case for example
+		$sql .= " " . (! isset($this->duree) ? 'NULL' : $this->duree) . ",";
 		$sql .= " " . (empty($this->nb_place) ? 'NULL' : $this->nb_place) . ",";
 		$sql .= " " . (! isset($this->public) ? 'NULL' : "'" . $this->public . "'") . ",";
 		$sql .= " " . (! isset($this->methode) ? 'NULL' : "'" . $this->methode . "'") . ",";
@@ -189,11 +158,7 @@ class Formation extends Formation18 {
 		$sql .= " " . (empty($this->pedago_usage) ? "null" : "'" . $this->pedago_usage . "'") . ', ';
 		$sql .= " " . (empty($this->sanction) ? "null" : "'" . $this->sanction . "'") . ', ';
 		$sql .= " " . (empty($this->qr_code_info) ? "null" : "'" . $this->qr_code_info . "'") . ', ';
-		$sql .= " " . (empty($this->fk_c_category_bpf) ? "null" : $this->fk_c_category_bpf) . ', ';
-		$sql .= " '".$this->db->idate(time())."' ,";
-		$sql .= " " . (empty($this->accessibility_handicap) ? 0 : $this->accessibility_handicap) . ',' ;
-		$sql .= " " . (empty($this->fk_nature_action_code) ? "null" : '"' . $this->fk_nature_action_code . '"') . ',' ;
-		$sql .= " " . (!empty($this->color) ? "'" . $this->color . "'" : "null") ;
+		$sql .= " " . (empty($this->fk_c_category_bpf) ? "null" : $this->fk_c_category_bpf);
 		$sql .= ")";
 		$this->db->begin();
 		dol_syslog(get_class($this) . "::create ", LOG_DEBUG);
@@ -265,8 +230,6 @@ class Formation extends Formation18 {
 		$sql .= " ,c.qr_code_info";
 		$sql .= " ,c.fk_c_category_bpf";
 		$sql .= " ,dictcatbpf.code as catcodebpf ,dictcatbpf.intitule as catlibbpf";
-		$sql .= " ,c.accessibility_handicap";
-		$sql .= " ,c.fk_nature_action_code";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formation_catalogue as c";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_formation_catalogue_type as dictcat ON dictcat.rowid=c.fk_c_category";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "agefodd_formation_catalogue_type_bpf as dictcatbpf ON dictcatbpf.rowid=c.fk_c_category_bpf";
@@ -274,7 +237,7 @@ class Formation extends Formation18 {
 			$sql .= " WHERE c.rowid = " . $id;
 		if (! $id && $ref)
 			$sql .= " WHERE c.ref = '" . $ref . "'";
-		$sql .= " AND c.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+		$sql .= " AND c.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 
 		dol_syslog(get_class($this) . "::fetch ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -318,8 +281,7 @@ class Formation extends Formation18 {
 				$this->sanction = $obj->sanction;
 				$this->color = $obj->color;
 				$this->qr_code_info = $obj->qr_code_info;
-				$this->accessibility_handicap = $obj->accessibility_handicap;
-				$this->fk_nature_action_code = $obj->fk_nature_action_code;
+
 				require_once (DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
     			$extrafields = new ExtraFields($this->db);
     			$extralabels = $extrafields->fetch_name_optionals_label($this->table_element, true);
@@ -398,8 +360,6 @@ class Formation extends Formation18 {
 		$this->note1 = $this->db->escape(trim($this->note1));
 		$this->note2 = $this->db->escape(trim($this->note2));
 		$this->certif_duration = $this->db->escape(trim($this->certif_duration));
-		$this->fk_nature_action_code = $this->db->escape(trim($this->fk_nature_action_code));
-
 		if (isset($this->color)) {
 			$this->color = trim($this->color);
 		}
@@ -447,9 +407,7 @@ class Formation extends Formation18 {
 		$sql .= " fk_c_category_bpf=" . (! empty($this->fk_c_category_bpf) ? $this->fk_c_category_bpf : "null") . ",";
 		$sql .= " certif_duration=" . (! empty($this->certif_duration) ? "'" . $this->certif_duration . "'" : "null") . ",";
 		$sql .= " color=" . (! empty($this->color) ? "'" . $this->color . "'" : "null"). ",";
-		$sql .= " qr_code_info=" . (! empty($this->qr_code_info) ? "'" . $this->qr_code_info . "'" : "null")  . ",";
-		$sql .= " accessibility_handicap =" . (!empty($this->accessibility_handicap) ?   $this->accessibility_handicap  : "0")  .", ";
-		$sql .= " fk_nature_action_code= '" . $this->fk_nature_action_code . "'";
+		$sql .= " qr_code_info=" . (! empty($this->qr_code_info) ? "'" . $this->qr_code_info . "'" : "null");
 		$sql .= " WHERE rowid = " . $this->id;
 
 		$this->db->begin();
@@ -499,21 +457,12 @@ class Formation extends Formation18 {
 	 * @return int if KO, >0 if OK
 	 */
 	public function remove($id, $notrigger = 0) {
-		global $conf, $user, $langs;
-
-		// Véfification des sessions existantes
-		$nbSession = $this->countSessionsLinked($id);
-		if ($nbSession === false) {
-			return -1;
-		} else if($nbSession>0) {
-			$this->error = $langs->trans("ErrorCatalogueHaveSessionLinked");
-			$this->errors[] = $this->error;
-			return -1;
-		}
-
+		global $conf, $user;
+		
 		$error = 0;
 
-		$sql = /** @lang SQL */  "DELETE FROM " . MAIN_DB_PREFIX . "agefodd_formation_catalogue WHERE rowid = " . $id;
+		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "agefodd_formation_catalogue";
+		$sql .= " WHERE rowid = " . $id;
 
 		dol_syslog(get_class($this) . "::remove ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -550,37 +499,6 @@ class Formation extends Formation18 {
 			$this->error = $this->db->lasterror();
 			return - 1;
 		}
-	}
-
-	/**
-	 * @param int|bool $id  ID de la formation à vérifier
-	 * @return false|int  false si erreur, sinon, décompte des sessions liées
-	 */
-	public function countSessionsLinked($id = false){
-
-		if($id === false){
-			$id = $this->id;
-		}
-
-		// Véfification des sessions existantes
-		$sql = /** @lang SQL */ 'SELECT COUNT(*) as nbSession '
-			.' FROM ' . MAIN_DB_PREFIX . 'agefodd_session as s '
-			.' WHERE fk_formation_catalogue = ' . intval($id);
-
-
-		$res = $this->db->query($sql);
-		if ($res) {
-			$obj = $this->db->fetch_object($res);
-			if ($obj) {
-				return intval($obj->nbSession);
-			} else {
-				return 0;
-			}
-		}
-
-		$this->error = "Error " . $this->db->lasterror();
-		$this->errors[] = $this->error;
-		return false;
 	}
 
 	/**
@@ -837,7 +755,7 @@ class Formation extends Formation18 {
 
 		$langs->load("admin");
 		$langs->load("agefodd@agefodd");
-
+		
 		$s  = '<b>' . $langs->trans("AgfTraining") . '</b>:<u>' . $this->intitule . ':</u><br>';
 		$s .= '<br>';
 		$s .= $langs->trans("AgfDuree") . ' : ' . $this->duree . ' H <br>';
@@ -904,21 +822,19 @@ class Formation extends Formation18 {
 		}
 
 		$sql .= " WHERE c.archive = " . $arch;
-		$sql .= " AND c.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+		$sql .= " AND c.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 		// Manage filter
 		if (! empty($filter)) {
 			foreach ( $filter as $key => $value ) {
 				// To allow $filter['YEAR(s.dated)']=>$year
-				if ($key == 'c.datec' ) {
+				if ($key == 'c.datec') {
 					$sql .= ' AND DATE_FORMAT(' . $key . ',\'%Y-%m-%d\') = \'' . dol_print_date($value, '%Y-%m-%d') . '\'';
 				} elseif ($key == 'c.duree' || $key == 'c.fk_c_category' || $key == 'c.fk_c_category_bpf') {
 					$sql .= ' AND ' . $key . ' = ' . $value;
 				} elseif (strpos($key,'ef.')!==false){
 					$sql.= $value;
 				} else {
-                    if($key != 'lastsession' && $key != 'nbsession') {            // doivent être filtrés avec un having
-                        $sql .= ' AND ' . $key . ' LIKE \'%' . $value . '%\'';
-                    }
+					$sql .= ' AND ' . $key . ' LIKE \'%' . $value . '%\'';
 				}
 			}
 		}
@@ -928,18 +844,13 @@ class Formation extends Formation18 {
 		{
 			$sql.= ',ef.'.$key;
 		}
-        if(!empty($filter['lastsession']) || !empty($filter['nbsession'])) {
-            $sql .= ' HAVING ';
-            if(!empty($filter['lastsession']))       $sql .= 'DATE_FORMAT(lastsession,\'%Y-%m-%d\') = \'' . dol_print_date($filter['lastsession'], '%Y-%m-%d') . '\'';
-            if(!empty($filter['lastsession']) && !empty($filter['nbsession'])) $sql .= ' AND ';
-            if(!empty($filter['nbsession']))         $sql .= 'nbsession = '.$filter['nbsession'];
-        }
-        if (! empty($sortfield)) {
-            $sql .= ' ORDER BY ' . $sortfield . ' ' . $sortorder;
-        }
-        if (! empty($limit)) {
-            $sql .= ' ' . $this->db->plimit($limit + 1, $offset);
-        }
+		if (! empty($sortfield)) {
+			$sql .= ' ORDER BY ' . $sortfield . ' ' . $sortorder;
+		}
+		if (! empty($limit)) {
+			$sql .= ' ' . $this->db->plimit($limit + 1, $offset);
+		}
+
 		dol_syslog(get_class($this) . "::fetch_all ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
@@ -997,7 +908,7 @@ class Formation extends Formation18 {
 	 * @return int <0 if KO, >0 if OK
 	 */
 	public function createAdmLevelForTraining($user) {
-		$error = 0;
+		$error = '';
 
 		require_once ('agefodd_sessadm.class.php');
 		require_once ('agefodd_session_admlevel.class.php');
@@ -1220,14 +1131,14 @@ class Formation extends Formation18 {
 	 */
 	public function fetchTrainer() {
 		require_once 'agefodd_formateur.class.php';
-
+		
 		$error = 0;
 
 		$sql = 'SELECT link.rowid as linkid, f.rowid as fk_trainer ';
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formateur as f";
 		$sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'agefodd_formateur_training as link';
 		$sql .= ' ON f.rowid=link.fk_trainer AND link.fk_training=' . $this->id;
-		$sql .= " WHERE f.entity IN (" . getEntity('agefodd_base'/*agsession*/) . ")";
+		$sql .= " WHERE f.entity IN (" . getEntity('agefodd'/*agsession*/) . ")";
 		$this->trainers = array();
 		// $line->fk_socpeople
 		dol_syslog(get_class($this) . "::" . __METHOD__, LOG_DEBUG);
@@ -1294,8 +1205,8 @@ class Formation extends Formation18 {
      *  @param		string		$suffix		'', '_public' or '_private'
      *  @return     int      		   		<0 if KO, >0 if OK
      */
-    function update_note_formation($note,$suffix='', $notrigger = 0)
-	{
+    function update_note($note,$suffix='')
+    {
 
         global $user;
     	if (! $this->table_element)

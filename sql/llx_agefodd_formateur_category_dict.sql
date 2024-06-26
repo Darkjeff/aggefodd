@@ -24,5 +24,5 @@ CREATE TABLE IF NOT EXISTS llx_agefodd_formateur_category_dict (
   label varchar(100),
   description text,
   active smallint NOT NULL DEFAULT 0,
-  tms TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  tms timestamp NOT NULL
 ) ENGINE=InnoDB;
