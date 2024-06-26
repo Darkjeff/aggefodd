@@ -411,9 +411,9 @@ class pdf_convocation extends ModelePDFAgefodd {
 							$pdf->SetXY($posX, $posY);
 							$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
 							if ($nbform>1) {
-								$this->str = ' ' . $outputlangs->transnoentities('Formateur(s)') . ' ';
+								$this->str = ' ' . $outputlangs->transnoentities('Formateur(s)') . ': ';
 							} else {
-								$this->str = ' ' . $outputlangs->transnoentities('Formateur') . ' ';
+								$this->str = ' ' . $outputlangs->transnoentities('Formateur') . ': ';
 							}
 
 							$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
@@ -425,7 +425,7 @@ class pdf_convocation extends ModelePDFAgefodd {
 								$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
 								$this->str = $formateur->lastname.' '.$formateur->firstname;
 								if (!empty($formateur->phone)) {
-									$this->str .= '('.$formateur->phone.')';
+									$this->str .= ' ('.$formateur->phone.')';
 								}
 								$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
 								$posY = $pdf->GetY() + 2;
