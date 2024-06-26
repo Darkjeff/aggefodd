@@ -393,6 +393,46 @@ class pdf_convocation extends ModelePDFAgefodd {
 					$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
 					$this->str = $agf_place->cp . ' ' . $agf_place->ville;
 					$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
+					$posY = $pdf->GetY() + 8;
+
+
+					//Modif JEFF 26/06/2024
+					/** Formateur */
+					// récupération des formateurs de la session
+					if (!empty($agf->id)) {
+						dol_include_once('/agefodd/class/agefodd_session_formateur.class.php');
+						$formateurs = new Agefodd_session_formateur($this->db);
+						$nbform =$formateurs->fetch_formateur_per_session($agf->id);
+						if ($nbform < 0) {
+							$this->errors[] = $outputlangs->trans('AgfErrorUnableToFetchTrainer');
+							return -1;
+						}
+						if (!empty($formateurs->lines)) {
+							$pdf->SetXY($posX, $posY);
+							$pdf->SetFont(pdf_getPDFFont($outputlangs), '', $this->defaultFontSize);
+							if ($nbform>1) {
+								$this->str = ' ' . $outputlangs->transnoentities('Formateur(s)') . ' ';
+							} else {
+								$this->str = ' ' . $outputlangs->transnoentities('Formateur') . ' ';
+							}
+
+							$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
+							$posY = $pdf->GetY() + 3;
+
+
+							foreach ($formateurs->lines as $formateur) {
+								$pdf->SetXY($posX + 10, $posY);
+								$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
+								$this->str = $formateur->lastname.' '.$formateur->firstname;
+								if (!empty($formateur->phone)) {
+									$this->str .= '('.$formateur->phone.')';
+								}
+								$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
+								$posY = $pdf->GetY() + 2;
+							}
+						}
+					}
+					//FIN Modif JEFF 26/06/2024
 					$posY = $pdf->GetY() + 10;
 
 					$pdf->SetXY($posX, $posY);
