@@ -137,7 +137,7 @@ if (! empty($idforma)) {
 if (! empty($conf->global->AGF_FILTER_SESSION_LIST_ON_COURANT_MONTH)) {
 	$button_removefilter_x = GETPOST("button_removefilter_x", 'none');
 	$button_search = GETPOST("button_search_x", 'none');
-	if (empty($button_removefilter_x) && empty($button_search)) {
+	if (empty($button_removefilter_x) && empty($button_search) && empty($search_month) && empty($search_year)) {
 		$search_month = date("m");
 		$search_year = date("Y");
 	}
@@ -204,7 +204,7 @@ $arrayfields = array(
 		's.rowid' => array(
 				'label' => "Id",
 				'checked' => 1,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.ref' => array(
 				'label' => "SessionRef",
@@ -233,17 +233,17 @@ $arrayfields = array(
 		'c.ref' => array(
 				'label' => "Ref",
 				'checked' => 1,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		'c.ref_interne' => array(
 				'label' => "AgfRefInterne",
 				'checked' => 0,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.type_session' => array(
 				'label' => "AgfFormTypeSession",
 				'checked' => 1,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.dated' => array(
 				'label' => "AgfDateDebut",
@@ -265,7 +265,7 @@ $arrayfields = array(
 		'p.ref_interne' => array(
 				'label' => "AgfLieu",
 				'checked' => 1,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.sell_price' => array(
 				'label' => "AgfCoutFormation",
@@ -325,7 +325,7 @@ $arrayfields = array(
 		's.nb_stagiaire' => array(
 				'label' => "AgfNbreParticipants",
 				'checked' => 1,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.duree_session' => array(
 				'label' => "AgfDuree",
@@ -334,27 +334,27 @@ $arrayfields = array(
 		's.notes' => array(
 				'label' => "AgfNote",
 				'checked' => 1,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.fk_socpeople_presta' => array(
 				'label' => 'AgfTypePresta',
 				'checked' => 0,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.fk_soc_employer' => array(
 				'label' => 'AgfTypeEmployee',
 				'checked' => 0,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		's.fk_soc_requester' => array(
 				'label' => 'AgfTypeRequester',
 				'checked' => 0,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
 		'AgfListParticipantsStatus' => array(
 				'label' => "AgfListParticipantsStatus",
 				'checked' => 1,
-				'enabled' => (! $user->rights->agefodd->session->trainer)
+				'enabled' => (empty($user->rights->agefodd->session->trainer))
 		),
         'AgfSheduleBillingState' => array(
                 'label' => "AgfSheduleBillingState",
@@ -515,7 +515,7 @@ if (! empty($search_session_status)) {
 	$filter['s.status'] = $search_session_status;
 	$option .= '&search_session_status=' . $search_session_status;
 }
-if (! empty($search_product)) {
+if ($search_product > 0) {
 	$filter['s.fk_product'] = $search_product;
 	$option .= '&search_product=' . $search_product;
 }
@@ -777,7 +777,7 @@ if ($resql != - 1) {
 	$massactionbutton = $formAgefodd->selectMassSessionsAction();
 	print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $option, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_generic.png', 0, '', '', $limit);
 
-	$morefilter = '';
+	$moreforfilter = '';
 	// If the user can view prospects other than his'
 	if ($user->rights->societe->client->voir || $socid) {
 		$moreforfilter .= '<div class="divsearchfield">';
