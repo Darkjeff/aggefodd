@@ -170,10 +170,8 @@ class ActionsAgefodd
 		$current_obj = $parameters['object'];
 		$res_array = array_intersect($contextarray, $contextcurrent);
 		if (is_array($res_array) && count($res_array) > 0 && $parameters['mode'] == 'add') {
-			$head = $parameters['head'];
-
-			foreach ($head as $key => &$val) {
-				if ($val[2] == 'tabAgefodd') {
+			foreach ($parameters['head'] as $key => $val) {
+				if ($key!=='object' && $val[2] == 'tabAgefodd') {
 					// dans le cas de tiers
 					if (get_class($current_obj) == 'Societe'|| get_class($current_obj) == 'Client'){
 
@@ -203,13 +201,13 @@ class ActionsAgefodd
 					} else {
 						$langs->load('agefodd@agefodd');
 						if ($resql > 0){
-							$val[1] .= ' <span class="badge">' . $resql . '</span>';
+							$parameters['head'][1] .= ' <span class="badge">' . $resql . '</span>';
 						}
 					}
 				}
 			}
-			$this->results = $head;
-			return 1;
+			$this->results = $parameters;
+			return 0;
 		}
 
 
