@@ -423,9 +423,9 @@ class pdf_convocation extends ModelePDFAgefodd {
 							foreach ($formateurs->lines as $formateur) {
 								$pdf->SetXY($posX + 10, $posY);
 								$pdf->SetFont(pdf_getPDFFont($outputlangs), 'B', $this->defaultFontSize);
-								$this->str = $line->lastname.' '.$line->firstname;
-								if (!empty($line->phone)) {
-									$this->str .= '('.$line->phone.')';
+								$this->str = $formateur->lastname.' '.$formateur->firstname;
+								if (!empty($formateur->phone)) {
+									$this->str .= '('.$formateur->phone.')';
 								}
 								$pdf->MultiCell(0, 4, $outputlangs->convToOutputCharset($this->str), 0, 'L');
 								$posY = $pdf->GetY() + 2;
