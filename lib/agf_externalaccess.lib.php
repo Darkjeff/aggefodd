@@ -1691,8 +1691,8 @@ function getPageViewSessionCardExternalAccess_traineelist(&$agsession)
 					$toDisplay = $extrafields->showOutputField(str_replace('ef.', '', $key), $value);
 				}
 				else if ($key == 'socid') $toDisplay = $stagiaire->socname;
-				else if ($key == 'date_birth') $toDisplay = dol_print_date($stagiaire->agefodd_stagiaire->{$key});
-				else $toDisplay = $stagiaire->agefodd_stagiaire->{$key};
+				else if ($key == 'date_birth') $toDisplay = dol_print_date($stagiaire->{$key});
+				else $toDisplay = $stagiaire->{$key};
 
 				$out .= '<td class="text-center" data-order="'.$key.'" data-search="'.dol_escape_htmltag($toDisplay).'">' . $toDisplay . '</td>';
 			}
