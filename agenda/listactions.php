@@ -337,8 +337,7 @@ if (! empty($filter_trainee)) {
 }
 $sql .= " WHERE c.id = a.fk_action";
 $sql .= ' AND a.fk_user_author = u.rowid';
-$sql .= ' AND a.entity IN (' . getEntity('agefodd_base'
-) . ')'; // To limit to entity
+$sql .= ' AND agf.entity IN (' . getEntity('agefodd_session') . ')'; // To limit to entity
 if ($pid)
 	$sql .= " AND a.fk_project=" . $db->escape($pid);
 if (! $user->rights->societe->client->voir && ! $socid)

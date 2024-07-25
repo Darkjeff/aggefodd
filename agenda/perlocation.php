@@ -375,7 +375,7 @@ if (! empty($filter_trainee)) {
 }
 
 $sql.= '
-	WHERE a.entity IN (' . getEntity('agefodd_session') . ')
+	WHERE agf.entity IN (' . getEntity('agefodd_session') . ')
 	AND a.elementtype="agefodd_agsession"';
 
 if (!empty($filter_session_status))

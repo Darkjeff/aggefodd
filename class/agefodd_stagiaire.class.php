@@ -406,7 +406,7 @@ class Agefodd_stagiaire extends CommonObject {
 		$sql .= " ON s.rowid = ef.fk_object";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_civility as civ";
 		$sql .= " ON s.civilite = civ.code";
-		$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ")";
+		$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ") AND so.entity IN (".getEntity('societe').") ";
 		if (!empty($search_training_ref)) {
 			$sql .= " AND cat.ref = '". $this->db->escape($search_training_ref) ."' ";
 		}

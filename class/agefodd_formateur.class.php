@@ -339,7 +339,7 @@ class Agefodd_teacher extends CommonObject {
 	 * @return int <0 if KO, >0 if OK
 	 */
 	public function fetch_all($sortorder, $sortfield, $limit, $offset, $arch = 0, $filter = array()) {
-		global $mysoc;
+		global $mysoc, $conf;
 
 		$error=0;
 
@@ -357,8 +357,6 @@ class Agefodd_teacher extends CommonObject {
 		//$sql .= " IF(u.civility IS NULL, s.civility, u.civility) as sp_civilite, "; // TODO : remove this comment if all is ok after few tests with CASE style
 		$sql .= " CASE WHEN u.civility IS NULL THEN s.civility ELSE u.civility END  as sp_civilite,"; // FOR pgsql
 
-
-
 		$sql .= " s.phone as sp_phone, s.email as sp_email, s.phone_mobile as sp_phone_mobile, ";
 		$sql .= " u.lastname as u_name, u.firstname as u_firstname, u.civility as u_civilite, ";
 		$sql .= " u.office_phone as u_phone, u.email as u_email, u.user_mobile as u_phone_mobile";
@@ -366,12 +364,28 @@ class Agefodd_teacher extends CommonObject {
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_formateur as f";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople as s ON f.fk_socpeople = s.rowid";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON f.fk_user = u.rowid";
+		if (isModEnabled('multicompany')) {
+			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as so ON s.fk_soc = so.rowid";
+		}
+		if (isModEnabled('multicompany') && !empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
+			$sql .= " LEFT JOIN " . $this->db->prefix() . "usergroup_user as ug ";
+			$sql .= " ON ug.fk_user = u.rowid ";
+		}
 		$sql .= " WHERE f.entity IN (" . getEntity('agefodd_base') . ")";
+		if (isModEnabled('multicompany')) {
+			$sql .= " AND (so.entity IN (".  getEntity('societe').")";
+			if (!empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
+				$sql .= " OR ug.entity = ".$conf->entity;
+			}
+			$sql .= ")";
+		}
+
 		if ($arch == 0 || $arch == 1) {
 			$sql .= " AND f.archive = " . $arch;
 		}
 
-			// Manage filter
+
+		// Manage filter
 		if (count($filter) > 0) {
 			foreach ( $filter as $key => $value ) {
 				if ($key == 'f.rowid' || $key == 'f.fk_socpeople') {

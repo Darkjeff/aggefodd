@@ -706,7 +706,7 @@ if ($resql) {
 if($dolibarr_main_db_type != 'pgsql')
 {
 	//Collation, PS: il existe aussi un script dans abricot pour ça.
-	$sql = 'SELECT CONCAT(\'ALTER TABLE \', TABLE_NAME,\' CONVERT TO CHARACTER SET utf8 COLLATE '.$dolibarr_main_db_collation.';\') AS    mySQL
+	$sql = 'SELECT CONCAT(\'ALTER TABLE \', TABLE_NAME,\' CONVERT TO CHARACTER SET '.$dolibarr_main_db_character_set.' COLLATE '.$dolibarr_main_db_collation.';\') AS    mySQL
 	        FROM INFORMATION_SCHEMA.TABLES
 	        WHERE TABLE_SCHEMA= "'.$dolibarr_main_db_name.'"
 	                AND TABLE_TYPE="BASE TABLE"
@@ -717,7 +717,7 @@ if($dolibarr_main_db_type != 'pgsql')
 	if ($resql) {
 	    if ($db->num_rows($resql)) {
 
-	        print 'Certaines tables ne sont pas en collation utf8';
+	        print 'Certaines tables ne sont pas en collation '.$dolibarr_main_db_collation;
 	        print '<BR><BR><BR>Suggestion de correction<BR><BR>';
 
 	        print '<BR>SET foreign_key_checks = 0;';

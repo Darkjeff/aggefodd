@@ -444,7 +444,7 @@ if (! empty($filter_trainee)) {
 }
 $sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . 'societe as socsess ON agf.fk_soc = socsess.rowid ';
 
-$sql .= ' WHERE a.entity IN (' . getEntity('agefodd_base') . ')';
+$sql .= ' WHERE agf.entity IN (' . getEntity('agefodd_session') . ')';
 $sql .= ' AND a.elementtype IN (\'agefodd_agsession\', \'agefodd_formateur\' )';
 if ($action == 'show_day') {
 	$sql .= " AND (";

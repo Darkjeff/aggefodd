@@ -420,11 +420,12 @@ class FormAgefodd extends Form
 		$out = '';
 		$sql = "SELECT p.rowid, p.ref_interne";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "agefodd_place as p";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as s ON p.fk_societe = s.rowid";
 		$sql .= " WHERE archive = 0";
 		if (! empty($filter))
 			$sql .= ' AND ' . $filter;
 
-		$sql .= " AND p.entity IN (" . getEntity('agefodd_base') . ")";
+		$sql .= " AND p.entity IN (" . getEntity('agefodd_base') . ")  AND s.entity IN (".getEntity('societe').") ";
 		$sql .= " ORDER BY p.ref_interne";
 
 		dol_syslog(get_class($this) . "::select_site_forma", LOG_DEBUG);
@@ -521,9 +522,9 @@ class FormAgefodd extends Form
 
 		if (! empty($filter)) {
 			$sql .= ' WHERE ' . $filter;
-			$sql .= " AND s.entity IN (" . getEntity('agefodd_base') . ")";
+			$sql .= " AND s.entity IN (" . getEntity('agefodd_base') . ") AND so.entity IN (".getEntity('societe').") ";
 		} else {
-			$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ")";
+			$sql .= " WHERE s.entity IN (" . getEntity('agefodd_base') . ") AND so.entity IN (".getEntity('societe').") ";
 		}
 		$sql .= " ORDER BY fullname";
 
@@ -923,8 +924,22 @@ class FormAgefodd extends Form
 		$sql .= " ON sp.rowid = s.fk_socpeople";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u";
 		$sql .= " ON u.rowid = s.fk_user";
+		if (isModEnabled('multicompany')) {
+			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as so ON sp.fk_soc = so.rowid";
+		}
+		if (isModEnabled('multicompany') && !empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
+			$sql .= " LEFT JOIN " . $this->db->prefix() . "usergroup_user as ug ";
+			$sql .= " ON ug.fk_user = u.rowid ";
+		}
 		$sql .= " WHERE s.archive = 0";
 		$sql .= " AND s.entity IN (" . getEntity('agefodd_base') . ")";
+		if (isModEnabled('multicompany')) {
+			$sql .= " AND (so.entity IN (".  getEntity('societe').")";
+			if (!empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
+				$sql .= " OR ug.entity = ".$conf->entity;
+			}
+			$sql .= ")";
+		}
 		if (! empty($filter)) {
 			$sql .= ' AND ' . $filter;
 		}
