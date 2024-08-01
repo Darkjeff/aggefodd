@@ -284,77 +284,77 @@ if ($action == 'remove_opcafksocOPCA') {
 	} else {
 		setEventMessage($agf->error, 'errors');
 	}
+}
 
-	if ($action == 'exportcsv') {
-		$langs->load('admin');
-		$agf = new Agsession($db);
-		$result = $agf->fetch($id);
+if ($action == 'exportcsv') {
+	$langs->load('admin');
+	$agf = new Agsession($db);
+	$result = $agf->fetch($id);
 
-		if (!$result) {
-			header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
-			setEventMessages($agf->error, $agf->errors, 'errors');
-			exit;
-		}
+	if (!$result) {
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessages($agf->error, $agf->errors, 'errors');
+		exit;
+	}
 
-		$stagiaires = new Agefodd_session_stagiaire($db);
-		$stagiaires->fetch_stagiaire_per_session($agf->id);
+	$stagiaires = new Agefodd_session_stagiaire($db);
+	$stagiaires->fetch_stagiaire_per_session($agf->id);
 
-		if (!$result) {
-			header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
-			setEventMessages($stagiaires->error, $stagiaires->errors, 'errors');
-			exit;
-		}
+	if (!$result) {
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessages($stagiaires->error, $stagiaires->errors, 'errors');
+		exit;
+	}
 
-		$filename = 'liste_participants_' . $agf->ref;
+	$filename = 'liste_participants_' . $agf->ref;
 
-		header('Content-Type: text/csv');
-		header('Content-Disposition: attachment;filename=' . $filename);
+	header('Content-Type: text/csv');
+	header('Content-Disposition: attachment;filename=' . $filename);
 
-		$handle = fopen('php://output', 'w');
+	$handle = fopen('php://output', 'w');
 
-		if (!$handle) {
-			header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
-			setEventMessage($langs->trans('ErrorWhenTryingToOpenOutput'), 'errors');
-			exit;
-		}
+	if (!$handle) {
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessage($langs->trans('ErrorWhenTryingToOpenOutput'), 'errors');
+		exit;
+	}
 
-		$array_fields = [
-			$langs->transnoentities('AgfFamilyName'),
-			$langs->transnoentities('AgfFirstName'),
-			$langs->transnoentities('ExtrafieldMail'),
-			$langs->transnoentities('ExtrafieldPhone'),
-			$langs->transnoentities('AgfTraineeStatus')
+	$array_fields = [
+		$langs->transnoentities('AgfFamilyName'),
+		$langs->transnoentities('AgfFirstName'),
+		$langs->transnoentities('ExtrafieldMail'),
+		$langs->transnoentities('ExtrafieldPhone'),
+		$langs->transnoentities('AgfTraineeStatus')
+	];
+
+	$retPut = fputcsv($handle, $array_fields, ';');
+
+	if (!$retPut) {
+		print "Error, when writing in CSV file";
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessage($langs->trans('ErrorWhenWrittingCSVFile'), 'errors');
+		exit;
+	}
+
+	foreach ($stagiaires->lines as $trainee) {
+		$fieldsValues = [
+			$trainee->nom,
+			$trainee->prenom,
+			$trainee->email,
+			$trainee->tel1,
+			$stagiaires->LibStatut($trainee->email, 1)
 		];
 
-		$retPut = fputcsv($handle, $array_fields, ';');
-
+		$retPut = fputcsv($handle, $fieldsValues, ';');
 		if (!$retPut) {
 			print "Error, when writing in CSV file";
 			header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
 			setEventMessage($langs->trans('ErrorWhenWrittingCSVFile'), 'errors');
 			exit;
 		}
-
-		foreach ($stagiaires->lines as $trainee) {
-			$fieldsValues = [
-				$trainee->nom,
-				$trainee->prenom,
-				$trainee->email,
-				$trainee->tel1,
-				$stagiaires->LibStatut($trainee->email, 1)
-			];
-
-			$retPut = fputcsv($handle, $fieldsValues, ';');
-			if (!$retPut) {
-				print "Error, when writing in CSV file";
-				header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
-				setEventMessage($langs->trans('ErrorWhenWrittingCSVFile'), 'errors');
-				exit;
-			}
-		}
-
-		exit;
 	}
+
+	exit;
 }
 
 /*
@@ -1648,6 +1648,7 @@ if ($action != 'create' && $action != 'edit' && $action != "edit_subrogation" &&
 	$parameters = array();
 	$reshook = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $agf, $action); // Note that $action and $object may have been modified by hook
 	if (empty($reshook)) {
+
 		if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
 			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '">' . $langs->trans('AgfModifyTrainee') . '</a>';
 		} else {

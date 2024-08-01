@@ -518,13 +518,13 @@ if ($result >= 0) {
 			print '<td  style="background: #' . $line->color . '"><a' . $color_a . ' href="card.php?id=' . $line->rowid . '"' . $target . '>' . img_object($langs->trans("AgfShowDetails"), "service") . ' ' . $line->rowid . '</a></td>';
 			print '<td  style="background: #' . $line->color . '"><a' . $color_a . ' href="card.php?id=' . $line->rowid . '"' . $target . '>' . img_object($langs->trans("AgfShowDetails"), "service") . ' ' . $line->sessionref . '</a></td>';
 
-			print '<td>';
 
-		if ($search_type_affect == 'trainee') {
+
+			if ($search_type_affect == 'trainee') {
 				foreach ($agfS->lines as $index => $trainee) {
 					if (
 						!empty($search_trainee_name)
-						&& !preg_match('/'. $search_trainee_name . '/i', $trainee->nom . ' ' . $trainee->prenom)
+						&& !preg_match('/' . $search_trainee_name . '/i', $trainee->nom . ' ' . $trainee->prenom)
 					) {
 						unset ($agfS->lines[$index]);
 					}
@@ -556,6 +556,7 @@ if ($result >= 0) {
 				print '</td>';
 			}
 
+			print '<td>';
 			if (!empty($line->socid) && $line->socid != -1) {
 				$soc = new Societe($db);
 				$soc->fetch($line->socid);
