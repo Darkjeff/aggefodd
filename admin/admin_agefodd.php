@@ -33,6 +33,7 @@ require_once '../class/agefodd_session_admlevel.class.php';
 require_once '../class/agefodd_calendrier.class.php';
 require_once '../class/html.formagefodd.class.php';
 require_once '../lib/agefodd.lib.php';
+require_once DOL_DOCUMENT_ROOT . "/categories/class/categorie.class.php";
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT . "/core/lib/images.lib.php";
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
@@ -275,6 +276,12 @@ if ($action == 'setvar') {
 	if (!$res > 0)
 		$error++;
 
+    // SCOPEN noé 28/10/24 Modif Allcare
+	$tagSubContracting = GETPOST('AGF_TAG_SUBCONTRACTING', 'array');
+	$res = dolibarr_set_const($db, 'AGF_TAG_SUBCONTRACTING', implode(',', $tagSubContracting), 'chaine', 0, '', $conf->entity);
+	if (!$res > 0)
+		$error++;
+    // End modif
 
 
 	// Marges
@@ -1087,8 +1094,42 @@ print '<td align="center">';
 print '</td>';
 print '</tr>';
 
+// SCOPEN noé 28/10/24 Modif Allcare
+// For backward compatibility
+if (is_numeric(Categorie::TYPE_CONTACT)) {
+	$typecontact=Categorie::TYPE_CONTACT;
+} else {
+	foreach(Categorie::$MAP_ID_TO_CODE as $key=>$val) {
+		if (Categorie::TYPE_CONTACT==$val) {
+			$typecontact=$key;
+			break;
+		}
+	}
+}
 
+$option_categ = array ();
+$selected_categ = array ();
 
+$sql = ' SELECT rowid, label FROM ' . MAIN_DB_PREFIX . 'categorie WHERE type=' . $typecontact . ' AND entity IN (' . getEntity('category', 1) . ')';
+$resql = $db->query($sql);
+if (! $resql) {
+	setEventMessage($db->lasterror, 'errors');
+} else {
+	while ( $obj = $db->fetch_object($resql) ) {
+		$option_categ[$obj->rowid] = $obj->label;
+	}
+}
+if (! empty($conf->global->AGF_TAG_SUBCONTRACTING)) {
+	$selected_categ = explode(',', $conf->global->AGF_TAG_SUBCONTRACTING);
+}
+// Tag SubContracting
+print '<tr class="pair"><td>' . $langs->trans("AgfTagSubcontracting") . '</td>';
+print '<td align="right">';
+print $formAgefodd->agfmultiselectarray('AGF_TAG_SUBCONTRACTING', $option_categ, $selected_categ);
+print '<td align="center">';
+print '</td>';
+print '</tr>';
+// End Modif 
 
 print '<tr class="impair"><td colspan="3" align="right"><input type="submit" class="button" value="' . $langs->trans("Save") . '"></td>';
 print '</tr>';

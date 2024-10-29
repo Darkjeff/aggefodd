@@ -713,7 +713,26 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		{
 			$exclude_array = array();
 		}
-		$formAgefodd->select_contacts_custom(0, '', 'contact', 1, $exclude_array, '', 1, '', 1);
+		// SCOPEN noé 28/10/24 Modif Allcare
+		print $form->selectcontacts(
+			-1,
+			$filter_contact,
+			'contact',
+			1,
+			'',
+			'',
+			1,
+			'',
+			false,
+			0,
+			1,
+			[],
+			'',
+			'contact',
+			false,
+			1
+		);
+		// End modif 
 		print '</td></tr>';
 	}
 	print '</table>';
@@ -745,10 +764,14 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 	print '<tr class="select_thirdparty_block"><td class="fieldrequired">' . $langs->trans("Company") . '</td><td colspan="3">';
 
 
-	$filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-	if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1);
-	else print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1);
-
+    $filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
+    // SCOPEN noé 28/10/24 Modif Allcare
+    if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) {
+		print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1);
+    } else {
+		print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1);
+    }
+    // End modif 
 
 	print '</td></tr>';
 

@@ -205,8 +205,6 @@ if ($action =='delete_action')
 	$result = $event->delete();
 }
 
-
-
 /*
  * View
  */

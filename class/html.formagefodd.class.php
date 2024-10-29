@@ -685,7 +685,7 @@ class FormAgefodd extends Form
 	 * @param bool $supplier only
 	 * @return int if KO, Nb of contact in list if OK
 	 */
-	public function selectcontactscustom($socid, $selected = '', $htmlname = 'contactid', $showempty = 0, $exclude = '', $limitto = 0, $showfunction = 0, $moreclass = '', $options_only = false, $showsoc = 0, $forcecombo = 0, $event = array(), $supplier = 0) {
+	public function selectcontactscustom($socid, $selected = '', $htmlname = 'contactid', $showempty = 0, $exclude = '', $limitto = 0, $showfunction = 0, $moreclass = '', $options_only = false, $showsoc = 0, $forcecombo = 0, $event = array(), $supplier = 0, $subcontractor = false) {
 		global $conf, $langs, $user;
 
 		$langs->load('companies');
@@ -710,6 +710,13 @@ class FormAgefodd extends Form
 			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe_commerciaux as sc ON s.rowid = sc.fk_soc AND sc.fk_user = " . $user->id;
 		}
 
+		// SCOPEN noé 28/10/24 Modif Allcare
+		if ($subcontractor) {
+			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "categorie_contact as cc ON sp.rowid = cc.fk_socpeople";
+			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "categorie as c ON cc.fk_categorie = c.rowid";
+		}
+		// end modif
+
 		$sql .= " WHERE sp.entity IN (" . getEntity('societe', 1) . ")";
 		if ($socid > 0) {
 			$sql .= " AND (sp.fk_soc IN (SELECT rowid FROM  " . MAIN_DB_PREFIX . "societe WHERE parent IN (SELECT parent FROM " . MAIN_DB_PREFIX . "societe WHERE rowid=" . $socid . '))';
@@ -720,6 +727,12 @@ class FormAgefodd extends Form
 
 		if (! empty($conf->global->CONTACT_HIDE_INACTIVE_IN_COMBOBOX))
 			$sql .= " AND sp.statut<>0 ";
+
+		// SCOPEN noé 28/10/24 Modif Allcare
+		if ($subcontractor) {
+			$sql .= ' AND c.rowid IN (' . $conf->global->AGF_TAG_SUBCONTRACTING . ')';
+		}
+		// end modif
 
 		$sql .= " ORDER BY sp.lastname ASC";
 
@@ -1779,17 +1792,34 @@ class FormAgefodd extends Form
 
 				if ($conf->global->AGF_CONTACT_DOL_SESSION) {
 					$events = array();
+					// SCOPEN noé 28/10/24 Modif Allcare
 					$events[] = array(
 							'method' => 'getContacts',
-							'url' => dol_buildpath('/core/ajax/contacts.php', 1),
+							'url' => dol_buildpath('/core/ajax/contacts.php?showempty=1', 1),
 							'htmlname' => 'contact',
 							'params' => array(
 									'add-customer-contact' => 'disabled'
 							)
 					);
 
-					$html_select_thirdparty_list = $form->select_thirdparty_list($filter_customer, 'fk_soc', '', 'SelectThirdParty', 1, 0, $events, '', 0, 0, 'minwidth100', $moreparam, $set_select_thirdparty_multiple);
-				} else {
+					$html_select_thirdparty_list = $form->select_company(
+						'',
+						'fk_soc',
+						$filter_customer,
+						'SelectThirdParty',
+						0, 
+						0,
+						$events, 
+						100,
+						'minwidth100',
+						$moreparam,
+						'',
+						3,
+						array(),
+						$set_select_thirdparty_multiple,
+					);
+					// End modif
+                } else {
 					$html_select_thirdparty_list = $form->select_thirdparty_list($filter_customer, 'fk_soc', '', 'SelectThirdParty', 1, 0, array(), '', 0, 0, 'minwidth100', $moreparam, $set_select_thirdparty_multiple);
 				}
 
@@ -1808,17 +1838,23 @@ class FormAgefodd extends Form
 				print $langs->trans("or") . ' ' . $langs->trans("AgfSessionContact");
 				print ' &nbsp;</td><td class="nowrap maxwidthonsmartphone">';
 				if ($conf->global->AGF_CONTACT_DOL_SESSION) {
-					if (! empty($filter_customer) && ! is_array($filter_customer)) {
-						$form->select_contacts($filter_customer, $filter_contact, 'contact', 1, '', '', 1, '', 1);
+					// SCOPEN noé 28/10/24 Modif Allcare
+					if (!empty($filter_customer) && !is_array($filter_customer)) {
+						$form->selectcontacts(
+							$filter_customer, $filter_contact, 'contact', 1, '', '', 1, '', false, 0, 1, [], '',
+							'contact', false, 1
+						);
 					} else {
-						$form->select_contacts(0, $filter_contact, 'contact', 1, '', '', 1, '', 1);
+						print $form->selectcontacts(
+							-1, $filter_contact, 'contact', 1, '', '', 1, '', false, 0, 1, [], '', 'contact', false, 1
+						);
 					}
+					// End modif
 				} else {
 					print $this->select_agefodd_contact($filter_contact, 'contact', '', 1);
 				}
 				print '</td></tr>';
 			}
-
 			print '<tr>';
 			print '<td class="nowrap">';
 			print $langs->trans("or") . ' ' . $langs->trans("AgfLieu") . ' ' . $langs->trans("Customer");
@@ -1828,7 +1864,25 @@ class FormAgefodd extends Form
 			if ($set_select_thirdparty_multiple && ( float ) DOL_VERSION <= 8.0) {
 				$moreparam = ' name="fk_soc_place[]" multiple >' . ";//"; // OMG j'ose vraiment le faire ? .. oui je l'ai fait :'( [@see => https://github.com/Dolibarr/dolibarr/pull/9028]
 			}
-			$html_select_thirdparty_place_list = $form->select_thirdparty_list($filter_customer_place, 'fk_soc_place', '', 'SelectThirdParty', 1, 0, array(), '', 0, 0, 'minwidth100', $moreparam, $set_select_thirdparty_multiple);
+
+            // SCOPEN noé 28/10/24 Modif Allcare
+            $html_select_thirdparty_place_list = $form->select_company(
+				'',
+				'fk_soc_place',
+				$filter_customer,
+				'SelectThirdParty',
+				0, 
+				0,
+				[], 
+				100,
+				'minwidth100',
+				$moreparam,
+				'',
+				3,
+				array(),
+				$set_select_thirdparty_multiple,
+            );
+            // End modif
 
 			if ($set_select_thirdparty_multiple && ( float ) DOL_VERSION <= 8.0) {
 				foreach ( $filter_customer_place as $fk_soc ) {
