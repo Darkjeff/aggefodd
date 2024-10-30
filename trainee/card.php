@@ -665,6 +665,8 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 				$("#fromblanck").show();
 			}
 
+			$("select[name=importfrom]").trigger("change");
+
 		});';
 	print "\n" . "</script>\n";
 
@@ -732,7 +734,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 			false,
 			1
 		);
-		// End modif 
+		// End modif
 		print '</td></tr>';
 	}
 	print '</table>';
@@ -771,7 +773,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
     } else {
 		print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1);
     }
-    // End modif 
+    // End modif
 
 	print '</td></tr>';
 
