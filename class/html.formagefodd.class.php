@@ -890,7 +890,7 @@ class FormAgefodd extends Form
 		}
 
 		// SCOPEN noé 28/10/24 Modif Allcare
-		if ($subcontractor) {
+		if ($subcontractor && !empty($conf->global->AGF_TAG_SUBCONTRACTING)) {
 			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "categorie_contact as cc ON sp.rowid = cc.fk_socpeople";
 			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "categorie as c ON cc.fk_categorie = c.rowid";
 		}
@@ -908,7 +908,7 @@ class FormAgefodd extends Form
 			$sql .= " AND sp.statut<>0 ";
 
 		// SCOPEN noé 28/10/24 Modif Allcare
-		if ($subcontractor) {
+		if ($subcontractor && !empty($conf->global->AGF_TAG_SUBCONTRACTING)) {
 			$sql .= ' AND c.rowid IN (' . $conf->global->AGF_TAG_SUBCONTRACTING . ')';
 		}
 		// end modif
@@ -1986,9 +1986,9 @@ class FormAgefodd extends Form
 						'fk_soc',
 						$filter_customer,
 						'SelectThirdParty',
-						0, 
 						0,
-						$events, 
+						0,
+						$events,
 						100,
 						'minwidth100',
 						$moreparam,
@@ -2050,9 +2050,9 @@ class FormAgefodd extends Form
 				'fk_soc_place',
 				$filter_customer,
 				'SelectThirdParty',
-				0, 
 				0,
-				[], 
+				0,
+				[],
 				100,
 				'minwidth100',
 				$moreparam,
