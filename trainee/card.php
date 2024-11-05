@@ -723,7 +723,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
                 'add-customer-contact' => 'disabled'
             )
         );
-		print '<tr><td width="20%">' . $langs->trans("AgfCompany") . '</td>';
+		print '<tr><td width="20%">' . $langs->trans("Company") . '</td>';
 		print '<td>';
         if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) {
             print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1, 0, $events);
