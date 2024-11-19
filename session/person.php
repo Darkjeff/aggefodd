@@ -902,7 +902,7 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 				exit();
 			}
 			if ($redirect) {
-				Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+				Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id."#modstagid".GETPOSTINT("modstagid"));
 				exit();
 			}
 		} else {
