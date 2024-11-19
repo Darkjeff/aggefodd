@@ -643,6 +643,185 @@ class FormAgefodd extends Form
 	}
 
 	/**
+	 * Return HTML code of the SELECT of list of all contacts (for a third party or all).
+	 * This also set the number of contacts found into $this->num
+     * 
+	 * SCOPEN Noé 05/11/24 Modif Allcare
+     * 
+	 * @since 9.0 Add afterSelectContactOptions hook
+	 *
+	 * @param int 			$socid 				Id ot third party or 0 for all or -1 for empty list
+	 * @param array|int 	$selected 			Array of ID of pre-selected contact id
+	 * @param string 		$htmlname 			Name of HTML field ('none' for a not editable field)
+	 * @param int|string 	$showempty 			0=no empty value, 1=add an empty value, 2=add line 'Internal' (used by user edit), 3=add an empty value only if more than one record into list
+	 * @param string 		$exclude 			List of contacts id to exclude
+	 * @param string 		$limitto 			Disable answers that are not id in this array list
+	 * @param integer 		$showfunction 		Add function into label
+	 * @param string 		$morecss 			Add more class to class style
+	 * @param bool 			$options_only 		Return options only (for ajax treatment)
+	 * @param integer 		$showsoc 			Add company into label
+	 * @param int 			$forcecombo 		Force to use combo box (so no ajax beautify effect)
+	 * @param array 		$events 			Event options. Example: array(array('method'=>'getContacts', 'url'=>dol_buildpath('/core/ajax/contacts.php',1), 'htmlname'=>'contactid', 'params'=>array('add-customer-contact'=>'disabled')))
+	 * @param string 		$moreparam 			Add more parameters onto the select tag. For example 'style="width: 95%"' to avoid select2 component to go over parent container
+	 * @param string 		$htmlid 			Html id to use instead of htmlname
+	 * @param bool 			$multiple 			add [] in the name of element and add 'multiple' attribut
+	 * @param integer 		$disableifempty 	Set tag 'disabled' on select if there is no choice
+	 * @return     int|string                   Return integer <0 if KO, HTML with select string if OK.
+	 */
+	public function selectcontacts(
+        $socid,
+        $selected = array(),
+        $htmlname = 'contactid',
+        $showempty = 0,
+        $exclude = '',
+        $limitto =  '',
+        $showfunction = 0,
+        $morecss = '',
+        $options_only = false,
+        $showsoc = 0,
+        $forcecombo = 0,
+        $events = array(),
+        $moreparam = '',
+        $htmlid = '',
+        $multiple = false,
+        $disableifempty = 0
+    ) {
+        global $conf, $langs, $user;
+        
+        if ($socid > -1) {
+            return parent::selectcontacts(
+                $socid,
+                $selected,
+                $htmlname,
+                $showempty,
+                $exclude,
+                $limitto,
+                $showfunction,
+                $morecss,
+                $options_only,
+                $showsoc,
+                $forcecombo,
+                $events,
+                $moreparam,
+                $htmlid,
+                $multiple,
+                $disableifempty
+            );
+        }
+        
+        		// On recherche les societes
+		$sql = "SELECT DISTINCT sp.rowid, sp.lastname, sp.statut, sp.firstname, sp.poste";
+		if ($showsoc > 0) {
+			$sql .= " , s.nom as company";
+		}
+		$sql .= " FROM " . MAIN_DB_PREFIX . "socpeople as sp";
+
+
+		// Limit contact visibility to contact of thirdparty saleman
+		if (empty($user->rights->societe->client->voir)) {
+			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe_commerciaux as sc ON s.rowid = sc.fk_soc AND sc.fk_user = " . $user->id;
+		}
+
+		$sql .= " WHERE sp.entity IN (" . getEntity('societe', 1) . ") AND sp.fk_soc IS NULL";
+
+		$sql .= " ORDER BY sp.lastname ASC";
+
+		if (!is_array($limitto) && !empty($limitto) && (int)$limitto>0) {
+			$sql .= $this->db->plimit($limitto);
+		}
+
+		dol_syslog(get_class($this) . "::" . __METHOD__, LOG_DEBUG);
+
+		if (!is_array($limitto) && !empty($limitto) && (int)$limitto>0) {
+			$sql .= $this->db->plimit($limitto);
+		}
+
+		dol_syslog(get_class($this) . "::" . __METHOD__, LOG_DEBUG);
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			$num = $this->db->num_rows($resql);
+
+			if ($conf->use_javascript_ajax && ! $forcecombo && ! $options_only) {
+				include_once DOL_DOCUMENT_ROOT . '/core/lib/ajax.lib.php';
+				if(empty($events)) $events = array();
+				if(empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)) $conf->global->CONTACT_USE_SEARCH_TO_SELECT = 0;
+				$comboenhancement = ajax_combobox($htmlname, $events, $conf->global->CONTACT_USE_SEARCH_TO_SELECT);
+				$out .= $comboenhancement;
+				$nodatarole = ($comboenhancement ? ' data-role="none"' : '');
+			}
+
+			if ($htmlname != 'none' || $options_only)
+				$out .= '<select class="flat' . ($moreclass ? ' ' . $moreclass : '') . '" id="' . $htmlname . '" name="' . $htmlname . '"' . $nodatarole . '>';
+			if ($showempty == 1)
+				$out .= '<option value="0"' . ($selected == '0' ? ' selected' : '') . '></option>';
+			if ($showempty == 2)
+				$out .= '<option value="0"' . ($selected == '0' ? ' selected' : '') . '>' . $langs->trans("Internal") . '</option>';
+
+			if ($num) {
+				include_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+				$contactstatic = new Contact($this->db);
+
+				while ( $obj = $this->db->fetch_object($resql) ) {
+
+					$contactstatic->id = $obj->rowid;
+					$contactstatic->lastname = $obj->lastname;
+					$contactstatic->firstname = $obj->firstname;
+
+					if ($htmlname != 'none') {
+						$disabled = 0;
+						if (is_array($exclude) && count($exclude) && in_array($obj->rowid, $exclude))
+							$disabled = 1;
+						if (is_array($limitto) && count($limitto) && ! in_array($obj->rowid, $limitto))
+							$disabled = 1;
+						if ($selected && $selected == $obj->rowid) {
+							$out .= '<option value="' . $obj->rowid . '"';
+							if ($disabled)
+								$out .= ' disabled';
+							$out .= ' selected>';
+							$out .= $contactstatic->getFullName($langs);
+							if ($showfunction && $obj->poste)
+								$out .= ' (' . $obj->poste . ')';
+							if (($showsoc > 0) && $obj->company)
+								$out .= ' - (' . $obj->company . ')';
+							$out .= '</option>';
+						} else {
+							$out .= '<option value="' . $obj->rowid . '"';
+							if ($disabled)
+								$out .= ' disabled';
+							$out .= '>';
+							$out .= $contactstatic->getFullName($langs);
+							if ($showfunction && $obj->poste)
+								$out .= ' (' . $obj->poste . ')';
+							if (($showsoc > 0) && $obj->company)
+								$out .= ' - (' . $obj->company . ')';
+							$out .= '</option>';
+						}
+					} else {
+						if ($selected == $obj->rowid) {
+							$out .= $contactstatic->getFullName($langs);
+							if ($showfunction && $obj->poste)
+								$out .= ' (' . $obj->poste . ')';
+							if (($showsoc > 0) && $obj->company)
+								$out .= ' - (' . $obj->company . ')';
+						}
+					}
+				}
+			} else {
+				$out .= '<option value="-1"' . ($showempty == 2 ? '' : ' selected') . ' disabled>' . $langs->trans($socid ? "NoContactDefinedForThirdParty" : "NoContactDefined") . '</option>';
+			}
+			if ($htmlname != 'none' || $options_only) {
+				$out .= '</select>';
+			}
+
+			$this->num = $num;
+			return $out;
+		} else {
+			dol_print_error($this->db);
+			return - 1;
+		}
+    }
+
+    /**
 	 * Return list of all contacts (for a third party or all)
 	 *
 	 * @param int $socid ot third party or 0 for all

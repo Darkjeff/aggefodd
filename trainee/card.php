@@ -681,7 +681,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 
 	print '<select name="importfrom" id="importfrom" class="flat">';
 	$selected = '';
-	if (! $user->rights->agefodd->session->trainer) {
+    if (! $user->rights->agefodd->session->trainer) {
 		if ($importfrom == 'contact')
 			$selected = ' selected="selected" ';
 		print '<option value="contact" ' . $selected . '>' . $langs->trans("AgfMenuActStagiaireNewFromContact") . '</option>';
@@ -700,8 +700,6 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 	if (empty($user->rights->agefodd->session->trainer)) {
 
 		$formAgefodd = new FormAgefodd($db);
-		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
-		print '<td>';
 
 		$agf_static = new Agefodd_stagiaire($db);
 		$exclude_array = $agf_static->fetch_all_id_by('fk_socpeople');
@@ -715,15 +713,38 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		{
 			$exclude_array = array();
 		}
+        
+		// SCOPEN noé 11/05/24 Modif Allcare
+        $events[] = array(
+            'method' => 'getContacts',
+            'url' => dol_buildpath('/core/ajax/contacts.php', 1),
+            'htmlname' => 'contact',
+            'params' => array(
+                'add-customer-contact' => 'disabled'
+            )
+        );
+		print '<tr><td width="20%">' . $langs->trans("Company") . '</td>';
+		print '<td>';
+        if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) {
+            print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1, 0, $events);
+        } else {
+            print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1, 0, $events);
+        }
+
+		print '</td></tr>';
+		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
+		print '<td>';
+        
+		// End Modif
 		// SCOPEN noé 28/10/24 Modif Allcare
-		print $form->selectcontacts(
+		print $formAgefodd->selectcontacts(
 			-1,
 			$filter_contact,
 			'contact',
 			1,
 			'',
 			'',
-			1,
+			0,
 			'',
 			false,
 			0,

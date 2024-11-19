@@ -54,11 +54,16 @@ if (! $user->rights->agefodd->lire) {
 // Get parameters
 $sortfield = GETPOST("sortfield", 'alpha');
 $sortorder = GETPOST("sortorder", 'alpha');
-$page = GETPOST("page", 'int');
+
+// Modif Scopen Noé
+$page = intval(GETPOST("page", 'int'));
 if ($page == - 1) {
 	$page = 0;
 }
-$offset = $conf->liste_limit * $page;
+
+$offset = intval($conf->liste_limit) * $page;
+// End Modif
+
 $pageprev = $page - 1;
 $pagenext = $page + 1;
 if (! $sortorder)
