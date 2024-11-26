@@ -116,7 +116,7 @@ class mod_agefoddcertif_simple extends ModeleNumRefAgefodd {
 			// Format the two first certificate caracters
 			if (strlen($prefix) > 0) {
 				$prefix = str_replace(' ', '', $prefix);
-				$prefix = strtoupper($prefix);
+				$prefix = mb_strtoupper($prefix);
 
 				if (strlen($prefix) >= 2) {
 					$prefix = substr($prefix, 0, 2);
