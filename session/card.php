@@ -437,14 +437,14 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 				$agf->contactid = 0;
 				$agf->sourcecontactid = 0;
 			}
+
 			$result = $agf->update($user);
 			if ($result > 0) {
-
 				if (! empty($saveandclose)) {
-					Header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
+					header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
 				} else {
-					setEventMessage($langs->trans('Save'), 'mesgs');
-					Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+					setEventMessage($langs->trans('Save'));
+					header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
 				}
 				exit();
 			} else {
@@ -458,7 +458,7 @@ if ($action == 'update' && ($user->rights->agefodd->creer || $user->rights->agef
 			}
 		}
 	} else {
-		Header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
+		header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
 		exit();
 	}
 }
@@ -882,45 +882,22 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	if ($conf->global->AGF_CONTACT_DOL_SESSION) {
 		print '<tr class="order_sessionContact"><td>' . $langs->trans("AgfSessionContact") . '</td>';
 		print '<td><table class="nobordernopadding"><tr><td>';
-		if (! empty($fk_soc_crea)) {
-			print $form->selectcontacts(
-				$fk_soc_crea,
-				GETPOST('contact', 'int'),
-				'contact',
-				1,
-				'',
-				'',
-				0,
-				'',
-				false,
-				0,
-				0,
-				[],
-				'',
-				'contact',
-				false,
-				1
-			);
-		} else {
-			print $form->selectcontacts(
-				0,
-				GETPOST('contact', 'int'),
-				'contact',
-				1,
-				'',
-				'',
-				0,
-				'',
-				false,
-				0,
-				0,
-				[],
-				'',
-				'contact',
-				false,
-				1
-			);
-		}
+		print $form->selectcontacts(
+			(! empty($fk_soc_crea)?$fk_soc_crea:0),
+			GETPOST('contact', 'int'),
+			'contact',
+			1,
+			'',
+			'',
+			0,
+			'',
+			false,
+			0,
+			0,
+			[],
+			'',
+			'contact',
+		);
 		print '</td>';
 		print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolContactHelp"), 1, 'help') . '</td></tr></table>';
 		print '</td></tr>';
@@ -965,45 +942,22 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 
 	print '<tr class="order_typeRequesterContact"><td>' . $langs->trans("AgfTypeRequesterContact") . '</td>';
 	print '<td><table class="nobordernopadding"><tr><td>';
-	if (! empty($fk_soc_requester)) {
-		print $form->selectcontacts(
-			$fk_soc_requester,
-			[GETPOST('fk_socpeople_requester', 'int')],
-			'fk_socpeople_requester',
-			1,
-			'',
-			'',
-			0,
-			'',
-			false,
-			0,
-			1,
-			[],
-			'',
-			'fk_socpeople_requester',
-			false,
-			1
-		);
-	} else {
-		print $form->selectcontacts(
-			-1,
-			[GETPOST('fk_socpeople_requester', 'int')],
-			'fk_socpeople_requester',
-			1,
-			'',
-			'',
-			1,
-			'',
-			false,
-			0,
-			1,
-			[],
-			'',
-			'fk_socpeople_requester',
-			false,
-			1
-		);
-	}
+	print $form->selectcontacts(
+		(! empty($fk_soc_requester)?$fk_soc_requester:-1),
+		[GETPOST('fk_socpeople_requester', 'int')],
+		'fk_socpeople_requester',
+		1,
+		'',
+		'',
+		0,
+		'',
+		false,
+		0,
+		1,
+		[],
+		'',
+		'fk_socpeople_requester',
+	);
 	print '</td>';
 	print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolRequesterHelp"), 1, 'help') . '</td></tr></table>';
 	print '</td></tr>';
@@ -1218,6 +1172,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 								'method' => 'getContacts',
 								'url' => dol_buildpath('/core/ajax/contacts.php', 1),
 								'htmlname' => 'contact',
+								'showempty' => 1,
 								'params' => array(
 										'add-customer-contact' => 'disabled'
 								)
@@ -1246,9 +1201,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 							0,
 							[],
 							'',
-							'contact',
-							false,
-							1
+							'contact'
                         );
                         // End modif
 						print '</td>';
@@ -1258,7 +1211,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						}
 						print '</td></tr>';
 					} else {
-						print '<tr class="order_sessionContact"><td>' . $langs->trans("AgfSessionContact") . '</td>';
+						print '<tr class="order_sessionContact"><td>d' . $langs->trans("AgfSessionContact") . '</td>';
 						print '<td><table class="nobordernopadding"><tr><td>';
 						print $formAgefodd->select_agefodd_contact($agf->contactid, 'contact', '', 1);
 						print '</td><td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddContactHelp"), 1, 'help') . '</td></tr></table>';
@@ -1276,6 +1229,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 								'method' => 'getContacts',
 								'url' => dol_buildpath('/core/ajax/contacts.php', 1),
 								'htmlname' => 'fk_socpeople_requester',
+								'showempty' => '1',
 								'params' => array(
 										'add-customer-contact' => 'disabled'
 								)
@@ -1290,17 +1244,10 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						print '<td><table class="nobordernopadding"><tr><td>';
 
 						// SCOPEN noé 28/10/24 Modif Allcare
-						if (!empty($agf->fk_soc_requester)) {
-							print $form->selectcontacts(
-								$agf->fk_soc_requester, $agf->fk_socpeople_requester, 'fk_socpeople_requester', 1,
-								'', '', 0, '', false, 0, 0, [], '', 'fk_socpeople_requester', false, 1
-							);
-                        } else {
-							print $form->selectcontacts(
-								-1, $agf->fk_socpeople_requester, 'fk_socpeople_requester', 1, '', '', 0, '', false,
-								0, 0, [], '', 'fk_socpeople_requester', false, 1
-							);
-                        }
+						print $form->selectcontacts(
+							(!empty($agf->fk_soc_requester)?$agf->fk_soc_requester:-1), $agf->fk_socpeople_requester, 'fk_socpeople_requester', 1,
+							'', '', 0, '', false, 0, 0, [], '', 'fk_socpeople_requester'
+						);
 						// End modif
                         print '</td>';
 						print '<td>' . $form->textwithpicto('', $langs->trans("AgfAgefoddDolRequesterHelp"), 1, 'help') . '</td></tr></table>';
