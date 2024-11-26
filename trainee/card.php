@@ -735,6 +735,20 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
 		print '<td>';
 
+		$alreadyTrainee = [];
+		$sqlAlreadyTrainee = "SELECT DISTINCT fk_socpeople FROM ".MAIN_DB_PREFIX."agefodd_stagiaire";
+		if (!empty($socid)) {
+			$sqlAlreadyTrainee .= " WHERE fk_soc = ".(int)$socid;
+		}
+		$resqlAreadyTrainne = $db->query($sqlAlreadyTrainee);
+		if ($resqlAreadyTrainne) {
+			if ($db->num_rows($resqlAreadyTrainne) > 0) {
+				while($obj = $db->fetch_object($resqlAreadyTrainne)) {
+					$alreadyTrainee[$obj->fk_socpeople] = $obj->fk_socpeople;
+				}
+			}
+		}
+
 		// End Modif
 		// SCOPEN noé 28/10/24 Modif Allcare
 		print $formAgefodd->selectcontacts(
@@ -742,7 +756,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 			GETPOST('contact','int'),
 			'contact',
 			1,
-			'',
+			$alreadyTrainee,
 			'',
 			0,
 			'minwidth300',
