@@ -366,19 +366,17 @@ class Agefodd_teacher extends CommonObject {
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON f.fk_user = u.rowid";
 		if (isModEnabled('multicompany')) {
 			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as so ON s.fk_soc = so.rowid";
-		}
-		if (isModEnabled('multicompany') && !empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
-			$sql .= " LEFT JOIN " . $this->db->prefix() . "usergroup_user as ug ";
-			$sql .= " ON ug.fk_user = u.rowid ";
-		}
-		$sql .= " WHERE f.entity IN (" . getEntity('agefodd_base') . ")";
-		if (isModEnabled('multicompany')) {
 			$sql .= " AND (so.entity IN (".  getEntity('societe').")";
 			if (!empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
 				$sql .= " OR ug.entity = ".$conf->entity;
 			}
 			$sql .= ")";
 		}
+		if (isModEnabled('multicompany') && !empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
+			$sql .= " LEFT JOIN " . $this->db->prefix() . "usergroup_user as ug ";
+			$sql .= " ON ug.fk_user = u.rowid ";
+		}
+		$sql .= " WHERE f.entity IN (" . getEntity('agefodd_base') . ")";
 
 		if ($arch == 0 || $arch == 1) {
 			$sql .= " AND f.archive = " . $arch;
@@ -410,7 +408,6 @@ class Agefodd_teacher extends CommonObject {
 		if (! empty($limit)) {
 			$sql .= $this->db->plimit($limit + 1, $offset);
 		}
-
 		dol_syslog(get_class($this) . "::fetch_all ", LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {

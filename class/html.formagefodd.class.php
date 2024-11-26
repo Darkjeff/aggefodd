@@ -645,9 +645,9 @@ class FormAgefodd extends Form
 	/**
 	 * Return HTML code of the SELECT of list of all contacts (for a third party or all).
 	 * This also set the number of contacts found into $this->num
-     * 
+     *
 	 * SCOPEN Noé 05/11/24 Modif Allcare
-     * 
+     *
 	 * @since 9.0 Add afterSelectContactOptions hook
 	 *
 	 * @param int 			$socid 				Id ot third party or 0 for all or -1 for empty list
@@ -687,7 +687,7 @@ class FormAgefodd extends Form
         $disableifempty = 0
     ) {
         global $conf, $langs, $user;
-        
+
         if ($socid > -1) {
             return parent::selectcontacts(
                 $socid,
@@ -708,7 +708,7 @@ class FormAgefodd extends Form
                 $disableifempty
             );
         }
-        
+
         		// On recherche les societes
 		$sql = "SELECT DISTINCT sp.rowid, sp.lastname, sp.statut, sp.firstname, sp.poste";
 		if ($showsoc > 0) {
@@ -1118,6 +1118,11 @@ class FormAgefodd extends Form
 		$sql .= " ON u.rowid = s.fk_user";
 		if (isModEnabled('multicompany')) {
 			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as so ON sp.fk_soc = so.rowid";
+			$sql .= " AND (so.entity IN (".  getEntity('societe').")";
+			if (!empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
+				$sql .= " OR ug.entity = ".$conf->entity;
+			}
+			$sql .= ")";
 		}
 		if (isModEnabled('multicompany') && !empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
 			$sql .= " LEFT JOIN " . $this->db->prefix() . "usergroup_user as ug ";
@@ -1125,13 +1130,6 @@ class FormAgefodd extends Form
 		}
 		$sql .= " WHERE s.archive = 0";
 		$sql .= " AND s.entity IN (" . getEntity('agefodd_base') . ")";
-		if (isModEnabled('multicompany')) {
-			$sql .= " AND (so.entity IN (".  getEntity('societe').")";
-			if (!empty($conf->global->MULTICOMPANY_TRANSVERSE_MODE)) {
-				$sql .= " OR ug.entity = ".$conf->entity;
-			}
-			$sql .= ")";
-		}
 		if (! empty($filter)) {
 			$sql .= ' AND ' . $filter;
 		}
