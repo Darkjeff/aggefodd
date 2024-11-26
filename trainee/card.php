@@ -713,7 +713,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		{
 			$exclude_array = array();
 		}
-        
+
 		// SCOPEN noé 11/05/24 Modif Allcare
         $events[] = array(
             'method' => 'getContacts',
@@ -734,18 +734,18 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		print '</td></tr>';
 		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
 		print '<td>';
-        
+
 		// End Modif
 		// SCOPEN noé 28/10/24 Modif Allcare
 		print $formAgefodd->selectcontacts(
-			-1,
-			$filter_contact,
+			(!empty($socid)?$socid:-1),
+			GETPOST('contact','int'),
 			'contact',
 			1,
 			'',
 			'',
 			0,
-			'',
+			'minwidth300',
 			false,
 			0,
 			1,
