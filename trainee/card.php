@@ -802,14 +802,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 
 
     $filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-    // SCOPEN noé 28/10/24 Modif Allcare
-    if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) {
-		print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1);
-    } else {
-		print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1);
-    }
-    // End modif
-
+	print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1);
 	print '</td></tr>';
 
 	print '<tr class="create_thirdparty_block"><td class="fieldrequired">' . $langs->trans("ThirdPartyName") . '</td>';
