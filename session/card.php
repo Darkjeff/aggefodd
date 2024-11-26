@@ -1012,7 +1012,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 	print '<td>';
 	print $formAgefodd->selectcontactscustom(0, [GETPOST('fk_socpeople_presta', 'int')], 'fk_socpeople_presta', 1, '', 0, 0, '', false, 0, 1, array(), 1, true);
 	print '</td></tr>';
-	// end Modif 
+	// end Modif
 	print '<tr class="order_typeEmployee"><td>' . $langs->trans("AgfTypeEmployee") . $form->textwithpicto('', $langs->trans("AgfTypeEmployeeHelp"), 1, 'help') . '</td>';
 	print '<td>';
 	print $form->select_company($fk_soc_employer, 'fk_soc_employer', '', 'SelectThirdParty', 1, 0, array(), 0, 'minwidth100','','',2);
@@ -1233,7 +1233,7 @@ if ($action == 'create' && $user->rights->agefodd->creer) {
 						print '<td><table class="nobordernopadding"><tr><td>';
 						// SCOPEN noé 28/10/24 Modif Allcare
 						print $form->selectcontacts(
-							-1,
+							(!empty($agf->fk_soc)?$agf->fk_soc:-1),
 							$agf->sourcecontactid,
 							'contact',
 							1,
