@@ -725,11 +725,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
         );
 		print '<tr><td width="20%">' . $langs->trans("Company") . '</td>';
 		print '<td>';
-        if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) {
-            print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1, 0, $events);
-        } else {
-            print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1, 0, $events);
-        }
+		print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1, 0, $events);
 
 		print '</td></tr>';
 		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
@@ -986,13 +982,11 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		print $formAgefodd->select_type_stagiaire($stagiaire_type, 'stagiaire_type', 'active=1', 1);
 		print '</td></tr>';
 		print '<tr class="agelfoddline"><td>' . $langs->trans('AgfTraineeSocDocUse') . '</td><td colspan="3">';
-		if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company(0, 'fk_soc_link', '', 'SelectThirdParty', 1);
-		else print $form->select_thirdparty_list(0, 'fk_soc_link', '', 'SelectThirdParty', 1, 0);
+		print $form->select_company(0, 'fk_soc_link', '', 'SelectThirdParty', 1);
 
 		print '</td></tr>';
 		print '<tr class="agelfoddline"><td>' . $langs->trans('AgfTypeRequester') . '</td><td colspan="3">';
-		if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company(0, 'fk_soc_requester', '', 'SelectThirdParty', 1);
-		else print $form->select_thirdparty_list(0, 'fk_soc_requester', '', 'SelectThirdParty', 1, 0);
+		print $form->select_company(0, 'fk_soc_requester', '', 'SelectThirdParty', 1);
 		print '</td></tr>';
 		if (empty($conf->global->AGF_SESSION_TRAINEE_STATUS_AUTO)) {
 			print '<tr class="agelfoddline"><td>' . $langs->trans('Status') . '</td><td colspan="3">';
@@ -1057,8 +1051,7 @@ else
 
 					print '<tr><td valign="top">' . $langs->trans("Company") . '</td><td>';
 					$filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-					if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
-					else print $form->select_thirdparty_list($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
+					print $form->select_company($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
 
 					print '</td></tr>';
 

@@ -1181,7 +1181,7 @@ if ($user->rights->agefodd->modifier && $action == 'new_invoice_supplier_mission
 	// Create new supplier invoice
 	print '<td width="20%" valign="top">';
 	$filters = (float) DOL_VERSION >= 18.0 ? '( (s.fournisseur:=:1) )' : '(s.fournisseur=1)';
-	print $form->select_thirdparty_list($socid, 'socid', $filters, 'SelectThirdParty');
+	print $form->select_company($socid, 'socid', $filters, 'SelectThirdParty');
 	print '</td>';
 
 	print '<td>';
@@ -1221,7 +1221,7 @@ if ($user->rights->agefodd->modifier && $action == 'new_invoice_supplier_mission
 	// print $langs->trans('AgfSelectFournProduct');
 
 	$filters = (float) DOL_VERSION >= 18.0 ? '( (s.fournisseur:=:1) )' : '(s.fournisseur=1)';
-	print $form->select_thirdparty_list($socid, 'socidlink', $filters, 'SelectThirdParty');
+	print $form->select_company($socid, 'socidlink', $filters, 'SelectThirdParty');
 	print '</td>';
 
 	print '<td>';

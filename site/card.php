@@ -319,14 +319,29 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 			)
 	);
 	$filters = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3) OR (s.fournisseur:=:1) )' : '((s.client IN (1,2,3)) OR (s.fournisseur=1))';
-	print '<td>' . $form->select_thirdparty_list('', 'societe', $filters, 'SelectThirdParty', 1, 0, $events) . '</td></tr>';
+	print '<td>' . $form->select_company('', 'societe', $filters, 'SelectThirdParty', 1, 0, $events) . '</td></tr>';
 	print '<tr><td>' . $langs->trans("Contact") . '</td>';
 	print '<td>';
-	if (! empty($societe)) {
-		$formAgefodd->select_contacts_custom($societe, '', 'contact', 1, '', '', 1, '', 1);
-	} else {
-		$formAgefodd->select_contacts_custom(0, '', 'contact', 1, '', 1000, 1, '', 1);
-	}
+
+	print $formAgefodd->selectcontacts(
+		(!empty($societe)?$societe:-1),
+		GETPOST('contact','int'),
+		'contact',
+		1,
+		[],
+		'',
+		0,
+		'minwidth300',
+		false,
+		0,
+		1,
+		[],
+		'',
+		'contact',
+		false,
+		1
+	);
+
 	print '</td></tr>';
 
 	print '<tr><td>' . $langs->trans('AgfImportCustomerAdress') . '</td><td>';
@@ -435,7 +450,7 @@ if ($action == 'create' && $user->rights->agefodd->agefodd_place->creer) {
 						)
 				);
 				$filters = (float) DOL_VERSION >= 18.0 ? '( (s.client:IN:1,2,3) OR (s.fournisseur:=:1) )' :  '((s.client IN (1,2,3)) OR (s.fournisseur=1))';
-				print '<td>' . $form->select_thirdparty_list($agf->socid, 'societe', $filters, 'SelectThirdParty', 1, 0,$events) . '</td></tr>';
+				print '<td>' . $form->select_company($agf->socid, 'societe', $filters, 'SelectThirdParty', 1, 0,$events) . '</td></tr>';
 
 				print '<tr><td>' . $langs->trans("Contact") . '</td>';
 				print '<td>';
