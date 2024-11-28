@@ -75,6 +75,10 @@ if ($create_thirdparty==-1) {
 $create_contact = GETPOST('create_contact', 'int');
 
 $socid = GETPOST('societe', 'int');
+if (empty($socid)) {
+	//Create trainee not from contact
+	$socid = GETPOST('societe_sta', 'int');
+}
 $fonction = GETPOST('fonction', 'alpha');
 $tel1 = GETPOST('tel1', 'alpha');
 $tel2 = GETPOST('tel2', 'alpha');
@@ -641,7 +645,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 				if($(this).val()=="contact") {
 					$("#fromcontact").show();
 					//hack to force select display again
-					$(\'#contact\').select2({dir: \'ltr\',width: \'resolve\',minimumInputLength: '.(empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)?0:$conf->global->CONTACT_USE_SEARCH_TO_SELECT).'});
+					$(\'#contact\').change();
 					$("#fromblanck").hide();
 				}else {
 					$("#fromcontact").hide();
@@ -798,7 +802,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 
 
     $filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-	print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1);
+	print $form->select_company($socid, 'societe_sta', $filters, 'SelectThirdParty', 1);
 	print '</td></tr>';
 
 	print '<tr class="create_thirdparty_block"><td class="fieldrequired">' . $langs->trans("ThirdPartyName") . '</td>';
