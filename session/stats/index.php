@@ -224,7 +224,7 @@ if (empty($socid)) {
 		$filter = (float) DOL_VERSION >= 18.0 ? '( (s.fournisseur:=:1) )' : 's.fournisseur = 1';
 	}
 
-	print $form->select_thirdparty_list($socid, 'socid', $filter, 'SelectThirdParty');
+	print $form->select_company($socid, 'socid', $filter, 'SelectThirdParty');
 	print '</td></tr>';
 	// User
 	print '<tr><td>' . $langs->trans("User") . '/' . $langs->trans("SalesRepresentative") . '</td><td>';

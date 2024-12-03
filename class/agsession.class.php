@@ -3218,7 +3218,7 @@ class Agsession extends CommonObject
 		}
 
 		$sql .= " WHERE s.status <> 4";
-		$sql .= " AND s.entity IN (" . getEntity('agefodd_base') . ")";
+		$sql .= " AND s.entity IN (" . getEntity('agefodd_session') . ")";
 		$sql .= " AND (SELECT count(rowid) FROM " . MAIN_DB_PREFIX . "agefodd_session_adminsitu WHERE archive=0 AND fk_agefodd_session=s.rowid)<>0";
 
 		if (is_object($user) && ! empty($user->id) && empty($user->rights->agefodd->session->all) && empty($user->admin)) {

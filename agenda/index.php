@@ -205,8 +205,6 @@ if ($action =='delete_action')
 	$result = $event->delete();
 }
 
-
-
 /*
  * View
  */
@@ -455,13 +453,13 @@ if (! empty($filter_trainer)) {
 		$sql .= " AND ca.code='AC_AGF_SESST' ";
 		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "agefodd_session_formateur_calendrier as trainercal ON trainercal.fk_agefodd_session_formateur = trainer_session.rowid ";
 	}
-	$sql .= " LEFT OUTER JOIN " . MAIN_DB_PREFIX . 'societe as socsess ON agf.fk_soc = socsess.rowid ';
+	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . 'societe as socsess ON agf.fk_soc = socsess.rowid ';
 }
 if (! empty($filter_trainee)) {
 	$sql .= " INNER JOIN " . MAIN_DB_PREFIX . 'agefodd_session_stagiaire as trainee_session ON agf.rowid = trainee_session.fk_session_agefodd ';
 }
 
-$sql .= ' WHERE agf.entity IN (' . getEntity('agefodd_base') . ')';
+$sql .= ' WHERE agf.entity IN (' . getEntity('agefodd_session') . ')';
 $sql .= ' AND a.elementtype=\'agefodd_agsession\'';
 if ($action == 'show_day') {
 	$sql .= " AND (";

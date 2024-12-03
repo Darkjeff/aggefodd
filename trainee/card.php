@@ -75,6 +75,10 @@ if ($create_thirdparty==-1) {
 $create_contact = GETPOST('create_contact', 'int');
 
 $socid = GETPOST('societe', 'int');
+if (empty($socid)) {
+	//Create trainee not from contact
+	$socid = GETPOST('societe_sta', 'int');
+}
 $fonction = GETPOST('fonction', 'alpha');
 $tel1 = GETPOST('tel1', 'alpha');
 $tel2 = GETPOST('tel2', 'alpha');
@@ -641,7 +645,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 				if($(this).val()=="contact") {
 					$("#fromcontact").show();
 					//hack to force select display again
-					$(\'#contact\').select2({dir: \'ltr\',width: \'resolve\',minimumInputLength: '.(empty($conf->global->CONTACT_USE_SEARCH_TO_SELECT)?0:$conf->global->CONTACT_USE_SEARCH_TO_SELECT).'});
+					$(\'#contact\').change();
 					$("#fromblanck").hide();
 				}else {
 					$("#fromcontact").hide();
@@ -665,6 +669,8 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 				$("#fromblanck").show();
 			}
 
+			$("select[name=importfrom]").trigger("change");
+
 		});';
 	print "\n" . "</script>\n";
 
@@ -679,7 +685,7 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 
 	print '<select name="importfrom" id="importfrom" class="flat">';
 	$selected = '';
-	if (! $user->rights->agefodd->session->trainer) {
+    if (! $user->rights->agefodd->session->trainer) {
 		if ($importfrom == 'contact')
 			$selected = ' selected="selected" ';
 		print '<option value="contact" ' . $selected . '>' . $langs->trans("AgfMenuActStagiaireNewFromContact") . '</option>';
@@ -698,8 +704,6 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 	if (empty($user->rights->agefodd->session->trainer)) {
 
 		$formAgefodd = new FormAgefodd($db);
-		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
-		print '<td>';
 
 		$agf_static = new Agefodd_stagiaire($db);
 		$exclude_array = $agf_static->fetch_all_id_by('fk_socpeople');
@@ -713,7 +717,59 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		{
 			$exclude_array = array();
 		}
-		$formAgefodd->select_contacts_custom(0, '', 'contact', 1, $exclude_array, '', 1, '', 1);
+
+		// SCOPEN noé 11/05/24 Modif Allcare
+        $events[] = array(
+            'method' => 'getContacts',
+            'url' => dol_buildpath('/core/ajax/contacts.php', 1),
+            'htmlname' => 'contact',
+            'params' => array(
+                'add-customer-contact' => 'disabled'
+            )
+        );
+		print '<tr><td width="20%">' . $langs->trans("Company") . '</td>';
+		print '<td>';
+		print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1, 0, $events);
+
+		print '</td></tr>';
+		print '<tr><td width="20%">' . $langs->trans("AgfContactImportAsStagiaire") . '</td>';
+		print '<td>';
+
+		$alreadyTrainee = [];
+		$sqlAlreadyTrainee = "SELECT DISTINCT fk_socpeople FROM ".MAIN_DB_PREFIX."agefodd_stagiaire";
+		if (!empty($socid)) {
+			$sqlAlreadyTrainee .= " WHERE fk_soc = ".(int)$socid;
+		}
+		$resqlAreadyTrainne = $db->query($sqlAlreadyTrainee);
+		if ($resqlAreadyTrainne) {
+			if ($db->num_rows($resqlAreadyTrainne) > 0) {
+				while($obj = $db->fetch_object($resqlAreadyTrainne)) {
+					$alreadyTrainee[$obj->fk_socpeople] = $obj->fk_socpeople;
+				}
+			}
+		}
+
+		// End Modif
+		// SCOPEN noé 28/10/24 Modif Allcare
+		print $formAgefodd->selectcontacts(
+			(!empty($socid)?$socid:-1),
+			GETPOST('contact','int'),
+			'contact',
+			1,
+			$alreadyTrainee,
+			'',
+			0,
+			'minwidth300',
+			false,
+			0,
+			1,
+			[],
+			'',
+			'contact',
+			false,
+			1
+		);
+		// End modif
 		print '</td></tr>';
 	}
 	print '</table>';
@@ -745,11 +801,8 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 	print '<tr class="select_thirdparty_block"><td class="fieldrequired">' . $langs->trans("Company") . '</td><td colspan="3">';
 
 
-	$filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-	if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($socid, 'societe', $filters, 'SelectThirdParty', 1);
-	else print $form->select_thirdparty_list($socid, 'societe', $filters, 'SelectThirdParty', 1);
-
-
+    $filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
+	print $form->select_company($socid, 'societe_sta', $filters, 'SelectThirdParty', 1);
 	print '</td></tr>';
 
 	print '<tr class="create_thirdparty_block"><td class="fieldrequired">' . $langs->trans("ThirdPartyName") . '</td>';
@@ -933,13 +986,11 @@ if ($action == 'create' && ($user->rights->agefodd->creer || $user->rights->agef
 		print $formAgefodd->select_type_stagiaire($stagiaire_type, 'stagiaire_type', 'active=1', 1);
 		print '</td></tr>';
 		print '<tr class="agelfoddline"><td>' . $langs->trans('AgfTraineeSocDocUse') . '</td><td colspan="3">';
-		if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company(0, 'fk_soc_link', '', 'SelectThirdParty', 1);
-		else print $form->select_thirdparty_list(0, 'fk_soc_link', '', 'SelectThirdParty', 1, 0);
+		print $form->select_company(0, 'fk_soc_link', '', 'SelectThirdParty', 1);
 
 		print '</td></tr>';
 		print '<tr class="agelfoddline"><td>' . $langs->trans('AgfTypeRequester') . '</td><td colspan="3">';
-		if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company(0, 'fk_soc_requester', '', 'SelectThirdParty', 1);
-		else print $form->select_thirdparty_list(0, 'fk_soc_requester', '', 'SelectThirdParty', 1, 0);
+		print $form->select_company(0, 'fk_soc_requester', '', 'SelectThirdParty', 1);
 		print '</td></tr>';
 		if (empty($conf->global->AGF_SESSION_TRAINEE_STATUS_AUTO)) {
 			print '<tr class="agelfoddline"><td>' . $langs->trans('Status') . '</td><td colspan="3">';
@@ -1004,8 +1055,7 @@ else
 
 					print '<tr><td valign="top">' . $langs->trans("Company") . '</td><td>';
 					$filters = (float) DOL_VERSION >= 18.0  ? '( (s.client:IN:1,2,3)  )' :  '( (s.client IN (1,2,3)) )';
-					if (!empty($conf->global->AGEFODD_USE_SELECT_WITH_AJAX)) print $form->select_company($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
-					else print $form->select_thirdparty_list($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
+					print $form->select_company($agf->socid, 'societe', $filters, 'SelectThirdParty', 1);
 
 					print '</td></tr>';
 

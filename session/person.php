@@ -902,7 +902,7 @@ if ($action == 'edit' && ($user->rights->agefodd->creer | $user->rights->agefodd
 				exit();
 			}
 			if ($redirect) {
-				Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+				Header("Location: " . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id."#modstagid".GETPOSTINT("modstagid"));
 				exit();
 			}
 		} else {
@@ -983,6 +983,77 @@ if ($action == 'remove_opcafksocOPCA') {
 	} else {
 		setEventMessage($agf->error, 'errors');
 	}
+}
+
+if ($action == 'exportcsv') {
+	$langs->load('admin');
+	$agf = new Agsession($db);
+	$result = $agf->fetch($id);
+
+	if (!$result) {
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessages($agf->error, $agf->errors, 'errors');
+		exit;
+	}
+
+	$stagiaires = new Agefodd_session_stagiaire($db);
+	$stagiaires->fetch_stagiaire_per_session($agf->id);
+
+	if (!$result) {
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessages($stagiaires->error, $stagiaires->errors, 'errors');
+		exit;
+	}
+
+	$filename = 'liste_participants_' . $agf->ref;
+
+	header('Content-Type: text/csv');
+	header('Content-Disposition: attachment;filename=' . $filename);
+
+	$handle = fopen('php://output', 'w');
+
+	if (!$handle) {
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessage($langs->trans('ErrorWhenTryingToOpenOutput'), 'errors');
+		exit;
+	}
+
+	$array_fields = [
+		$langs->transnoentities('AgfFamilyName'),
+		$langs->transnoentities('AgfFirstName'),
+		$langs->transnoentities('ExtrafieldMail'),
+		$langs->transnoentities('ExtrafieldPhone'),
+		$langs->transnoentities('AgfTraineeStatus')
+	];
+
+	$retPut = fputcsv($handle, $array_fields, ';');
+
+	if (!$retPut) {
+		print "Error, when writing in CSV file";
+		header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+		setEventMessage($langs->trans('ErrorWhenWrittingCSVFile'), 'errors');
+		exit;
+	}
+
+	foreach ($stagiaires->lines as $trainee) {
+		$fieldsValues = [
+			$trainee->nom,
+			$trainee->prenom,
+			$trainee->email,
+			$trainee->tel1,
+			$stagiaires->LibStatut($trainee->email, 1)
+		];
+
+		$retPut = fputcsv($handle, $fieldsValues, ';');
+		if (!$retPut) {
+			print "Error, when writing in CSV file";
+			header("Location:" . $_SERVER['PHP_SELF'] . "?action=edit&id=" . $id);
+			setEventMessage($langs->trans('ErrorWhenWrittingCSVFile'), 'errors');
+			exit;
+		}
+	}
+
+	exit;
 }
 
 /*
@@ -2825,6 +2896,9 @@ if (! empty($id)) {
 			print '<br>';
 
 			print '<div class="tabsAction">';
+
+			print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=exportcsv&id=' . $id . '">' . $langs->trans('AgfExportListInCSV') . '</a>';
+
 			if (($user->rights->agefodd->creer || $user->rights->agefodd->modifier) && $agf->status != 4) {
 				print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=edit&id=' . $id . '&newstag=1" " title="' . $langs->trans('AgfStagiaireAdd') . '">' . $langs->trans('AgfStagiaireAdd') . '</a>';
 			}
@@ -2925,6 +2999,7 @@ if (! empty($id)) {
 			if (!$newstag=1) {
 				print '<a class="butAction" href="'.dol_buildpath('agefodd/trainee/card.php', 1).'?action=create' . $param_socid . '&session_id=' . $id . '&url_back=' . urlencode($_SERVER['PHP_SELF'] . '?action=edit&id=' . $id) . '" title="' . $langs->trans('AgfNewParticipantLinkInfo') . '">' . $langs->trans('AgfNewParticipant') . '</a>';
 			}
+
 			print '</div>';
 		}
 //		print '</div>';
